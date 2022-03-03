@@ -1,8 +1,8 @@
 # braid-programme
 
-The braid programme was originally written in support of work done with Roger Fenn to calculate matrix representations of virtual braid groups. It has evolved to include 
-tasks that relate to virtual knots, long knots, welded knots and knotoids but that do not involve a braid representation. However, in the absence of anything better, the 
-name 'braid' has been retained for the programme.
+The braid programme was originally written to calculate matrix representations of virtual braid groups. It has evolved to include 
+tasks that relate to virtual knots, long knots, welded knots and knotoids but that do not involve a braid representation. However, 
+in the absence of anything better, the name 'braid' has been retained for the programme.
 
 The tools provided by the programme support the following:
 
