@@ -7,7 +7,7 @@ in the absence of anything better, the name 'braid' has been retained for the pr
 The tools provided by the programme support the following:
 
     The Alexander and Burau polynomial invariants of a classical or virtual knot or link
-    The Alexander-like polynomial invariant of a classical doodle [19]
+    The Alexander-like polynomial invariant of a classical doodle
     Various quaternionic polynomial invariants of a classical or virtual knot or link
     Various matrix-switch polynomial invariants of a classical or virtual knot or link
     Various Weyl algebra switch polynomial invariants of a classical or virtual knot or link
@@ -26,7 +26,7 @@ The tools provided by the programme support the following:
     Sawollek's normalized Conway polynomial for a braid word
     The Dynnikov test for the trivial braid
     The Dowker(-Thistlethwaite) code for the braid
-    The Gauss code, or the oriented or unoriented left preferred Gauss data for a labelled peer code, labelled immersion code or a braid word [14]
+    The Gauss code, or the oriented or unoriented left preferred Gauss data for a labelled peer code, labelled immersion code or a braid word
     The labelled immersion code for a braid word
     The labelled peer code for a braid word or a labelled immersion code
     The labelled peer code for the Gauss code of a classical link
