@@ -1,0 +1,583 @@
+<HTML>
+<HEAD>
+	<META HTTP-EQUIV="CONTENT-TYPE" CONTENT="text/html; charset=utf-8">
+	<TITLE></TITLE>
+</HEAD>
+
+<BODY LANG="en-GB">
+
+<P ALIGN=CENTER><A NAME="_top"></A>
+<FONT SIZE=6><B> Software Developer Notes for Braid version 23.0</B></FONT>
+</P>
+
+<BR>
+
+<H2>1. Introduction</H2>
+
+<p>This document is intended as an initial guide to the source code published with the braid programme, it contains
+information not included in the user documentation that is relevant only to those wishing to extend, customize or 
+otherwise modify the code. It is not a detailed design spec, but contains various comments and definitions on the 
+following topics:</p>
+
+<P><OL START=2>
+<LI><A HREF="#Hidden-options">Hidden command line options</A>
+<LI><A HREF="#Debugging">Debugging information</A>
+<LI><A HREF="#Polynomials">Polynomial storage mechanism</A>
+<LI><A HREF="#Local-classes">Local classess</A>
+<LI><A HREF="#Comments">General source comments</A>
+</OL></P>
+
+<h2><a name="Hidden-options"></a>2. Hidden command line options</h2>
+
+<p>There are a number of options not documented in the standard user documentation that may be entered at the command line mostly relating to debugging information.  A full help screen can be displayed with the command</p>
+
+<P STYLE="margin-left: 1cm"><KBD>braid -H!</KBD></P>
+
+<p>where the H must be in upper case.  The full syntax for the programme is:</p>
+
+<p style="margin-left: 1cm"><kbd>braid --&lt;task&gt; [-&lt;short_options&gt;][--&lt;long_option&gt;][&lt;infile&gt;[&lt;outfile&gt;]]</kbd></p>
+
+<p>The <kbd>&lt;task&gt;</kbd> indicates the primary task of the programme, currently the following tasks are supported:</p>
+
+<p style="margin-left: 1cm">
+
+<kbd>affine-index</kbd>: evaluate the affine index polynomial invariant<br>
+<kbd>alexander</kbd>: evaluate Alexander switch polynomial invariants<br>
+<kbd>arrow-polynomial</kbd>: the arrow polynomial invariant of a classical or virtual knot, link, knotoid or multi-knotoid<br>
+<kbd>automorphism</kbd>: evaluate a commutative automorphism switch polynomial invariant<br>
+<kbd>burau</kbd>: evaluate Burau switch polynomial invariants<br>
+<kbd>dowker</kbd>: calculate the Dowker code for the closure of the braid, provided it is a knot <br>
+<kbd>dynnikov</kbd>: carry out the Dynnikov test to determine whether the braid is trivial or not <br>
+<kbd>fixed-point</kbd>: evaluate the fixed-point invariant of a braid <br>
+<kbd>gauss</kbd>: evaluate Gauss code of a braid<br>
+<kbd>homfly</kbd>: evaluate the HOMFLY polynomial for the closure of a braid<br>
+<kbd>info</kbd>: display status information (currently just the number of components) for the braid<br>
+<kbd>immersion</kbd>: evaluate labelled immersion code<br>
+<kbd>jones-polynomial</kbd>: evaluate the Jones polynomial for a classical or virtual link<br>
+<kbd>kauffman-bracket</kbd>: evaluate the Kauffman polynomial for a classical or virtual link<br>
+<kbd>knotoid-bracket</kbd>: evaluate the Turaev extended bracket polynomial for a knotoid<br>
+<kbd>matrix</kbd>: evaluate matrix switch polynomial invariants<br>
+<kbd>parity-bracket</kbd>: calculate the normalized Manturov parity bracket polynomial<br>
+<kbd>peer</kbd>: evaluate labelled peer code<br>
+<kbd>quaternion</kbd>: evaluate quaternionic switch polynomial invariants<br>
+<kbd>rack-polynomial</kbd>: evaluate the finite switch polynomial invariants<br>
+<kbd>satellite[=n]</kbd>: evaluate the peer code of the n-parallel cable satellite of a knot's peer code, n defaults to 2<br>
+<kbd>sawollek</kbd>: evaluate Sawollek's normalized Conway polynomial <br>
+<kbd>vogel</kbd>: apply the vogel algorithm to a labelled peer code<br>
+<kbd>weyl</kbd>: evaluate Weyl algebra switch polynomial invariants<br>
+</p>
+
+	
+<p>In fact, a <kbd>&lt;task&gt;</kbd> is just an example of a <kbd>&lt;long_option&gt;</kbd>.  Any of the programme option keywords that may appear as an
+<a href="#Options-In-Input-Files">input file programme option</a> may be used as a <kbd>&lt;long_option&gt;</kbd>.</p>
+
+<p style="margin-left: 1cm">
+
+<kbd>complex-delta1</kbd>:       calculate Delta_1^C rather than Delta_1^H for quaternionic switches<br>
+<kbd>delta1-only</kbd>:          display polynomial output for Delta_1 only<br>
+<kbd>double-braid</kbd>:         calculate the Kamada double covering of all the braids in the input file<br>
+<kbd>equality</kbd>:             test for A=D or B=C in switch when calculating switch polynomial invariants<br>
+<kbd>extra-output</kbd>:         display additional polynomial invariant output<br>
+<kbd>fixed-point</kbd>:          finite biquandle fixed point invariant<br>
+<kbd>flat</kbd>:                 create flat Reidemeister II moves when executing the Vogel algorithm<br>
+<kbd>flip-braid</kbd>:           flip all the braids in the input file<br>
+<kbd>format</kbd>:               format the output file so that it may be used as an input file later<br>
+<kbd>invert-braid</kbd>:         invert all the braids in the input file<br>
+<kbd>line-reflect</kbd>:         reflect all the braids in the file in a horizontal line drawn south of the braid<br>
+<kbd>lpgc</kbd>:                 calculate the left preferred Gauss code, rather than a standard gauss code<br>
+<kbd>mod-p=n</kbd>:              calculate mod p with p=n (only used for non-Weyl algebra switches)<br>
+<kbd>no-auto-delta1</kbd>:       only calculate Delta_1 if Delta_0 is zero<br>
+<kbd>no-even-writhe</kbd>:       normalize the parity bracket polynomial with the full writhe rather than the even writhe<br>
+<kbd>no-expanded-bracket</kbd>:  do not expand D=(-A^2-A^{-2}) in bracket polynomials<br>
+<kbd>normalize-quaternions</kbd>:normalize quaternionic polynomial invariants<br>
+<kbd>no-normalize-bracket</kbd>: do not normalize bracket polynomial invariants<br>
+<kbd>plane-reflect</kbd>:        reflect all the braids in the file in the plane of the page<br>
+<kbd>power=n</kbd>:              evaluate the nth power of the switch when calculating switch polynomial invariants<br>
+<kbd>rack-terms=k</kbd>:         set the global value k for the number of terms to consider for rack-polynomials<br>
+<kbd>raw-output</kbd>:           produce raw output, that is the result only without descriptive text<br>
+<kbd>remove=n</kbd>:             remove the n-th component from a peer code<br>
+<kbd>rho</kbd>:                  use the Study rho mapping for calculating Study determinants<br>
+<kbd>show-parity-peer-codes</KBD>: show peer codes in addition to unoriented left preferred Gauss codes in parity bracket polynomial output<br>
+<kbd>show-varmaps</kbd>:         show variable mappings instead of substituting mapped variables in polynomial output<br>
+<kbd>silent</kbd>:               do not generate any output to the command line (stdout)<br>
+<kbd>TeX-polynomials</kbd>:      display output polynomials in TeX format<br>
+<kbd>ulpgc</kbd>:                calculate the unoriented left preferred Gauss code, rather than a standard gauss code<br>
+<kbd>wait[=n]</kbd>:             display determinant wait information, (based on nxn minors, so larger n produces less frequent output)<br>
+<kbd>zig-zag-delta</kbd>:        include delta with K_i and Lambda_i variables when calculating the arrow polynomial<br>
+</p>
+  
+<p>The public short options are:</p>
+
+<P STYLE="margin-left: 1cm">
+<KBD>c[{2}]</KBD>:   calculate Delta<sub>i</sub><sup>C</sup> rather than Delta<sub>i</sub><sup>H</sup> for quaternionic switches<BR>
+<KBD> - {2}</KBD>  always calculate codimension 2 determinant from complex Study Delta_1<br>
+<KBD>d</KBD>:   evaluate the Kamada double covering for braids (used only by the fixed-point task)<br>
+<KBD>e</KBD>:   test for the switch equality condition A=D and B=C<BR>
+<KBD>h</KBD>:   display help information<BR>
+<KBD>I</KBD>:   format programme output as a valid input file<BR>
+<KBD>M</KBD>:   do not remove Reidemeister II moves when calculating labelled peer codes from braid words<BR>
+<KBD>N</KBD>:   normalize quaternionic polynomial invariants<BR>
+<KBD>o</KBD>:   display the matrix representation, M, of the braid and the elements of the adjoint adj(M-I) for the <A HREF="#Active-switch">active switch</A><BR>
+<KBD>O</KBD>:   produce raw output (values only, no descriptive text)<BR>
+<KBD>p=n</KBD>: calculate mod p using the given prime (no checking for primality is included)<BR>
+<KBD>P</KBD>:   display the polynomial wait indicator<BR>
+<KBD>R</KBD>:   use the rho-mapping for Study determinants<br>
+<KBD>S</KBD>:   silent operation<br>
+<KBD>t=n</KBD>:   set the global number of terms for finite switch polynomial invariants.<br>
+<KBD>V</KBD>:   Do not use the t-variable with the default quaternionic switch<BR>
+<KBD>W[=n]</KBD>:   force <A HREF="#Wait-information">wait information</A> to be displayed, if <KBD>n</KBD> is supplied, set the wait threshold to <KBD>n</KBD><BR>
+<KBD>z</KBD>:   do not calculate Delta<sub>1</sub> when Delta<sub>0</sub> is non-zero<BR>
+<KBD>Z</KBD>:   display Delta<sub>1</sub> polynomials only<br>
+</P>
+
+<p>The additional short options are:</p>
+
+<P STYLE="margin-left: 1cm">
+<KBD>#</KBD>: debug, see the section <a href="#Debugging">Debugging</a> below<BR>
+<KBD>0</KBD>: calculate Delta<sub>0</sub> only<BR>
+<KBD>D</KBD>: verify Delta<sub>0</sub> = 0 for the classical case<BR>
+<KBD>F</KBD>: bypass the fundamental equation test for linear switches<BR>
+<KBD>H!</KBD>: display full usage information<BR>
+<KBD>#H!</KBD>: display debug help information, see the section <a href="#Debugging">Debugging</a> below<BR>
+<KBD>T</KBD>: store output in /tmp rather than the current directory<BR>
+<KBD>U</KBD>: do not test for units in calculation of Delta_1<BR>
+</P>
+
+<p>If required (for example when running the braid programme from a system call in another programme) it is possible to specify multiple independent
+sets of options on the command line, each set preceeded by the short option indicator '<kbd>-</kbd>'.  Similarly any of the options that may be specified in an 
+input file may be supplied via the command line preceeded by the long option indicator '<kbd>--</kbd>'.  The programme simply scans the command
+line arguments and calls the function <kbd>set_programme_short_options</kbd> or <kbd>set_programme_long_options</kbd> if the argument begins with 
+<kbd>-</kbd> or <kbd>--</kbd> respectively.  Multiple short options may be set within each command line argument, only one long option may be set in each 
+command line argument.</p>
+
+<p>If multiple command line arguments are used as described above for options they may preceed or follow the arguments specifying, the 
+infile and outfile.  The programme assumes the first argument it receives with out an option indicator to be the infile and the second such option 
+to be the outfile.</p>
+
+<P>
+   <A HREF="#_top">back to top</A>
+</P>
+
+<h3><a name="Command line sub-options"></a>2.1 Command line sub-options</h3>
+
+<p>The command line syntax <KBD>c{2}</KBD> was introduced in version 12.2 to allow for command line sub-options.  This was necessary in order to avoid a conflict between the use of the character <kbd>2</kbd> to indicate that the codimension 2 determinant from complex Study Delta_1 should be calculated and the use of the number 2 with the <kbd>W</kbd> and <kbd>p</kbd> options.</p>
+
+<p>The syntax chosen mimics that for debugging parameters (see below), so that it becomes an extensible part of the command syntax.</p>
+
+<P>
+   <A HREF="#_top">back to top</A>
+</P>
+
+<h2><a name="Debugging"></a>3. Debugging information</h2>
+
+<p>Version 11.1 introduced a structured debug subsystem across classes and the main braid function.  Prior to this, various booleans controlled debug output but only a subset of them were accessible from the command line.  The debug subsystem allows full debugging control as well as default debug options in a flexible and extensible manner.
+</p>
+
+<p>Debug information is requested using the <kbd>#</kbd> option, followed optionally by a debug specification enclosed in square brackets <kbd>[]</kbd>.  The debug specification is a list of options, separated by colons; an option may be followed by one or more option parameters, enclosed in braces <kbd>{}</kbd> and also separated by colons.  No spaces are permitted in a debug specification.  Thus the general format is of the form:</p>
+
+<p STYLE="margin-left: 1cm">
+<kbd>braid -#[option:option{parameter:parameter}:option]</kbd>
+</p>
+
+<p>If no debug specification is given then the default programme debug options are set.</p>
+
+<p>The available debug options can be displayed by running the braid programme with the both the debug option and the hidden help option described above:</p>
+
+<p STYLE="margin-left: 1cm">
+<pre>
+[bart@wormwood current]$ braid -#H!
+
+    debug options may be specified using the syntax -#[option:option{parameter:parameter}:option]
+    supported options and parameters:
+            bigint{san:+:-:*:/:%:rs:ls:bc:==:gt:out:in:sum:diff:num_len:gcd:all}, bitmap: no default
+            matrix{det:inv:*:all}, bitmap: no default
+            poly{no-gen:san:+:*:/:in:gcd:all}, bitmap: general debug included unless no-gen specified
+            rational, boolean
+            quaternion, boolean
+            braid{summary|1:basic|2:intermediate|3:detail|4}, integer: default 0=off, no parameters sets summary
+            vogel, boolean
+    default options set by omitting [...]
+    default options:
+            braid{summary}
+
+</pre>
+</p>
+
+<p>Each option corresponds to a class (bigint, matrix, etc.) or a functional area of the programme (braid, vogel).  As can be seen from the above output, there are currently three different types of debug control used by the debug options: bitmap, integer and boolean each of which is described below.  The option parameters for each of the classes are set by the function <kbd>set_debug_option_parameter</kbd> in the file <kbd>debug.cpp</kbd> and for the braid programme specific options by <kbd>set_main_debug_option_parameter</kbd> in the file <kbd>main.cpp</kbd>.</p>
+
+<p>A bitmap debug control variable requires parameters to specify what debug information is required, as an example the bigint_control structure is defined as follows:</p>
+
+<p>
+<pre>
+struct bigint_control
+{
+    static unsigned int DEBUG; //bitmap
+    enum parameters
+    {
+        general =     0x00000001, // unused
+        sanitize =    0x00000002, 
+        add =         0x00000004,
+        subtract =    0x00000008,
+        multiply =    0x00000010,
+        divide =      0x00000020,
+        remainder =   0x00000020,
+        equal =       0x00000040,
+        greater =     0x00000080,
+        output =      0x00000100,
+        input =       0x00000200,
+        sum =         0x00000400,
+        diff =        0x00000800,
+        num_len =     0x00001000,
+        r_shift =     0x00002000,
+        l_shift =     0x00004000,
+        bool_conv =   0x00008000,
+        gcd =         0x00010000,
+        // 'all' also supported
+    };
+};
+</pre>
+</p>
+
+<p>An integer debug control variable defines different levels of debug information to be provided, as in the case of the braid programme's debug control structure:</p>
+
+<p STYLE="margin-left: 1cm">
+<pre>
+struct braid_control 
+{
+    enum level {OFF, SUMMARY, BASIC, INTERMEDIATE, DETAIL};
+    static int DEBUG;
+    static bool VOGEL_DEBUG;
+};
+</pre>
+</p>
+
+<p>Finally, a boolean debug control variable, the simplest form of debug control, requires no parameters an example being <kbd>VOGEL_DEBUG</kbd> in the <kbd>braid_control</kbd> structure above.  The debug control subsystem is mainly coded in the separate source file <kbd>debug.cpp</kbd>, though the braid programme specific debug information is contained in <kbd>main.cpp</kbd>.</p>
+
+<p>Debug output is written to the file braid.dbg in the current directory, it is formatted as a list of records that indicate the source of the debug information.  Here is a sample debug output when reading the string <kbd>2x-1</kbd> into a <kbd>polynomial&lt;quaternion&lt;scalar&gt; &gt;</kbd> using the <kbd>biging</kbd> scalar variant, the debug option used to generate this output was <kbd>-#[poly{in}:bigint{in}:quaternion]</kbd>.</p>
+
+<p>
+<pre>
+debug: setting debug option polynomial_control::general
+debug: setting debug option polynomial_control::input
+debug: setting debug option bigint_control::input
+debug: setting debug option quaternion_control::DEBUG
+polynomial&#060;T,U>::>>: presented with string: (2x-1)
+polynomial&#060;T,U>::>>: polynomial begins with '(', checking for parentheses
+polynomial&#060;T,U>::>>: open parentheses detected
+polynomial&#060;T,U>::>>: close parentheses detected
+polynomial&#060;T,U>::>>: input buffer after removal of parentheses: 2x-1
+polynomial&#060;T,U>::>>: number of variables = 1
+polynomial&#060;T,U>::>>: variable characters: x
+polynomial&#060;T,U>::>>: variable degrees: 1
+polynomial&#060;T,U>::>>: length of virtual pterm list = 4
+polynomial&#060;T,U>::>>: reading term 1:
+polynomial&#060;T,U>::>>:   implicit sign = 1
+quaternion::operator >> : initial character from istream: (
+bigint::operator >> : initial character from istream: 2
+bigint::operator >> : putting back digit 2 for main loop execution
+bigint::operator >> : next character from istream: 2
+bigint::operator >> :   a = 2
+bigint::operator >> : final value of a = 2
+quaternion::operator >> : no comma found after reading real part setting all other quaternionic parts to zero
+polynomial&#060;T,U>::>>:   absolute coefficient = 2
+polynomial&#060;T,U>::>>:   coefficient value = 2
+polynomial&#060;T,U>::>>:   read variable x
+polynomial&#060;T,U>::>>:   index = 0
+polynomial&#060;T,U>::>>:   set expoenent = 1
+polynomial&#060;T,U>::>>: term place = 2
+polynomial&#060;T,U>::>>: reading term 2:
+polynomial&#060;T,U>::>>:   explicit sign = -1
+quaternion::operator >> : initial character from istream: 1
+quaternion::operator >> : no opening '(' detected
+quaternion::operator >> : digit found, putting 1 back into istream ready to read real part
+bigint::operator >> : initial character from istream: 1
+bigint::operator >> : putting back digit 1 for main loop execution
+bigint::operator >> : next character from istream: 1
+bigint::operator >> :   a = 1
+bigint::operator >> : final value of a = 1
+quaternion::operator >> : setting all other quaternionic parts to zero
+polynomial&#060;T,U>::>>:   absolute coefficient = 1
+polynomial&#060;T,U>::>>:   coefficient value = -1
+polynomial&#060;T,U>::>>: term place = 0
+polynomial&#060;T,U>::>>: final polynomial value: 2x-1
+polynomial&#060;T,U>::>>: final polynomial structure:
+
+polynomial located at    0xbfba4588
+number of variables      = 1
+variable characters      = x
+variable degrees         = 1
+number of virtual pterms = 4
+polynomial pterms:       2 present
+
+1 0x8cd2670: x^0
+pterm.n = -1
+pterm.pl = 0    pterm.prev = NULL       pterm.next = 0x8cd1358
+2 0x8cd1358: x^1
+pterm.n = 2
+pterm.pl = 2    pterm.prev = 0x8cd2670  pterm.next = NULL
+</pre>
+</p>
+
+
+<P>
+   <A HREF="#_top">back to top</A>
+</P>
+
+<h2><a name="Polynomials"></a>4. Polynomial storage mechanism</h2>
+
+<p>Polynomials are defined here to be doubly-linked lists of pterm structures, headed by a polynomial structure 
+that points at the start of the list.  Each pterm structure corresponds to one term of the polynomial, with only
+non-zero terms being stored, the number of terms currently held is recorded in the length field of the polynomial 
+structure that points to this list </p>
+ 
+<p>The polynomial structure also contains information about the number of variables in the polynomial, and the 
+variable characters used and whether those variables are mapped to another object.  These definitions do not limit 
+the number of variables, nor the particular choice of variable characters, but the characters i,j,k,I,J,K should be 
+avoided since polynomials may involve quaternions.</p>
+ 
+<p>The actual definitions are:</p>
+
+<p><pre>
+template &#060;typename T, typename V=string, typename U=int> class polynomial
+{
+    int         nv;          /* number of variables */
+    char*       vc;          /* string of variable characters */
+    int*        vd;          /* array of (maximum absolute) variable degrees */
+    map&#060;char,V> vm;          /* variable map */
+    U           l;           /* length of virtual array of pterms */
+    pterm&#060;T,U>* p;           /* pointer to first term of polynomial */
+    static polynomial&#060;T,U> add_pterm (polynomial&#060;T,U>&, pterm&#060;T,U>*);
+
+    /* operators etc */
+};
+
+template &#060;typename T, typename U>	struct pterm
+{
+    T         n;      /* coefficient */
+    U         pl;     /* place in canonical order - counted from zero */
+    pterm*    prev;   /* pointer to previous term */
+    pterm*    next;   /* pointer to next tern */
+};
+
+</pre></p>
+
+
+<p>Polynomials are taken here to be elements of the ring of Laurent polynomials with coefficients in the ring indicated by T, 
+generated by the stated variables and their inverses.  The coefficients may be a built in ring type (int, long, complex etc.) 
+or one of the <A HREF="#Scalar-classes">scalar classes</A> implemented by the braid programme code.</P>
+
+<p>Optionally, variables within a polynomial may be mapped to an object of type V, allowing polynomials involving variables 
+of arbitrary type to be handled. The motivating cases were the arrow polynomial, which requires variables \Lambda_i and K_i 
+(strings rather than characters) and the parity bracket polynomial, which includes graphical nodes as variables.  These 
+non-character variables are mapped to proxy character variables in order that the existing code may be re-used, with the mapped 
+type being used for variable comparison and output.</p>
+
+<p>When two polynomials include variable mappings, their mapped variable objects are used for comparison purposes.  The 
+implementation does not require that the character used as a proxy for a mapped variable is always the same. 
+Thus, if in x+y the variable x is mapped to an object V and in y+z the variable z is mapped to the same V, then 
+these two polynomials are considered to be the same.  Similarly, the code distinguishes between variables in a polynomial
+that are unmapped and the same variable character in another polynomial that is mapped.  Thus, if P_1 = x and P_2 = x (x mapped to V),
+then P_1 + P_2 = x + a (a mapped to V).  As in this example, mapped variable characters are replaced with others, rather than changing
+unmapped variable characters.</p>
+
+<p>When writing a polynomial with mapped variable to an output stream, the control boolean SUBSTITUTE_MAPPED_VARIABLES 
+is used to determine whether the proxy characters or the mapped object is displayed.  If the boolean is false, then 
+the output of the above polynomial x+y would appear as "x+y (x,V)" to indicate the variable mapping, whilst if the 
+boolean is true, the polynomial would appear as "x+V", using the output operator for the object type of V.</p>
+
+<p>At most one variable in a polynomial may be mapped to a given V, an attempt to map a subsequent variable to the same V
+replaces the mapping of the existing variable with the new variable.<p>
+ 
+<P>The polynomial structure stores the absolute degree of each variable, in the 
+same order as the variable characters are stored.  Thus, for the polynomial  
+<kbd>x^2y^-3+xy</KBD>, the absolute degree of <kbd>x</kbd> is 2 and that of <kbd>y</kbd> is 3.</P>
+ 
+<P>The zero polynomial is represented by any polynomial structure with a null list 
+pointer.  Unit polynomials have no variables, or degrees.</P>
+ 
+<P>The pterms also contain a pointer to the previous and next pterm in the list: 
+the first pterm in the list will contain a NULL previous pointer,
+and the last a NULL next pointer.</P>
+ 
+<P>The pterms do not store the variables to which the coefficients apply, instead we store the place the pterm has in a virtual array of pterms. This is list of 
+polynomial terms based on a canonical ordering of the variables and which is described below.  Many of these terms will be zero, which is why we store the 
+place in the list; it also provides a simple mechanism for determining where in a list a pterm should be stored, which is necessary when we start adding or 
+multiplying polynomials.</P>
+
+<p>The place in the virtual pterm list, and the length of the pterm list is indexed by a unit type U, which defaults to an integrer.  This allows us to define 
+very large polynomials involving huge numbers of virtual pterms by setting U to be a <A HREF="#Scalar-classes">bigint</A>.</p>
+ 
+<P>The canonical order of terms is in increasing order based on the exponent of the 
+variables, which may be either positive or negative.  For a single
+variable polynomial, this order is </P>
+ 
+<p STYLE="margin-left: 1cm"><kbd>x^0, x^-0, x^1, x^-1... x^n, x^-n,</kbd></P>
+ 
+<P>the reason for the <kbd>-0</kbd> exponent is due to the place calculation described below.  
+Stick with it, these horrible looking things are never actually stored, remember 
+we are talking about virtual pterms, we are only interested in the place in the 
+list of the terms we want to store.  For a two variable polynomial, the 
+canonical order is:</P>
+
+<p STYLE="margin-left: 1cm"><kbd> 
+     x^0y^0, x^0y^-0, x^0y^1, x^0y^-1, ...,x^0y^n, x^0y^-n...
+<br> x^-0y^0, x^-0y^-0, x^-0y^1, x^-0y^-1, ...,x^-0y^n, x^-0y^-n...
+<br> ...
+<br> x^my^0, x^my^-0, x^my^1, x^my^-1, ...,x^my^n, x^my^-n...
+<br> x^-my^0, x^-my^-0, x^-my^1, x^-my^-1, ...,x^-my^n, x^-my^-n...
+</kbd></P>
+
+<P>We are assuming here that the absolute exponent of <kbd>x</kbd> is <kbd>m</kbd> and the absolute 
+exponent of <kbd>y</kbd> is <kbd>n</kbd>. A three variable polynomial example will enable us to see 
+how to calculate places, consider an additional variable <kbd>z</kbd> of absolute exponent 
+<kbd>k</kbd> and think of the number of terms we are writing down.</P>
+ 
+<p STYLE="margin-left: 1cm"><kbd>
+     x^0y^0z^0, x^0y^0z^-0, x^0y^0z^1, x^0y^0z^-1, ...,x^0y^0z^k, x^0y^0z^-k...
+<br> [there are a total of 2(k+1) entries in the list to this point]
+<br> x^0y^-0z^0, x^0y^-0z^-0, x^0y^-0z^1, x^0y^-0z^-1, ...,x^0y^-0z^k, x^0y^-0z^-k...
+<br> ...
+<br> x^0y^nz^0, x^0y^nz^-0, x^0y^nz^1, x^0y^nz^-1, ...,x^0y^nz^k, x^0y^nz^-k...
+<br> x^0y^-nz^0, x^0y^-nz^-0, x^0y^-nz^1, x^0y^-nz^-1, ...,x^0y^-nz^k, x^0y^-nz^-k...
+<br> [there are a total of 2(n+1)*2(k+1) entries in the list to this point, which we 
+<br> shall refer to as the x^0 block, or block 0]
+<br> ...
+<br> [here's the x^-0 block, or block 1]
+<br> x^-0y^0z^0, x^-0y^0z^-0, x^-0y^0z^1, x^-0y^0z^-1, ...,x^-0y^0z^k, x^-0y^0z^-k...
+<br> x^-0y^-0z^0, x^-0y^-0z^-0, x^-0y^-0z^1, x^-0y^-0z^-1, ...,x^-0y^-0z^k, 
+<br> x^-0y^-0z^-k...
+<br> ...
+<br> x^-0y^nz^0, x^-0y^nz^-0, x^-0y^nz^1, x^-0y^nz^-1, ...,x^-0y^nz^k, x^-0y^nz^-k...
+<br> x^-0y^-nz^0, x^-0y^-nz^-0, x^-0y^-nz^1, x^-0y^-nz^-1, ...,x^-0y^-nz^k, 
+<br> x^-0y^-nz^-k...
+<br> ...
+<br> [ending with the x^m and x^-m block, blocks 2m and 2m+1 ]
+<br> x^my^0z^0, x^my^0z^-0, x^my^0z^1, x^my^0z^-1, ...,x^my^0z^k, x^my^0z^-k...
+<br> x^my^-0z^0, x^my^-0z^-0, x^my^-0z^1, x^my^-0z^-1, ...,x^my^-0z^k, x^my^-0z^-k...
+<br> ...
+<br> x^my^nz^0, x^my^nz^-0, x^my^nz^1, x^my^nz^-1, ...,x^my^nz^k, x^my^nz^-k...
+<br> x^my^-nz^0, x^my^-nz^-0, x^my^-nz^1, x^my^-nz^-1, ...,x^my^-nz^k, x^my^-nz^-k
+<br> x^-my^0z^0, x^-my^0z^-0, x^-my^0z^1, x^-my^0z^-1, ...,x^-my^0z^k, x^-my^0z^-k...
+<br> x^-my^-0z^0, x^-my^-0z^-0, x^-my^-0z^1, x^-my^-0z^-1, ...,x^-my^-0z^k, 
+<br> x^-my^-0z^-k...
+<br> ...
+<br> x^-my^nz^0, x^-my^nz^-0, x^-my^nz^1, x^-my^nz^-1, ...,x^-my^nz^k, x^-my^nz^-k...
+<br> x^-my^-nz^0, x^-my^-nz^-0, x^-my^-nz^1, x^-my^-nz^-1, ...,x^-my^-nz^k, 
+<br> x^-my^-nz^-k
+</kbd></P>
+
+<P>There are a total of <kbd>2(m+1)*2(n+1)*2(k+1)</kbd> entries in the list altogether.</P>
+ 
+<P>Given a variable place <kbd>p</kbd>, in the range <kbd>0,...2(m+1)*2(n+1)*2(k+1)</kbd>, by looking at 
+the integer part of <kbd>p/2(m+1)</kbd>, we can tell which block the variable place lies 
+in, and therefore the power of the variable <kbd>x</kbd>.  If the block number is odd, the 
+power is a negative one, otherwise a positive one, by dividing the block number 
+by <kbd>2</kbd> and taking the integral part we determine the power of <kbd>x</kbd> of the variable 
+stored in place <kbd>p</kbd>.</P>
+ 
+<P>We now take the remainder of <kbd>p/2(m+1)</kbd>, which indicates the offset into the block 
+of place <kbd>p</kbd>.  We can now work recursively, dividing this offset by <kbd>2(n+1)</kbd> to 
+determine the power of <kbd>y</kbd> and then finally the power of <kbd>z</kbd>.</P>
+ 
+<P>To calculate the place corresponding to a particular set of variables, simply 
+work backwards through this calculation.</P>
+ 
+<P>Thus to calculate the exponents from a place <kbd>pl</kbd>, we have code of the form:</P>
+
+<p>
+<pre>
+    factor = poly.l;
+    place = pl;
+    for (i=0; i&lt;poly.nv;i++)
+    {
+        factor /= (2*(poly.vd[i]+1));
+        if ((place/factor)%2)
+            negative_exp = TRUE;
+        else
+            negative_exp = FALSE;
+     
+        power = place/factor/2;
+        if (negative_exp)
+            power *= -1;
+     
+        aexponent[i] = power;
+        place %= factor;
+    }
+</pre>
+</p>
+
+<P>and to calculate a place:</P>
+ 
+<p>
+<pre>
+    place = 0;
+    factor = l;
+    for (i=0; i&lt;poly.nv;i++)
+    {
+        factor /= 2 * (poly.vd[i]+1);
+        block_num = 2 * abs(exponent[i]);
+        if (exponent[i] < 0)
+            block_num++;
+        place += block_num*factor;
+    }
+</pre>
+</p>
+
+<P>
+   <A HREF="#_top">back to top</A>
+</P>
+
+<h2><a name="Local-classes"></a>5. Local classes</h2>
+
+<p>As the code has evolved, local classes for things like quaternions, rationals, matrices  big integers and  big-rationals have been developed.  These have been written 
+because "standard" implementations were not available, to ensure I had control over the code, or just as an exercice.  However, I have made no attempt to replace them with "standard" implementations as they have become available, to minimize risk in making code changes.</p>
+
+<p>In particular, the local <kbd>scalar</kbd> class has been developed to allow run-time selection of an object's type.  This class is documented on the <a href=http://www.layer8.co.uk/maths/scalars.htm>scalars</a> page of my website.</p>
+
+
+<h2><a name="Comments"></a>6. General source comments</h2>
+
+
+<p>I lay out my code in a way that I find easy to read, quick to debug and aesthetically pleasing (to me).  It is 
+	not quite standard but it is, I hope, clear.  My style of writing evolved from working with ALGOL68 many moons 
+	ago, so as an example, I always write</p>
+ 
+<p>
+<pre>
+    char*  foo;
+    char** bar;
+</pre>
+</p>
+ 
+<p>rather than</P>
+ 
+<p>
+<pre>
+    char &nbsp; *foo,**bar;
+</pre></p>
+ 
+<p>because ALGOL68 would write</P>
+ 
+<p>
+<pre>
+    REF CHAR     foo;
+    REF REF CHAR bar;
+</pre>
+</p>
+
+<p>and I like the ability to look down the left side of the page and see what type of variable I have.  Also, as in all the above code snippets, I do not open clauses with a brace at the end of a line, rather I always put delimiting braces on their own line.  This is again motivated by ALGOL68 and I find it easier to look down code whose indentation
+delimiters are vertically aligned.  Sorry if you find this weird.</p>
+
+<p>You will find lots of comments in my code, which I hope will be useful if you use any of it for your 
+own work.  I would be very happy to provide assistance to anyone trying to understand what I've done, provided I have the time.  Email me <a href="mailto:andrewb@layer8.co.uk">here</a> if you are experiencing problems understanding what I've done.</p>
+
+<p>You are very welcome to use any of my source code in your programmes, but bear in mind that although it is provided in good faith and to the best of my knowledge the code is accurate, if you decide to use this software then I accept no responsibility for the consequences of any errors it may contain.  That said, it would be nice if you included a comment to say where you got it, and sent me an email to say you've used it, just so I get some feedback regarding how useful it actually is!</p>
+
+</ol>
+
+<P>
+   <A HREF="#_top">back to top</A>
+</P>
+
+</body>
+</html>

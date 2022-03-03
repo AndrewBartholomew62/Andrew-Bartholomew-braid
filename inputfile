@@ -1,0 +1,405 @@
+
+;                          Input file for braid programme version 23.0
+
+
+; An input file may contain one or more braid definitions together with
+; comments.  Comments are indicated by starting the line with a semi-colon
+; as demonstrated by these lines. It is also possible to place a comment
+; after a braid definition line, as shown in the braid definition example
+; below.
+
+; The file may contain lines of whitespace
+
+; if a line contains only the word 'exit' after comments have been removed then 
+; the processing of the file terminates at that point.
+
+; see the user documentation for full details of the file format
+
+
+; the programme accepts options specified in the input file, multiple options may be enclosed 
+; in the same set of brackets, separated by commas e.g. [quaternion, output, mod-p=3, wait]  
+; The list of available options is as follows: 
+
+;[affine-index]           ; evaluate the affine index polynomial invariant
+;[alexander]              ; Alexander polynomial invariant
+;[arrow-polynomial]       ; evaluate the arrow polynomial invariant of a classical or virtual knot, link, knotoid or multi-knotoid
+;[automorphism]           ; commutative automorphism switch polynomial invariant
+;[burau]                  ; Burau polynomial invariant
+;[complex-delta1]         ; calculate Delta_1^C rather than Delta_1^H for quaternionic switches
+;[delta1-only]            ; display polynomial output for Delta_1 only
+;[double-braid]           ; calculate the Kamada double covering of all the braids in the input file
+;[dowker]                 ; evaluate Dowker(-Thistlethwaite) code
+;[dynnikov]               ; carry out  Dunnikiv test
+;[equality]               ; test for A=D or B=C in switch when calculating switch polynomial invariants
+;[extra-output]           ; display additional polynomial invariant output
+;[fixed-point]            ; finite biquandle fixed point invariant
+;[flat]                   ; create flat Reidemeister II moves when executing the Vogel algorithm 
+;[flip-braid]             ; flip all the braids in the input file
+;[format]                 ; format the output file so that it may be used as an input file later
+;[gauss]                  ; evaluate Gauss code
+;[homfly]                 ; evaluate HOMFLY polynomial
+;[immersion]              ; evaluate labelled immersion code
+;[info]                   ; display status information about a braid
+;[invert-braid]           ; invert all the braids in the input file
+;[jones-polynomial]       ;  evaluate the Jones polynomial
+;[kauffman-bracket]       ; evaluate the normalized Kauffman bracket polynomial
+;[knotoid-bracket]        ; evaluate the Turaev extended bracket polynomial for a knotoid
+;[line-reflect]           ; reflect all the braids in the file in a horizontal line drawn south of the braid
+;[lpgd]                   ; calculate the left preferred Gauss code, rather than a standard gauss code
+;[matrix]                 ; matrix switch polynomial invariant
+;[mod-p=n]                ; calculate mod p with p=n (only used for non-Weyl algebra switches)
+;[no-auto-delta1]         ; only calculate Delta_1 if Delta_0 is zero
+;[no-even-writhe]         ; normalize the parity bracket polynomial with the full writhe rather than the even writhe
+;[no-expanded-bracket]    ; do not expand D=(-A^2-A^{-2}) in bracket polynomials
+;[no-normalize-bracket]   ; do not normalize bracket polynomial invariants
+;[normalize-quaternions]  ; normalize quaternionic polynomial invariants
+;[parity-arrow]           ; evaluate Kaestner and Kauffman's parity arrow polynomial
+;[parity-bracket]         ; evaluate the Manturov parity bracket polynomial
+;[peer]                   ; evaluate labelled peer code
+;[plane-reflect]          ; reflect all the braids in the file in the plane of the page
+;[power=n]                ; evaluate the nth power of the switch when calculating switch polynomial invariants
+;[quaternion]             ; quaternionic polynomial invariant
+;[rack-polynomial]        ; evaluate the rack polynomial for the specified braids
+;[rack-terms=k]           ; set the global valu k for the number of terms to consider for rack-polynomials
+;[raw-output]             ; produce raw output, that is the result only without descriptive text
+;[reflect-braid]          ; reflect all the braids in the input file
+;[relaxed-parity]         ; evaluate the relaxed variant of the parity arrow polynomial
+;[rho]                    ; use the Study rho mapping for calculating Study determinants
+;[satellite[=n]]          ; calculate the peer code of the n-parallel cable satellite of a knot's peer code (default n=2)
+;[sawollek]               ; evaluate Sawolleks normalized Conway polynomial
+;[show-parity-peer-codes] ; show peer codes in addition to unoriented left preferred Gauss codes in parity bracket polynomial output;
+;[show-varmaps]           ; show variable mappings instead of substituting mapped variables in polynomial output
+;[silent]                 ; do not generate any output to the command line (stdout)
+;[TeX-polynomials]        ; display output polynomials in TeX format (not supported for the Jones polynomial)
+;[ulpgd]                  ; calculate the unoriented left preferred Gauss code, rather than a standard gauss code
+;[vogel]                  ; use the Vogel algorithm to determine an equivalent braid word
+;[wait[=n]]               ; display determinant wait information, (based on nxn minors, so larger n produces less frequent output)
+;[weyl]                   ; Weyl algebra switch polynomial invariant 
+;[zig-zag-delta]          ; include delta with K_i and Lambda_i variables when calculating the arrow polynomial
+
+; Titles
+; ======
+
+; A line beginning with '--' is used as a title for the switch, braid or code data and is reported
+; in the output of the programme.  This is useful when a file contains multiple switches or 
+; input data.  When reading the input file for the next switch or input data the programme records 
+; any titles it encounters, the last of which is associated with the next switch or data input line 
+; it finds.
+
+
+; Quaternion switches
+; ===================
+
+; these are the sample switches from the quaternion invariants paper
+; note the syntax quaternionic switches use the t variable by default
+; use the -V option to disable this behaviour
+
+-- Budapest switch
+;S = (1,1,0,0) (0,0,-1,0) (0,0,1,0) (1,1,0,0)   ; this is the default quaternionic switch
+;S = (1,1,0,0) (0,0,-1,-1) (0,0,1/2,1/2) (1,1,0,0)
+;S = (1,1,0,0) (0,0,1/2,1/2) (0,0,-1,-1) (1,1,0,0)
+
+; remove the semicolon to make these switches active
+;S = (1,1,0,0) (-1,1,1,-1) (-1/4,1/4,-1/4,1/4) (1/2,1/2,1/2,1/2)
+;S = (1,1,0,0) (1,-1,1,-1) (1/4,-1/4,-1/4,1/4) (1/2,1/2,-1/2,-1/2)
+;S = (1/2,1/2,1/2,1/2) (-1/4,1/4,-1/4,1/4) (-1,1,1,-1) (1,1,0,0)
+;S = (1/2,1/2,1/2,1/2) (1/4,-1/4,-1/4,1/4) (1,1,-1,-1) (1,0,1,0)
+;S = (1,1,0,0) (-1,1,0,-1) (-1/3,1/3,0,1/3) (1/3,1/3,2/3,0)
+;S = (1,1,0,0) (1,-1,0,-1) (1/3,-1/3,0,1/3) (1/3,1/3,-2/3,0)
+
+
+; Matrix switches
+; ===============
+
+; matrix switch E1, this is the default matrix switch
+; note there is no t variable specified here
+
+; Note: polynomial variables should be specified in lower case
+; S = 2, 0, x, 2, y, z, xyz-2y^2-2/2z, xz-2y/2
+
+; matrix switch E2, this takes a LONG time to process
+; S = a, 0, 0, a/a-1, b, c, b^2+a-1/c-ca, b/1-a
+
+; if you want to include the t variable, use the syntax
+; S[t] = a, 0, 0, a/a-1, b, c, b^2+a-1/c-ca, b/1-a
+
+
+; Finite switches
+; ===============
+
+; Example essential virtual, welded or doodle pair switches.  Here a space is used to separate matrix elements from each other and the 
+; leading D, F, T and W flags but any separator is acceptable, provided it does not contain S, F, T, or W.  The programme 
+; skips any number of non-digit characters and reads the next matrix element.  This allows TeX output (for example) to be 
+; pasted into an input file.
+
+; a finite biquandle for use with classical braids, if this switch is applied to a virtual braid, the default twist is used
+; S = F U(0,0) U(0,1) ... U(n,n) D(0,0) ... D(n,n)	
+; 
+
+; a finite biquandle for use with virtual braids with an alternative twist biquandle: S is specified first T second
+; S = FT U(0,0) U(0,1) ... U(n,n) D(0,0) ... D(n,n) U(0,0) U'(0,1) ... U'(n,n) D'(0,0) ... D'(n,n)	
+
+; a finite biquandle for use with welded braids with an alternative twist biquandle: S is specified first T second
+; a switch for use with welded braids has to be a significant pair.
+; S = FTW U(0,0) U(0,1) ... U(n,n) D(0,0) ... D(n,n) U(0,0) U'(0,1) ... U'(n,n) D'(0,0) ... D'(n,n)	
+
+; a finite doodle pair, where S is a doodle switch (S has order 2 and S-Yang-Baxter is not satisfied) and 
+; T is a finite quandle or biquandle.
+; S = FDT U(0,0) U(0,1) ... U(n,n) D(0,0) ... D(n,n) U(0,0) U'(0,1) ... U'(n,n) D'(0,0) ... D'(n,n)	
+
+
+; Commutative automorphism switches
+; =================================
+
+; Commutative automorphism switches are determined by two commuting automorphisms, phi and psi, of an abelian group
+; the switch specification is atually a specification of phi and psi, as two nxn matrices, given row by row, with
+; phi specified first.  
+; Commutative automorphism switches are identified by the introductory phrase "S = A"; thus if 
+; phi = diag(x,y) and psi = diag(z,w) we write:
+
+; S = A x,0,0,y,z,0,0,w
+; S = A a,b,0,a,x,y,0,x
+
+; Weyl algebra switches
+; =====================
+
+; Weyl algebra switches are specified in one of the following forms:
+  
+; S = WP,n,p	the prime Weyl switch, U and V are nxn and p is a prime dividing n
+; S = WT,n,p    the truncated polynomial Weyl switch, U and V are nxn and p is a prime dividing n
+; S = WQ,n [,p]  the quantum Weyl switch, see notes below for the interpretation of p in this case
+; S = WUV,p, u(0,0), u(0,1), ..., u(n,n), v(0,0), ..., v(n,n)	a custom Weyl switch, calculated mod p 
+; S = WQUV,p, u(0,0), u(0,1), ..., u(n,n), v(0,0), ..., v(n,n)	a custom quantum algebra representation
+; S = WUVG,p, u(0,0), u(0,1), ..., u(n,n), v(0,0), ..., v(n,n)	take GCD of the Delta_1 generators' numerator 
+; S = WQUVG,p, u(0,0), u(0,1), ..., u(n,n), v(0,0), ..., v(n,n)	take GCD of the Delta_1 generators' numerator
+
+; The specification of a prime p is required in each case other than the quantum Weyl algebra switch, where
+; it is optional.  If no prime is specified for the quantum algebra the integers are used in place of Zp.
+; The custom Weyl algebras allow for explicit specification of the matrices U and V, in which case the value
+; of n is determined from the number of matrix elements provided.
+; 
+; Note that in the case of the custom quantum algebra representation, the specification of p is required so there is 
+; no ambiguity between p and u(0,0), set p=0 if integers are required rather than Zp. A separate 'Q' version of the 
+; custom specification is necessary because the checks made on the algebra are different in the quantum case 
+; (e.g. UV-qVU=1 not UV-VU=1).  We cannot rely on p=0 to identify the quantum case as we want to allow Zp calculation 
+; with a custom quantum algebra.
+
+; Weyl algebra polynomial invariants are evaluated as rationals in the form n/d, where n and d are polynomials. 
+; In some cases the polinomials are in a single variable and the generators of Delta<sub>1</sub> always yield d 
+; as a unit. In these cases the programme can evaluate the greatest common divisor of the numerators of the E_1
+; generators to give a single polynomial for Delta_1.  This option is specified by including 'G'in the 
+; specification of the custom Weyl algebra.
+
+; example Weyl switches
+;S = WP,2 ,2
+;S[t] = WP,3 ,3   ; includes the use of the t variable
+;S = WP,6 ,2
+;S = WT,14 ,7
+;S = WT,2,2
+;S = WT,3,3
+;S = WT,5,5
+;S = WQ,3
+;S = WQ,2 ,2
+
+;S=WUV, 2,1, a,0,1,1,0,1/a,1 ; WP,2,2
+
+;S=WQUV, 0, q, 0, 1, 1, 1/1-q, q-1/q, 0, 1/q-q^2 ;
+;S=WQUVG, 3, q, 0, 1, 1, 1/1-q, q-1/q, 0, 1/q-q^2 ;
+;S=WQUV, 0, aq^2, bd, 0, 0, aq, d, 0, 0, a, 1/(-aq^3+aq^2), e, 0, 0, 1/(-aq^2+aq), eq/b, 0, 0, 1/(-aq+a) ; full WQ, 3
+S=WQUV, 0, q^2, 1, 0, 0, q, 1, 0, 0, 1, 1/(-q^3+q^2), 1, 0, 0, 1/(-q^2+q), q, 0, 0, 1/(-q+1) ; a=b=d=e=1
+
+;S=WUV,2,a,b,0,a,A,B,1/b,A; WT,2,2
+;S=WUV,2,a,b,0,a,a,a,1/b,a ; WT,2,2 with A=B=a
+;S=WUV,2,a,a,0,a,a,a,1/a,a ; WT,2,2 with A=B=b=a
+;S=WUV,2,x,a,0,x,y,0,1/a,y ; WT,2,2 with A->y B=0 a->x b->a
+;S=WUV, 2, x, 1, 0, x, x, 0, 1, x ; set x=y and a=1
+;S=WUVG, 2, x, 1, 0, x, x, 0, 1, x ; Note: lower case variables again
+
+;S=WUV,3,a, b, c, 0, a, b, 0, 0, a, A, B, C, 1/b, (Ab^2+c)/b^2, (Bb^3+c^2)/b^3, 0, 2/b, (Ab^2+2c)/b^2 ; WT, 3,3
+;S=WUV,3,a, a, a, 0, a, a, 0, 0, a, a, a, a, 1/a, (a^2+1)/a, (a^2+1)/a, 0, 2/a, (a^2+2)/a ; WT, 3,3 b=c=A=B=C=a
+
+; Titles
+; ======
+
+; A line beginning with '--' is used as a title for a switch, braid, or peer code and is reported
+; in the output of the programme.  
+
+
+; Braid definitions
+; =================
+
+; In this context a braid definition is an optional list of assignment
+; statements followed by a braid statement.
+
+; An assignment statement uses one of the eight word variables, w1,...w8
+; provided by the programme.  It may assign to the word variable a string
+; including elements of the form si, -si and ti for some i, or may reference
+; other word variables either positively (wi) or negatively (-wi).
+; Referenced word variables are expanded automatically.
+
+; Here are some valid assignment statements:
+; w1 = s1s2t3-s1-s2
+; w2 = s2w1s2w1
+; w3 = -w1-w2w1w2
+
+; The interpretation of a negative word is the inverse of that word, so that
+; in the above
+
+; -w1 is the word s2s1t3-s2-s1 (note that the inverse of ti is again ti).
+
+; A braid definition ends with a braid statement, which is simply a line with
+; no assignment.  A braid statement may reference word variables used
+; previously in the same definition.  Each new braid definition in the file
+; starts with all word variables set to the null string.
+
+; Here are some examples of braid statements
+
+; -w3-w4w3w4
+; -w3s1s2t3-s2-s1w3
+; s1s2s3
+
+; Here are some examples of braid statements with qualifiers
+; Currently supported qualifiers are: "doodle", "welded", "flip", "invert", "plane-reflect", "line-reflect", "double" and "rack-terms=n".
+
+; s1s2s1s2s1s2s1s2{doodle}; requires that the braid be treated as a doodle (with flat crossings)
+; -w3s1s2t3-s2-s1w3 {welded}; requires that the braid be treated as a welded knot
+; s2s1t3-s4 {flip} ; renumber the braid strands in the opposite order before processing this braid, produces s3s4t2-s1.
+; s2s1t3-s4 {invert} ; reflect braid in a vertical line before processing this braid, produces s4t3-s1-s2.
+; s2s1t3-s4 {line-reflect} ; reflect braid in a horizontal line drawn south of the braid before processing this braid, produces -s3-s4t2s1.
+; s2s1t3-s4 {plane-reflect} ; reflect braid in the plane of the diagram before processing this braid, produces -s2-s1t3s4.
+; s1-s2-s1t2s1s2-s1t2 {rack-terms=6}; calculate fixed-point invariants by adding sequentially s3, s4, s5, s6, s7, and s8
+
+; Once a braid statement is encountered, the programme checks that braid
+; then returns to the input file to check for another braid definition.
+
+; Care must be taken to define a word variable in an assignment statement
+; before it is referenced by another assignment statement or a braid
+; statement.
+
+; Here is the braid definition of Bigelow's example used to prove the Burau 
+; representation is not faithful for n=5
+
+;-- The Bigelow braid
+
+;w1=-s3s2s1s1s2s4s4s4s3s2                 ; here is a comment after a line.
+;w2 =-s4s3s2-s1-s1s2s1s1s2s2s1s4s4s4s4s4
+;w3=-w1s4w1
+;w4=-w2s4s3s2s1s1s2s3s4w2
+;-w3-w4w3w4
+
+; Labelled peer codes
+; ===================
+
+; Labelled peer codes are writen as a list of odd-numbered peers enclosed in square brackets to distinguish
+; the code from a labelled immersion code.  Peers of type 1 crosings are written as negative numbers, 
+; peers of type 2 crossings are written as positive numbers.  The peers are followed by a
+; '/' character and the labels associated with each crossing 
+
+-- k10n37
+[-11 -17 19 13 -3 -15 5 -1 -9 7]/+++-++-+++
+
+; Here's a link showing how different the peers of naming edges lying in different components
+; are separated with commas
+
+--l7a1
+[-11 9, -3 1 -13 5 -7]/+++++++
+
+; Labelled peer codes may be specified with a qualifier in a similar manner to braid statements.
+; Two qualifiers are currently supported, the shift vector that specifies that the labelled peer
+; code is to be renumbered according to the specified shift:
+
+-- renumbered link
+[-11 9,-3 1 -13 5 -7]/ + - - + - + - {shift[0,2]}
+
+; and the satellite qualifier that replaces the peer code (which must be that of a knot, K) with 
+; a satellite link formed of r parallel copies of the unknot in a torus, and companion knot K
+
+[3 5 1]/+ - * {satellite=3}
+
+; shift vectors move the start of the numering for each component forwards by the absolute amount of the
+; given shift, negative shift components indicate orientation reversal.
+
+; Labelled immersion codes
+; ========================
+
+; Labelled immersion codes have been deprecated by labelled peer codes but continue to be 
+; supported for backwards compatibility.  They are writen as a product of cycles followed by a
+; '/' character and the labels associated with each crossing.  Type 1 crosings are written as 
+; negative numbers and type 2 crossings are written as positive numbers.
+
+(0 4 2)(1 3)/+ - * + +
+(-0 -2 -1 -3 -5 -4) / - + * + - *
+
+;Here are some other braid definitions together with some labelled code examples.
+
+;-- virtual trefoil
+;s1s1t1
+;(-0 -2 -1) / - * - ; labelled immersion code for the virtual trafoil
+;[-3 -5 -1]/- * -
+
+;exit               ; uncomment the exit on this line to terminate processing here
+
+; Kishino knots
+-- K1 
+s1-s2-s1t2s1s2-s1t2
+
+-- K2
+-s1-s2s1t2-s1s2s1t2
+
+-- K3
+s1s2s1t2-s1-s2-s1t2
+(-0 -2 -1 -3 -5 -4) / - + * + - * 
+[-3 -5 -1 -9 -11 -7]/- + * + - * 
+
+; Long knots
+; ==========
+
+; Long knots are specified as labelled immersion codes prefixed with an L
+; The point at infinity may be moved around the immersion by a number of semi-arcs
+; by specifying a + (forwards) or - (backwards) after the L together with the number of
+; semi-arcs to move.  The direction is with respect to the orientation determined by the code.
+
+;-- the fly
+;L:(0 2 1)/- + *
+
+;-- the dead fly
+;L:+2(0 2 1)/+ - * ; infinity moved forwards two arcs
+
+;-- the dead fly
+;L:(0 2 1)/+ - * ; infinity moved backwards two arcs
+
+;-- concatenation product example
+;L:+2(0 4 2)(1 3)/+ - * + + ~ L:-3(0 4 2) (-1 -3)/+ + - + * ~ L:(0 4 2)(1 3)/+ * - + -
+
+
+; Knotoids
+; ========
+
+; A knotoid K is specified as labelled immersion codes for the corresponding knot K_ by
+; labelling the semi-arc containing the leg of the knotoid as zero and proceeding from the
+; leg to the head.  There is a unique semi-arc entering the first shortcut crossing as an
+; under arc with respect to this orientation, so that first crossing is identified in the
+; immersion code by writing a ^ charcater *after* the corresponding crosing.
+
+;--k5.30	
+; [-7 13 -11 -1 3 -5 9^ ]/+ + - + + - -
+
+; a knot-type knotoid is speficied by prefixing a labelled peer code with K:
+; K:[3 5 1]/+++
+
+; Gauss code
+; ==========
+
+; Here is an example Gauss code for a link
+;-- Gauss code example
+; 1 -2 5 -4 3 -5, -1 2 -3 4 / ++--+
+
+; Gauss codes may also be specified in the following form
+; O1-O2-U1-U3+O4-U2-O5+U6-O7-O3+U5+U4-U7-O6-
+
+; Gauss codes for flat virtual links are specified using left and right indications
+; L1 R2, L3, R1 L2 R3/# # # 
+
+; Gauss codes for doodles are similarly specified using left and right:
+L1 L2 R1 R2 L3 L4 R3 R4 / # # # #
+
