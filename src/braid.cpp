@@ -9,8 +9,6 @@ polynomial<int> sawollek(string braid, int num_terms)
 int number_of_components (char* braid, int num_terms)
 string braid_to_gauss_code (string braid, int num_terms)
 string braid_to_generic_code (string braid, int num_terms, int code_type)
-bool valid_braid_input (string input_string, int& num_terms, int& num_strings)
-void parse_braid(string word, int num_terms, vector<int>& braid_num, vector<int>& type)
 hpolynomial homfly(vector<int> braid_num, vector<int> type, vector<int> component_record, 
                                                                        int basepoint, int level, bool virtual_braid)
 hpolynomial virtual_homfly(vector<int> braid_num, vector<int> type, vector<int> master_component_record, int level)
@@ -51,17 +49,17 @@ extern ifstream     input;
 #include <matrix.h>
 #include <braid.h>
 #include <gauss-orientation.h>
+#include <reidemeister.h>
 
 /********************* Function prototypes ***********************/
 void help_info();
 void tostring (char*& cptr, int n);
 polynomial<int> sawollek(string braid, int num_terms);
-bool valid_braid_input (string input_string, int& num_terms, int& num_strings);
-void parse_braid(string word, int num_terms, vector<int>& braid_num, vector<int>& type);
+//bool valid_braid_input (string input_string, int& num_terms, int& num_strings, bool raw_output, bool silent_output, bool output_as_input);
+//void parse_braid(string word, int num_terms, vector<int>& braid_num, vector<int>& type);
 void dynnikov(string input_string, int num_strings, int num_terms);
 int braid_to_dowker (string braid, int num_terms, int*& code);
 Hpolynomial study_determinant (const Qpmatrix& H_matrix, int n=0, int* rperm=0, int* cperm=0);
-void convert_rep (char*& word);
 void braid_reduce (vector<int>& braid_num, vector<int>& type, int& basepoint, vector<int>& component_record);
 int number_of_components (string braid, int num_terms);
 string braid_to_gauss_code (string input, int num_terms);
@@ -69,10 +67,6 @@ string braid_to_generic_code (string braid, int num_terms, int code_type);
 Qpmatrix C_study_matrix(const Qpmatrix& H_matrix, int n, int* rperm, int* cperm);
 Qpmatrix R_study_matrix(const Qpmatrix& C_matrix);
 void normalize(Hpolynomial& poly);
-void read_immersion_code (generic_code_data& code_data, string input_string);
-void read_peer_code (generic_code_data& code_data, string input_string);
-void write_peer_code(ostream& s, const generic_code_data& code_data, bool zig_zags=false, bool labelled=true);
-void write_gauss_code(ostream& s, generic_code_data& code_data);
 hpolynomial homfly(vector<int> braid_num, vector<int> type, vector<int> component_record, 
                                                                  int basepoint, int level, bool virtual_braid);
 hpolynomial virtual_homfly(vector<int> braid_num, vector<int> type, vector<int> master_component_record, int level);
@@ -83,16 +77,13 @@ int num_fixed_points(matrix<int>& Su, matrix<int>& Sd, matrix<int>& invSu, matri
 						   matrix<int>& Tu, matrix<int>& Td, string input_string);
 bool distinguish_modified_string (matrix<int>& Su, matrix<int>& Sd, matrix<int>& invSu, matrix<int>& invSd, 
 						   matrix<int>& Tu, matrix<int>& Td, string input_string, int num_terms);
-bool valid_knotoid_input(matrix<int>& code_table, int head, vector<int>& shortcut_crossing);
-void write_code_data(ostream& s, generic_code_data& code_data);
-void print(generic_code_data& code_data, ostream& s, string prefix="");
-void flip_braid(string& braid);
-void invert_braid(string& braid);
-void line_reflect_braid(string& braid);
-void plane_reflect_braid(string& braid);
+//void flip_braid(string& braid);
+//void invert_braid(string& braid);
+//void line_reflect_braid(string& braid);
+//void plane_reflect_braid(string& braid);
 void Kamada_double_covering(string& braid);
 void generic_code(string input_string, string title);
-int remove_Reidemeister_II(generic_code_data& code_data, vector<int>& component_flags);
+//int remove_Reidemeister_II(generic_code_data& code_data, vector<int>& component_flags);
 
 
 void braid(string input_string, string title)
@@ -123,14 +114,14 @@ void braid(string input_string, string title)
     			
    		input_string = input_string.substr(0,pos);
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
   	debug << "braid: after removing braid qualifiers, input_string =  " << input_string << endl;
 
    	}
 
 	if (braid_control::FLIP_BRAID || flip_braid_qualifier)
 	{
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
     debug << "braid: flipping braid " << input_string << endl;
     
 				flip_braid(input_string);    
@@ -138,7 +129,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 
 	if (braid_control::INVERT_BRAID || invert_braid_qualifier)
 	{
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
     debug << "braid: inverting braid " << input_string << endl;
     
 				invert_braid(input_string);    
@@ -146,7 +137,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 
 	if (braid_control::PLANE_REFLECT_BRAID || plane_reflect_braid_qualifier)
 	{
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
     debug << "braid: plane-reflecting braid " << input_string << endl;
     
 				plane_reflect_braid(input_string);    
@@ -154,7 +145,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 
 	if (braid_control::LINE_REFLECT_BRAID || line_reflect_braid_qualifier)
 	{
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
     debug << "braid: line-reflecting braid " << input_string << endl;
     
 				line_reflect_braid(input_string);    
@@ -174,7 +165,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 	   	output << input_string;		
 	}
 					
-	if (valid_braid_input(input_string, num_terms, num_strings))
+	if (valid_braid_input(input_string, num_terms, num_strings, braid_control::SILENT_OPERATION, braid_control::RAW_OUTPUT, braid_control::OUTPUT_AS_INPUT))
 	{
 		if (braid_control::DOWKER_CODE)
 		{
@@ -229,7 +220,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 			
 			string pcode = braid_to_generic_code(input_string, num_terms, generic_code_data::peer_code);
 
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "braid: pcode from braid word is " << pcode << endl;
 
 			generic_code_data code_data;
@@ -264,7 +255,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 					output << '\n';
 			}
 			output << oss.str() << endl;
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "\nbraid: Gauss code = " << oss.str() << endl;
 
 		}
@@ -293,7 +284,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 
 				int num_cpts = master_component_record.size();
 
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 {
 	debug << "braid: master_component_record = ";
 	for (int i=0; i< num_cpts; i++)
@@ -305,7 +296,7 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 				
 				if (input_string.find('t') == string::npos)
 				{
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 	debug << "braid: classical braid, using master component_record for call to homfly function" << endl;
 
 					hpoly = homfly(braid_num,type,master_component_record,1,0,false); //basepoint on strand 1, level=0, virtual=false
@@ -322,13 +313,13 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 					}
 					output << hpoly << endl;
 
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "braid: HOMFLY polynomial = " << hpoly << endl;
 
 				}
 				else
 				{
-//if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
+//if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 //	debug << "braid: virtual braid, using master_component_perm for call to virtual_homfly function" << endl;
 	
 //					hpoly = virtual_homfly(braid_num,type,master_component_record,0); // level=0	
@@ -342,7 +333,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 					}
 					output << endl;
 
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "braid: The HOMFLY polynomial remains undefined for virtual knots and links" << endl;					
 				}
 		}
@@ -361,7 +352,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 						output << '\n';
 				}
 				output << icode << endl;
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "\nbraid: \tImmersion code = " << icode << endl;
 			}
 			else
@@ -373,7 +364,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 					output << (braid_control::OUTPUT_AS_INPUT? "\n;" : "\n");
 					output << "No immersion code defined, closure of braid is a link." << endl;
 				}
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "\n\nbraid: no immersion code defined, closure of braid is a link." << endl;
 			}
 		}
@@ -381,7 +372,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 		{
 			string pcode = braid_to_generic_code(input_string, num_terms, generic_code_data::peer_code);
 
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "braid: \tpcode from braid word is " << pcode << endl;
 
 			generic_code_data code_data;
@@ -409,7 +400,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 			write_peer_code(output,code_data);
 			output << endl;
 			
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 {
 	debug << "\nbraid: \tPeer code = ";
 	write_peer_code(debug,code_data);
@@ -442,7 +433,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 			*/
 			string pcode = braid_to_generic_code(input_string, num_terms, generic_code_data::peer_code);
 
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "\nbraid: peer code from braid word = " << pcode << endl;
 
 			generic_code(pcode, title);
@@ -506,7 +497,7 @@ void dynnikov(string input_string, int num_strings, int num_terms)
 		alpha[2*i+1] = 1;
 	}
 
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 {
     debug << "\n\nDynnikov test: initial value of alpha = ";
     for (int i=0;i<2*num_strings; i++)
@@ -538,7 +529,7 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 
 		get_number(number, mark);
 
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 {
     debug << "\nDynnikov test: ";
     if (S)
@@ -648,7 +639,7 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 		    alpha[2*number] = a2dash;
 		    alpha[2*number+1] = b2dash;
 		}
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 {
     debug << "Dynnikov test:  yields alpha = ";
 
@@ -684,7 +675,7 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 		output << "\nis not the trivial braid\n";
     }
 
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 {
     if (identity)
 		debug << "\nDynnikov test: is the trivial braid\n";
@@ -1006,7 +997,7 @@ polynomial<int> sawollek(string braid, int num_terms)
 		}
     }
 
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 {
     debug << "\nsawolleck: braid crossing heights\n";
     for (int i=0; i<num_terms; i++)
@@ -1158,7 +1149,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 		} while (!string_found);
     }
 
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 {
     debug << "\n\nsawolleck: Sawollek matrix (M-P)\n";
     debug << Smatrix;
@@ -1175,7 +1166,7 @@ if (braid_control::DEBUG >= braid_control::BASIC)
     Polynomial poly = determinant(Smatrix);
 	matrix_control::WAIT_INFO = false;
 	
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 {
     debug << "\nsawolleck: det(M-P) = " << poly;
 }
@@ -1218,7 +1209,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 	    	if (w_power%2)
 				poly *= -1;
 
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 {
     debug << "\nsawolleck: normalizing poly= " << (w_power%2? -1 : 1);
 }
@@ -1239,7 +1230,7 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 
 	    	poly *= Polynomial(oss.str());
 
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 {
     debug << "\nsawolleck: normalizing poly here= " << Polynomial(oss.str());
 }
@@ -1247,7 +1238,7 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
         }
     }
 
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 {
     debug << "\nsawolleck: Sawollek's normalized Z-polynomial = " << poly << "\n";
 }
@@ -1285,7 +1276,7 @@ int number_of_components (string braid, int num_terms)
 	    braid_num[i] = number;
 	}
 
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 {
 	debug << "\nnumber_of_components: braid_num: ";
 	for (int i=0; i<num_terms; i++)
@@ -1473,7 +1464,7 @@ string braid_to_gauss_code (string braid, int num_terms)
 	    braid_num[i] = number;
 	}
 
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 {
 	debug << "\n\ngauss_code: braid_num: ";
 	for (int i=0; i<num_terms; i++)
@@ -1652,7 +1643,7 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 		} while (component_not_finished);
 	} while (new_component_found);
 	
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 {
 	debug << "\ngauss_code: gcode: ";
 	for (int i=0; i<2*num_terms; i++)
@@ -1735,7 +1726,7 @@ string braid_to_generic_code (string braid, int num_terms, int code_type)
 	    get_number(braid_num[i], mark);
 	}
 
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 {
 	debug << "braid_to_generic_code: braid_num: ";
 	for (int i=0; i<num_terms; i++)
@@ -1787,7 +1778,7 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 	bool complete = false;
 	do
 	{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "braid_to_generic_code: immersion edge " << edge << endl;
 	
 	    /* search for the next crossing involving 'string_num' in the ,
@@ -1800,7 +1791,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 			{
 			    string_found = true;
 			    crossing = i;
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "braid_to_generic_code:  string " << string_num << " found at braid crossing " << i << endl;
 			    break;
 			}
@@ -1815,7 +1806,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 				{
 					string_found = true;
 					crossing = i;
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "braid_to_generic_code:  string " << string_num << " found at braid crossing " << i << endl;
 					break;
 	    		}
@@ -1835,7 +1826,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 		       an odd terminating peer.  We are guaranteed to be able to find such a crossing
 		       if there is another component to number. 
 		    */
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "braid_to_generic_code:  end of component detected" << endl;
 		    complete = true;
 			for (int i=0; i< num_terms; i++)
@@ -1847,7 +1838,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 					string_num = abs(code_table[EVEN_TERMINATING][i]);
 					complete = false;
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "braid_to_generic_code:  start of component " << component << " detected at crossing " << crossing << endl;
 	debug << "braid_to_generic_code:  starting string number = " << string_num <<  endl;
@@ -1860,14 +1851,14 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 		{
 			/* continue with the current component */
 			code_table[row][crossing] = edge;
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "braid_to_generic_code:    setting code_table[" << (edge%2? "ODD_TERMINATING": "EVEN_TERMINATING") << "][" << crossing << "] = " << edge << endl;
 			
 			if (edge%2 == 0)
 			{
 				int peer_code_crossing = edge/2;
 				braid_crossing_num[peer_code_crossing] = crossing;
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "braid_to_generic_code:    setting braid_crossing_num[" << peer_code_crossing << "] = " << crossing << endl;
 	
 				/* record the component of the peer-code naming edge */
@@ -1893,7 +1884,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 			if ( braid_num[crossing] == string_num )
 			{
 				string_num++;
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "braid_to_generic_code:    change to string " << string_num << endl;
 				if (edge%2 == 0)
 				{
@@ -1907,7 +1898,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 					else
 						code_table[LABEL][peer_code_crossing] = generic_code_data::NEGATIVE; 
 	
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "braid_to_generic_code:    crossing TYPE = TYPE1" << endl;
 	debug << "braid_to_generic_code:    crossing LABEL = " << code_table[LABEL][peer_code_crossing] << endl;
@@ -1917,7 +1908,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 			else
 			{
 				string_num--;
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "braid_to_generic_code:    change to string " << string_num << endl;
 				if (edge%2 == 0)
 				{
@@ -1931,7 +1922,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 					else
 						code_table[LABEL][peer_code_crossing] = generic_code_data::NEGATIVE;
 	
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "braid_to_generic_code:    crossing TYPE = TYPE1" << endl;
 	debug << "braid_to_generic_code:    crossing LABEL = " << code_table[LABEL][peer_code_crossing] << endl;
@@ -1948,7 +1939,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 		}
 	} while (!complete);
 
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 {
 	debug << "braid_to_generic_code: braid_crossing_num (conversion from peer code numbers to braid numbers): ";
 	for (int i=0; i<num_terms; i++)
@@ -1989,7 +1980,7 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 	code_data.num_crossings = num_terms;
 	code_data.num_components = component+1;
 	
-//if (braid_control::DEBUG >= braid_control::DETAIL)
+//if (debug_control::DEBUG >= debug_control::DETAIL)
 //	print (code_data, debug, "braid_to_generic_code: ");
 
 	string result;
@@ -2005,209 +1996,6 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 	delete[] inbuf;
 	return result;
 }
-
-/* valid_braid_input returns a boolean indicating whether input is a valid braid, 
-   num_terms and num_strings may or may not have been set if the input is invalid 
-   
-   If the braid includes the doodle qualifier, the function checks that only positive
-   classical crossings have been specified.
-*/
-bool valid_braid_input (string input_string, int& num_terms, int& num_strings)
-{
-	char*       mark;
-	int         number;
-
-if (braid_control::DEBUG >= braid_control::DETAIL)
-	debug << "braid::valid_braid_input: presented with input_string " << input_string << endl;
-	
-	/* first check and then remove any unwanted qualifiers from the input string */
-	bool doodle_braid = false;
-	string::size_type pos = input_string.find('{');
-	
-	if (pos != string::npos)
-	{
-		
-   		if (input_string.substr(pos).find("doodle") != string::npos)
-   			doodle_braid = true;
-
-		input_string = input_string.substr(0,pos);
-	}
-
-	pos = input_string.find('-');
-	if (pos != string::npos && doodle_braid)
-	{
-if (braid_control::DEBUG >= braid_control::SUMMARY)
-	debug << "braid::valid_braid_input: doodle braid contains '-' character, only positive crossings should be specified" << endl;
-		
-		return false;
-	}
-
-	char* inbuf = c_string(input_string);
-
-	if (strchr(inbuf,'('))
-	{
-		if (!braid_control::SILENT_OPERATION)
-			cout << "\nLabelled immersion codes only supported for polynomial invariants" << endl;
-		if (!braid_control::RAW_OUTPUT)
-		{
-			output << (braid_control::OUTPUT_AS_INPUT? "\n;" : "\n");
-			output << "Labelled immersion codes only supported for polynomial invariants\n";
-		}
-	
-if (braid_control::DEBUG >= braid_control::SUMMARY)
-	debug << "braid::valid_braid_input: labelled immersion codes only supported for polynomial invariants" << endl;
-		
-		return false;
-	}
-	else 
-	{
-		if (!strchr(inbuf,'s') && !strchr(inbuf,'S') && !strchr(inbuf,'t') && !strchr(inbuf,'T'))
-		{
-			convert_rep(inbuf); //assume its a traditional representation of a classical braid
-			if (!strlen(inbuf))
-			{
-if (braid_control::DEBUG >= braid_control::SUMMARY)
-    debug << "braid::valid_braid_input: convert_rep found error in input " << inbuf << endl;
-
-				return false; // convert_rep has found an error
-			}			
-			else
-			{
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
-    debug << "braid::valid_braid_input: converted to = " << inbuf << endl;
-			}
-		}
-	
-	    /* evaluate the number of terms in the word by counting the number of
-	       s and t characters - we scan the input at this point
-	    */
-	    char* cptr = inbuf;
-	    num_terms = 0;
-    	do
-	    {
-	        if (isalpha(*cptr))
-	        {
-	            num_terms++;
-	            if (isalpha(*(cptr+1)) || *(cptr+1) == '\0')
-	            {
-					if (!braid_control::SILENT_OPERATION)
-						cout << "Error in input: must specify suffix for " << *cptr << "\n";
-
-if (braid_control::DEBUG >= braid_control::SUMMARY)
-    debug << "braid::valid_braid_input: Error in input: must specify suffix for " << *cptr << endl;
-
-	                return false;
-	            }
-	        }
-	        else if (*cptr == '-')
-	        {
-	            if (!isalpha(*(cptr+1)) || *(cptr+1) == '\0')
-	            {
-	                if (*(cptr+1) == '\0')
-					{
-						if (!braid_control::SILENT_OPERATION)
-							cout << "Error in input: word ends in '-'!\n";
-
-if (braid_control::DEBUG >= braid_control::SUMMARY)
-    debug << "braid::valid_braid_input: Error in input: word ends in '-'!" << endl;
-					}
-	                else
-					{
-						if (!braid_control::SILENT_OPERATION)
-							cout << "Error in input: must specify suffix for " << *(cptr-1) << "\n";
-
-if (braid_control::DEBUG >= braid_control::SUMMARY)
-    debug << "braid::valid_braid_input: Error in input: must specify suffix for " << *(cptr-1) << endl;
-					}
-	                return false;
-	            }
-	            else if (*(cptr+1) == 't' || *(cptr+1) == 'T')
-	            {
-					if (!braid_control::SILENT_OPERATION)
-						cout << "Error in input: t crossings cannot be negative\n";
-if (braid_control::DEBUG >= braid_control::SUMMARY)
-    debug << "braid::valid_braid_input: Error in input: t crossings cannot be negative" << endl;
-					return false;
-	            }
-	        }
-	    } while (*++cptr != '\0');
-	
-        /* Work out how many strings we have in the braid */
-        num_strings = 0;
-        cptr = inbuf;
-        for ( int i = 0; i< num_terms; i++)
-        {
-            if (*cptr == '-')
-                cptr++;
-
-            cptr++;
-            mark = cptr; /* mark where we start the number */
-
-            /* look for the end of the number */
-            while (isdigit(*cptr))
-                cptr++;
-
-	    	get_number(number, mark);
-        	    if (number > num_strings)
-           	    num_strings = number;
-        }
-        num_strings++;
-		
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
-{
-    debug << "braid::valid_braid_input: number of strands = " << num_strings << endl;
-    debug << "braid::valid_braid_input: number of terms = " << num_terms << endl;
-}
-
-    }
-		
-	delete[] inbuf;
-	return true;
-}
-
-void parse_braid(string word, int num_terms, vector<int>& braid_num, vector<int>& type)
-{
-	char* braid_word = c_string(word);
-	char* cptr = braid_word;
-	
-	for ( int i = 0; i< num_terms; i++)
-	{
-	    if (*cptr == '-')
-	    {
-			type[i] = braid_crossing_type::NEGATIVE;
-			cptr++;
-	    }
-	    else if (*cptr == 't' || *cptr == 'T')
-			type[i] = braid_crossing_type::VIRTUAL;
-        else
-			type[i] = braid_crossing_type::POSITIVE;
-
-        cptr++;
-        char* mark = cptr; /* mark where we start the number */
-
-        /* look for the end of the number */
-        while (isdigit(*cptr))
-            cptr++;
-
-		int number;
-	    get_number(number, mark);
-	    braid_num[i] = number;
-	}
-
-if (braid_control::DEBUG >= braid_control::DETAIL)
-{
-	debug << "parse_braid: braid_num: ";
-	for (int i=0; i<num_terms; i++)
-		debug << braid_num[i] << ' ';
-	debug << "\nparse_braid: type: ";
-	for (int i=0; i<num_terms; i++)
-		debug << type[i] << ' ';
-	debug << endl;
-}    
-
-	delete[] braid_word;
-}
-
 
 /* The homfly function uses the skein relation
 		
@@ -2247,7 +2035,7 @@ hpolynomial homfly(vector<int> braid_num, vector<int> type, vector<int> componen
 	int num_cpts=component_record.size();
 	int num_terms=braid_num.size();
 
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 {
 	debug << "homfly:(" << level << ") ";
 	for (int i=0; i< level; i++)
@@ -2260,7 +2048,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 		debug << "  ";
 	debug << "input braid has " << num_terms << " terms" << endl;
 
-	if (braid_control::DEBUG >= braid_control::DETAIL)
+	if (debug_control::DEBUG >= debug_control::DETAIL)
 	{
 		debug << "homfly:(" << level << ") ";
 		for (int i=0; i< level; i++)
@@ -2314,7 +2102,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 			num_strings = component_record[i];
 	}
 
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 {
 	debug << "homfly:(" << level << ") ";
 	for (int i=0; i< level; i++)
@@ -2337,7 +2125,7 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 	   component is completed, we transcribe these temporary records into crossing_visited and processed_strand.
 	   
 	*/
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 {
 	debug << "homfly:(" << level << ") ";
 	for (int i=0; i< level; i++)
@@ -2358,7 +2146,7 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 	int string_num = component_record[cpt_index];
 	if (string_num == basepoint)
 	{			
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 {
 	debug << "homfly:(" << level << ") ";
 	for (int i=0; i< level; i++)
@@ -2396,7 +2184,7 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 			cpt_index++;
 			string_num = component_record[cpt_index];
 			
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 {
 	debug << "homfly:(" << level << ") ";
 	for (int i=0; i< level; i++)
@@ -2413,7 +2201,7 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 		
 		if (string_num == basepoint)
 		{			
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 {
 	debug << "homfly:(" << level << ") ";
 	for (int i=0; i< level; i++)
@@ -2439,7 +2227,7 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 
 			i -= current_cpt_strands;
 
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 {
 	debug << "homfly:(" << level << ") ";
 	for (int i=0; i< level; i++)
@@ -2456,7 +2244,7 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 		
 		current_cpt_strands++;
 
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 {
 	debug << "homfly:(" << level << ") ";
 	for (int i=0; i< level; i++)
@@ -2470,7 +2258,7 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 			/* does this crossing involve 'string_num' ?	*/
 			if (braid_num[j] == string_num || braid_num[j] == string_num-1 )
 			{
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 {
 	debug << "homfly:(" << level << ") ";
 	for (int i=0; i< level; i++)
@@ -2491,7 +2279,7 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 						*/
 						bad_crossing = j+1;
 
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 {
 	debug << "homfly:(" << level << ") ";
 	for (int i=0; i< level; i++)
@@ -2501,7 +2289,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 						break;
 					}			
 
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 {
 	if (passed_basepoint)
 	{
@@ -2532,7 +2320,7 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 				else
 					string_num--;
 
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 {
 	debug << "homfly:(" << level << ") ";
 	for (int i=0; i< level; i++)
@@ -2557,7 +2345,7 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 		for (int i=0; i<num_cpts-1; i++)
 			result *= delta;
 
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 {
 	debug << "homfly:(" << level << ") ";
 	for (int i=0; i< level; i++)
@@ -2583,7 +2371,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 		else
 			type[bad_crossing] = braid_crossing_type::POSITIVE;
 				
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 {
 	debug << "homfly:(" << level << ") ";
 	for (int i=0; i< level; i++)
@@ -2596,7 +2384,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 	write_braid(debug,braid_num,type);
 	debug << endl;
 
-	if (braid_control::DEBUG >= braid_control::DETAIL)
+	if (debug_control::DEBUG >= debug_control::DETAIL)
 	{
 		debug << "homfly:(" << level << ") ";
 		for (int i=0; i< level; i++)
@@ -2623,7 +2411,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 		int good_basepoint = basepoint;
 		braid_reduce(braid_num, type, good_basepoint, component_record);
 		
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 {
 	debug << "homfly:(" << level << ") ";
 	for (int i=0; i< level; i++)
@@ -2633,7 +2421,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 	debug << endl;
 
 
-	if (braid_control::DEBUG >= braid_control::DETAIL)
+	if (debug_control::DEBUG >= debug_control::DETAIL)
 	{
 		debug << "homfly:(" << level << ") ";
 		for (int i=0; i< level; i++)
@@ -2684,7 +2472,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 		                     0,smoothed_basepoint, cpt_index);
 		int num_smoothed_cpts = smoothed_component_record.size();
 
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 {
 	debug << "homfly:(" << level << ") ";
 	for (int i=0; i< level; i++)
@@ -2693,7 +2481,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 	write_braid(debug,smoothed_braid_num,smoothed_type);
 	debug << endl;
 	
-	if (braid_control::DEBUG >= braid_control::DETAIL)
+	if (debug_control::DEBUG >= debug_control::DETAIL)
 	{
 		debug << "homfly:(" << level << ") ";
 		for (int i=0; i< level; i++)
@@ -2726,7 +2514,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 		/* take out redundant terms etc.*/
 		braid_reduce(smoothed_braid_num, smoothed_type, smoothed_basepoint, smoothed_component_record);
 		
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 {
 	debug << "homfly:(" << level << ") ";
 	for (int i=0; i< level; i++)
@@ -2735,7 +2523,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 	write_braid(debug,smoothed_braid_num,smoothed_type);
 	debug << endl;
 
-	if (braid_control::DEBUG >= braid_control::DETAIL)
+	if (debug_control::DEBUG >= debug_control::DETAIL)
 	{
 		debug << "homfly:(" << level << ") ";
 		for (int i=0; i< level; i++)
@@ -2766,7 +2554,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 }
 
 
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 {
 	debug << "homfly:(" << level << ") ";
 	for (int i=0; i< level; i++)
@@ -2781,7 +2569,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 								homfly(braid_num,type,component_record,good_basepoint,level+1,false)
 							);
 
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 {
 	debug << "homfly:(" << level << ") ";
 	for (int i=0; i< level; i++)
@@ -2801,7 +2589,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 							homfly(smoothed_braid_num,smoothed_type,smoothed_component_record,smoothed_basepoint,level+1,false)
 								);
 		
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 {
 	debug << "homfly:(" << level << ") ";
 	for (int i=0; i< level; i++)
@@ -2819,7 +2607,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 			result += hpolynomial("a")*hgood;
 			result *= hpolynomial("a");
 
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 {
 	debug << "homfly:(" << level << ") ";
 	for (int i=0; i< level; i++)
@@ -2833,7 +2621,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 			result += hpolynomial("a^-1")*hgood;
 			result *= hpolynomial("a^-1");
 
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 {
 	debug << "homfly:(" << level << ") ";
 	for (int i=0; i< level; i++)
@@ -2842,7 +2630,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 }
 		}
 		
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 {
 	debug << "homfly:(" << level << ") ";
 	for (int i=0; i< level; i++)
@@ -2875,7 +2663,7 @@ hpolynomial virtual_homfly(vector<int> braid_num, vector<int> type, vector<int> 
 		for (int i=0; i< num_cpts; i++)
 			component_record[i] = master_component_record[component_perm[i]];
 
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 {
 	debug << "virtual_homfly:(" << level << ") ";
 	for (int i=0; i< level; i++)
@@ -2907,7 +2695,7 @@ int num_braid_terms(string word)
 	if (word.length() == 0)
 		return 0;
 		
-	if (!valid_braid_input(word, num_terms, num_strings))
+	if (!valid_braid_input(word, num_terms, num_strings, braid_control::SILENT_OPERATION, braid_control::RAW_OUTPUT, braid_control::OUTPUT_AS_INPUT))
 		exit(0);
 	
 	return num_terms;
@@ -2968,7 +2756,7 @@ void set_component_record (int action, vector<int>& braid_num, vector<int>& type
                            int base_crossing, int basepoint, int datum)
 {
 	int num_terms = braid_num.size();
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "set_component_record: action = ";
 	if (action == CR_CREATE)
@@ -3021,7 +2809,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 			num_strings = component_record[i];
 	}
 	
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "set_component_record: num_strings = " << num_strings << endl;
 
 	valarray<int> processed_strand(0,num_strings);
@@ -3037,7 +2825,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 		string_num = 1;
 		component_record.push_back(1);
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "set_component_record: creating component record, starting first component on strand 1" << endl;
 
 	}
@@ -3058,7 +2846,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 			}
 		}
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "set_component_record: untwisting lower crossing " << datum << endl;
 	debug << "set_component_record: braid_number of lower crossing and initial string_num = " << string_num << endl;
@@ -3069,7 +2857,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 	{
 		string_num = component_record[cpt_index];
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "set_component_record: re-setting component_record ";
 	if (action == CR_RESET_TO_CROSSING)
@@ -3086,7 +2874,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 		for (int i=0; i< num_cpts; i++)
 			new_component_record[i] = num_strings;
 			
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "set_component_record: new_component_record initialized to: ";
 	for (unsigned int i=0; i< new_component_record.size(); i++)
@@ -3100,7 +2888,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 	if (string_num == basepoint)
 	{
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "set_component_record: passing basepoint on strand " << string_num << endl;
 
 		passed_basepoint = true;
@@ -3134,7 +2922,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 							component_record.push_back(string_num);
 							cpt_index++; // used only to set processed_strand correctly
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "set_component_record: new component found starting with strand " << string_num << endl;
 							break;
 						}
@@ -3156,7 +2944,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 						{
 							/* we have split component datum+1 into two, first find the lowest unprocessed strand */
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "set_component_record: component " << datum+1 << " has been split by smoothing the crossing" << endl;
 
 							for (int j=0; j< num_strings; j++)
@@ -3164,7 +2952,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 								if (processed_strand[j] == 0)
 								{
 									string_num = j+1;
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "set_component_record: new component found starting with strand " << string_num << endl;
 									break;
 								}
@@ -3175,7 +2963,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 								/* the new component goes at the end of the component_record */
 								component_record.push_back(string_num);
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "set_component_record: basepoint already encountered, adding " << string_num 
 	      << " to the end of the component record" << endl;
 
@@ -3186,7 +2974,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 								component_record.push_back(component_record[datum]);
 								component_record[datum] = string_num;
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "set_component_record: basepoint not yet encountered, moving " << component_record[datum] 
 	      << " to the end of the component record" << endl;
 							}
@@ -3197,7 +2985,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 						{
 							string_num = component_record[cpt_index];
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "set_component_record: checking for new component on strand " << string_num << endl;
 
 							if (processed_strand[string_num-1])
@@ -3214,7 +3002,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 								*/
 								string_num = component_record[++cpt_index];
 																
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "set_component_record: component " << fused_cpt_index << " has been fused with another component" << endl;
 	debug << "set_component_record: moving to next component starting on strand " << string_num << endl;
@@ -3222,7 +3010,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 							}
 							else
 							{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "set_component_record:   valid start of next component" << endl;
 							}
 						}
@@ -3232,21 +3020,21 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 						/* move to the next component in the component_record. */					
 						string_num = component_record[++cpt_index];
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "set_component_record: moving to next component starting on strand " << string_num << endl;
 					}
 				}
 			}
 		}
 		
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "set_component_record: starting processing of strand " << string_num
 	      << ", cpt_index = " << cpt_index << ", from crossing " << base_crossing+1 << endl;
 
 		if (string_num == basepoint)
 		{
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "set_component_record: passing basepoint on strand " << string_num << endl;
 
 			passed_basepoint = true;
@@ -3262,7 +3050,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 			*/
 			component_record[cpt_index] = string_num;
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "set_component_record: reducing record for cpt_index " << cpt_index << " to " << string_num << endl;
 
 		}
@@ -3275,13 +3063,13 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 				if (first_inverse_pair_strand == 0)
 				{
 					first_inverse_pair_strand = string_num;
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "set_component_record: first_inverse_pair_strand = " << first_inverse_pair_strand << endl;
 				}
 				else
 				{
 					second_inverse_pair_strand = string_num;
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "set_component_record: second_inverse_pair_strand = " << second_inverse_pair_strand << endl;
 				}
 			}
@@ -3300,7 +3088,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 				{
 					new_component_record[cpt_index] = string_num;					
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "set_component_record:   reducing new component record of component " << cpt_index+1 << " to " << string_num << endl;
 				}
 			}
@@ -3309,7 +3097,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 			if (braid_num[k] == string_num || braid_num[k] == string_num-1 ) 
 			{
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "set_component_record:   next crossing involving strand " << string_num << " is " << k+1 << endl;
 		
 				/* change string to record the effect of the crossing on the strand we are following */
@@ -3318,13 +3106,13 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 				else
 					string_num--;
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "set_component_record:   new strand number is " << string_num << endl;
 			}
 		}
 	}
 	
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "set_component_record: strand to component mapping after tracing braid: ";
 	for (unsigned int i=0; i< processed_strand.size(); i++)
@@ -3335,7 +3123,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 
 	if (action == CR_UNTWIST_CROSSING)
 	{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "set_component_record: after untwisting, component_record changed to: ";
 	for (unsigned int i=0; i< component_record.size(); i++)
@@ -3365,14 +3153,14 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 			
 		int other_cpt = processed_strand[component_record[cpt_index]-1];
 		
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "set_component_record: smoothing crossing has fused component " << cpt_index+1 << " with " << other_cpt <<  endl;
 	
 		if (component_record[other_cpt-1] > component_record[cpt_index])
 		{
 			component_record[other_cpt-1] = component_record[cpt_index];
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "set_component_record: component " << cpt_index+1 << " had a lower component_record, adjusting component " 
 	      << other_cpt << endl;
 		}
@@ -3382,14 +3170,14 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 	else if (action == CR_RESET_TO_CROSSING)
 	{
 		component_record = new_component_record;
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "set_component_record: setting component_record to new_component_record" << endl;
 	}
 	else if (action == CR_INVERSE_PAIR)
 	{	
 		if (processed_strand[first_inverse_pair_strand-1] == processed_strand[second_inverse_pair_strand-1])
 		{
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE) 
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE) 
 	debug << "set_component_record: inverse pair involves strands on the same component, no adjustment required" << endl;
 		}
 		else
@@ -3403,7 +3191,7 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 					component_record[j] = first_inverse_pair_strand;
 			}		
 
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE) 
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE) 
 	debug << "set_component_record: checked component_record for inverse pair strands " 
 	      << first_inverse_pair_strand << " and " << second_inverse_pair_strand << endl;
 	
@@ -3411,7 +3199,7 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 	}
 
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "set_component_record: component_record changed to: ";
 	for (unsigned int i=0; i< component_record.size(); i++)
@@ -3453,7 +3241,7 @@ void fixed_point_invariant(matrix<int>& Su, matrix<int>& Sd, matrix<int>& invSu,
 	bool line_reflect_braid_qualifier = false;
 	bool double_braid_qualifier = false;
 
-	if (valid_braid_input(input_string, num_terms, num_strings))
+	if (valid_braid_input(input_string, num_terms, num_strings, braid_control::SILENT_OPERATION, braid_control::RAW_OUTPUT, braid_control::OUTPUT_AS_INPUT))
 	{	
 
     	if (title.length())
@@ -3521,12 +3309,12 @@ void fixed_point_invariant(matrix<int>& Su, matrix<int>& Sd, matrix<int>& invSu,
     			
     		input_string = input_string.substr(0,pos);
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
   	debug << "fixed_point_invariant: after removing braid qualifiers, input_string =  " << input_string << endl;
 
     	}
     
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 {
    	debug << "fixed_point_invariant: welded_braid =  " << (welded_braid?"true":"false") << endl;
    	debug << "fixed_point_invariant: doodle_braid =  " << (doodle_braid?"true":"false") << endl;
@@ -3536,7 +3324,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 		/* check that the S and T we've been given are appropriate for the input braid */
 		if (welded_braid && pair_type != ST_pair_type::ESSENTIAL_WELDED)
     	{
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
    	debug << "fixed_point_invariant: terminating since S and T are not an essential welded pair, as required for welded braids" << endl;
     
 			if (!braid_control::SILENT_OPERATION)
@@ -3552,7 +3340,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
     	}
 		else if (doodle_braid && pair_type != ST_pair_type::ESSENTIAL_DOODLE)
     	{
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
    	debug << "fixed_point_invariant: terminating since S and T are not an essential doodle pair, as required for doodle braids" << endl;
     
 			if (!braid_control::SILENT_OPERATION)
@@ -3568,7 +3356,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
     	}
 		else if (flat_braid && pair_type != ST_pair_type::FLAT_ESSENTIAL_VIRTUAL)
     	{
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
    	debug << "fixed_point_invariant: terminating since S and T are not a flat essential virtual pair, as required for flat braids" << endl;
     
 			if (!braid_control::SILENT_OPERATION)
@@ -3585,7 +3373,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 		else if (!welded_braid && !doodle_braid && !flat_braid && pair_type != ST_pair_type::ESSENTIAL_VIRTUAL && pair_type != ST_pair_type::FLAT_ESSENTIAL_VIRTUAL)
     	{
 			/* virtual braids may use either essential virtual pairs or flat essential virtual pairs */
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
    	debug << "fixed_point_invariant: terminating since S and T are not an essential virtual pair, as required by the input braid" << endl;
     
 			if (!braid_control::SILENT_OPERATION)
@@ -3618,7 +3406,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 			{
 				/* test the combination determined by crossing_type */
 				
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 {
 	debug << "fixed_point_invariant: crossing_types: ";
 	for (int i=0; i< num_strings; i++)
@@ -3645,7 +3433,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 					oss << i+1;
 				}
 				
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "fixed_point_invariant:   additional word: " << oss.str() << endl;
 			
 				string modified_input_string = input_string + oss.str();
@@ -3709,7 +3497,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 		//			output << fixed_points << endl;
 					output << endl;
 		    
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
     debug << "fixed_point_invariant:   distinguishable from unknot" << endl;
 		    
 					return;
@@ -3751,7 +3539,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 			
 			if (braid_control::FLIP_BRAID || flip_braid_qualifier)
 			{
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
     debug << "fixed_point_invariant: flipping braid " << input_string << endl;
     
 				flip_braid(input_string);
@@ -3760,7 +3548,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 
 			if (braid_control::INVERT_BRAID || invert_braid_qualifier)
 			{
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
     debug << "fixed_point_invariant: inverting braid " << input_string << endl;
     
 				invert_braid(input_string);
@@ -3769,7 +3557,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 			
 			if (braid_control::LINE_REFLECT_BRAID || line_reflect_braid_qualifier)
 			{
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
     debug << "fixed_point_invariant: line-reflecting braid " << input_string << endl;
     
 				line_reflect_braid(input_string);
@@ -3779,7 +3567,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 
 			if (braid_control::PLANE_REFLECT_BRAID || plane_reflect_braid_qualifier)
 			{
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
     debug << "fixed_point_invariant: plane-reflecting braid " << input_string << endl;
     
 				plane_reflect_braid(input_string);
@@ -3788,7 +3576,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 
 			if ( (braid_control::KAMADA_DOUBLE_COVERING || double_braid_qualifier) && (doodle_braid || flat_braid) )
 			{
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
     debug << "fixed_point_invariant: evaluating the Kamada double covering of braid " << input_string << endl;
     
 				Kamada_double_covering(input_string);
@@ -3807,7 +3595,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 	    	}
 	    	output << fixed_points << endl;
 		    
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
     debug << "fixed_point_invariant: total number of fixed points = " << fixed_points << endl;
     
     
@@ -3835,7 +3623,7 @@ int num_fixed_points(matrix<int>& Su, matrix<int>& Sd, matrix<int>& invSu, matri
 	int num_terms;
 	int n = Su.numcols();
 	
-	if (valid_braid_input(input_string, num_terms, num_strings))
+	if (valid_braid_input(input_string, num_terms, num_strings, braid_control::SILENT_OPERATION, braid_control::RAW_OUTPUT, braid_control::OUTPUT_AS_INPUT))
 	{	
 		char* str = c_string(input_string);
 		
@@ -3873,7 +3661,7 @@ int num_fixed_points(matrix<int>& Su, matrix<int>& Sd, matrix<int>& invSu, matri
 				braid_num[i] *= -1;
 		}
 
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 {
   	debug << "num_fixed_points: provided with input string " << input_string << endl;
 	debug << "num_fixed_points: braid_num: ";
@@ -3896,7 +3684,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 
 		int fixed_points = 0;
 
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 	debug << "num_fixed_points: calculating fixed points" << endl;
 
 //output << "\n\n";
@@ -3926,7 +3714,7 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 			for (int i=0; i< num_strings; i++)
 				Mv[i] = v[i];
 		
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 {
 	debug << "num_fixed_points:  initial Mv = ";
 	for (int i=0; i< num_strings; i++)
@@ -3944,7 +3732,7 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 				if (virtual_crossing[i])
 				{
 					int bn = abs(braid_num[i]);
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "num_fixed_points:    braid_number = " << bn << " Mv[" << bn << "] = " << Mv[bn] 
 	      << " Mv[" << bn-1 << "] = " << Mv[bn-1] << endl;
@@ -3952,7 +3740,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 					int temp = Td[Mv[bn-1]][Mv[bn]];
 					Mv[bn] = Tu[Mv[bn]][Mv[bn-1]];
 					Mv[bn-1] = temp;
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "num_fixed_points:    after applying T_" << bn << " Mv[" << bn << "] = " << Mv[bn] 
 	      << " Mv[" << bn-1 << "] = " << Mv[bn-1] << endl;
@@ -3961,7 +3749,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 				else if (braid_num[i] > 0)
 				{
 					int bn = braid_num[i];
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "num_fixed_points:    braid_number = " << bn << " Mv[" << bn << "] = " << Mv[bn] 
 	      << " Mv[" << bn-1 << "] = " << Mv[bn-1] << endl;
@@ -3969,7 +3757,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 					int temp = Sd[Mv[bn-1]][Mv[bn]];
 					Mv[bn] = Su[Mv[bn]][Mv[bn-1]];
 					Mv[bn-1] = temp;
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "num_fixed_points:    after applying S_" << bn << " Mv[" << bn << "] = " << Mv[bn] 
 	      << " Mv[" << bn-1 << "] = " << Mv[bn-1] << endl;
@@ -3978,7 +3766,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 				else // (braid_num[i] < 0)
 				{
 					int bn = abs(braid_num[i]);
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "num_fixed_points:    braid_number = " << bn << " Mv[" << bn << "] = " << Mv[bn] 
 	      << " Mv[" << bn-1 << "] = " << Mv[bn-1] << endl;
@@ -3986,14 +3774,14 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 					int temp = invSu[Mv[bn-1]][Mv[bn]];
 					Mv[bn] = invSd[Mv[bn]][Mv[bn-1]];
 					Mv[bn-1] = temp;
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "num_fixed_points:    after applying invS_" << bn << " Mv[" << bn << "] = " << Mv[bn] 
 	      << " Mv[" << bn-1 << "] = " << Mv[bn-1] << endl;
 }
 				}
 
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 {
 	debug << "num_fixed_points:  i=" << i << " Mv = ";
 	for (int j=0; j< num_strings; j++)
@@ -4022,7 +3810,7 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 			{					
 				fixed_points++;
 				
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 	debug << "num_fixed_points:  fixed point" << endl;
 	
 //output << "invariant" << endl;
@@ -4030,7 +3818,7 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 			}
 			else
 			{
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 	debug << "num_fixed_points:  not fixed point" << endl;
 	
 //output << endl;
@@ -4052,13 +3840,13 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 		
 		delete [] str;		
 		
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "num_fixed_points: number of fixed points = " << fixed_points << endl;
 	
 		return fixed_points;
 	}
 	
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "num_fixed_points:  Error! returning -1" << endl;
 	return -1; // error
 }
@@ -4069,7 +3857,7 @@ void rack_poly_invariant(matrix<int>& Su, matrix<int>& Sd, matrix<int>& invSu, m
 	int num_strings;
 	int num_terms;
 
-	if (valid_braid_input(input_string, num_terms, num_strings))
+	if (valid_braid_input(input_string, num_terms, num_strings, braid_control::SILENT_OPERATION, braid_control::RAW_OUTPUT, braid_control::OUTPUT_AS_INPUT))
 	{
     	if (title.length())
        	{
@@ -4108,7 +3896,7 @@ void rack_poly_invariant(matrix<int>& Su, matrix<int>& Sd, matrix<int>& invSu, m
     			flat_braid = true;
     	}
     
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 {
    	debug << "rack_poly_invariant: welded_braid =  " << (welded_braid?"true":"false") << endl;
    	debug << "rack_poly_invariant: doodle_braid =  " << (doodle_braid?"true":"false") << endl;
@@ -4117,14 +3905,14 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
     
 		if (doodle_braid)
 		{
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
    	debug << "rack_poly_invariant: terminating, doodles not supported by rack_poly_invariant" << endl;
    	
 			return;
 		}
 		else if (welded_braid && pair_type != ST_pair_type::ESSENTIAL_WELDED)
     	{
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
    	debug << "rack_poly_invariant: terminating since S and T are not an essential welded pair, as required for welded braids" << endl;
     
 			if (!braid_control::SILENT_OPERATION)
@@ -4140,7 +3928,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
     	}
 		else if (flat_braid && pair_type != ST_pair_type::FLAT_ESSENTIAL_VIRTUAL)
     	{
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
    	debug << "rack_poly_invariant: terminating since S and T are not a flat essential virtual pair, as required for flat braids" << endl;
     
 			if (!braid_control::SILENT_OPERATION)
@@ -4156,7 +3944,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
     	}
 		else if (!welded_braid && !flat_braid && pair_type != ST_pair_type::ESSENTIAL_VIRTUAL && pair_type != ST_pair_type::FLAT_ESSENTIAL_VIRTUAL)
     	{
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
    	debug << "rack_poly_invariant: terminating since S and T are not an essential virtual pair, as required for virtual braids" << endl;
     
 			if (!braid_control::SILENT_OPERATION)
@@ -4185,13 +3973,13 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 			{
 				get_number(rack_terms, input_string.substr(pos), rpos+11); //expected format is "rack-terms=n"
 
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "rack_poly_invariant: rack_terms read from braid qualifier, rack-terms =  " << rack_terms << endl;
 			}
     			
 			input_string = input_string.substr(0,pos);
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
   	debug << "rack_poly_invariant: after removing braid qualifiers, input_string =  " << input_string << endl;
 
 		}
@@ -4209,18 +3997,18 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 
 			rack_terms = braid_control::RACK_TERMS;
 
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
   	debug << "rack_poly_invariant: using rack_terms provided from the command line, rack_terms =  " << rack_terms << endl;
 		}
 		else if (!rack_terms)
 		{
 			rack_terms = n;
 
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
   	debug << "rack_poly_invariant: using default rack_terms value of n = " << rack_terms << endl;
 		}
 
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
   	debug << "rack_poly_invariant: applying " << rack_terms << " rack terms" << endl;
 	
 		/* The writhe is the number of positive terms in the braid 
@@ -4233,7 +4021,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 				writhe--;
 		}
 		
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
   	debug << "rack_poly_invariant: winding number of input braid =  " << writhe << endl;
 
 		vector<int> rack_poly_coefficients(rack_terms+1);
@@ -4243,7 +4031,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 		oss << fixed_points << "t^" << writhe;
 		polynomial<int> rack_poly(oss.str());
 
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
   	debug << "rack_poly_invariant: initial term of rack polynomial =  " << rack_poly << endl;
 		
 		string positive_string = input_string;
@@ -4265,25 +4053,25 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 			negative_string += "-s";
 			negative_string += i_num.str();
 
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
   	debug << "rack_poly_invariant: adding crossing s" << i_num.str() << endl;
 
 			fixed_points = num_fixed_points(Su,Sd,invSu,invSd,Tu,Td,positive_string);
 			rack_poly_coefficients[i-num_strings+1] = fixed_points;
 
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
   	debug << "rack_poly_invariant:   number of fixed points =  " << fixed_points << endl;
 
 			ostringstream oss_p;
 			oss_p << fixed_points << "t^" << writhe + i - num_strings + 1;
 			polynomial<int> p_term(oss_p.str());
 
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
   	debug << "rack_poly_invariant:   new polynomial term: " << p_term << endl;
 
 			rack_poly += p_term;
 
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 {
   	debug << "rack_poly_invariant:   rack polynomial updated to : " << rack_poly << endl;
 //  	debug << "rack_poly_invariant: adding crossing -s" << i_num.str() << endl;
@@ -4293,19 +4081,19 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 
 			fixed_points = num_fixed_points(Su,Sd,invSu,invSd,Tu,Td,negative_string);
 
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
   	debug << "rack_poly_invariant:   number of fixed points =  " << fixed_points << endl;
 
 			ostringstream oss_n;
 			oss_n << fixed_points << "t^" << writhe - i + num_strings - 1;
 			polynomial<int> n_term(oss_n.str());
 
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
   	debug << "rack_poly_invariant:   new polynomial term: " << n_term << endl;
 			
 			rack_poly += n_term;
 
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
   	debug << "rack_poly_invariant:   rack polynomial updated to : " << rack_poly << endl;	
 */	
 		}
@@ -4335,7 +4123,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 		}
 		
     
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 {
     debug << "rack_poly_invariant: final rack_poly = " << rack_poly << endl;
 	debug <<"\nRack polynomial = ";
@@ -4355,7 +4143,7 @@ bool distinguish_modified_string (matrix<int>& Su, matrix<int>& Sd, matrix<int>&
 	int num_cpts=number_of_components(inbuf,num_terms);
 	delete[] inbuf;
 
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 {
 	debug << "distinguish_modified_string: input_string = " << input_string << endl;
 	debug << "distinguish_modified_string: num_terms = " << num_terms << endl;
@@ -4366,24 +4154,24 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 	{
 		int fixed_points = num_fixed_points(Su,Sd,invSu,invSd,Tu,Td,input_string);
     	   
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
     debug << "distinguish_modified_string:   number of fixed points = " << fixed_points << endl;
     
 		if (fixed_points != n)
 		{
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
     debug << "distinguish_modified_string:   distinguished from unknot" << endl;
 			distinguished = true;
 		}
 		else
 		{
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
     debug << "distinguish_modified_string:   indistinguishable from unknot" << endl;
 		}
 	}
 	else
 	{
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "distinguish_modified_string:   braid closure is a link" << endl;
 	}		
 	

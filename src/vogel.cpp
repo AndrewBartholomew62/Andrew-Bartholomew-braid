@@ -46,6 +46,7 @@ extern ofstream		debug;
 #include <matrix.h>
 #include <hash-defs.h>
 #include <braid-control.h>
+#include <braid-util.h>
 #include <generic-code.h>
 
 #define OVER      0
@@ -57,11 +58,7 @@ extern ofstream		debug;
 void vogel_error (string errstring);
 string braid_reduce (string word);
 string virtual_vogel (string inbuf);
-bool calculate_turning_cycles(generic_code_data& code_data, matrix<int>& cycle, int& num_left_cycles, int& num_cycles);
 bool realizable_code_data(generic_code_data& code_data, matrix<int>& cycle, int& num_left_cycles, int& num_cycles);
-void write_peer_code(ostream& s, const generic_code_data& code_data, bool zig_zags=false, bool labelled=true);
-void read_peer_code (generic_code_data& code_data, string input_string);
-void print_code_data(generic_code_data& code_data, ostream& s, string prefix="");
 int on_circle(matrix<int>& seifert_circle, int circle, int crossing);
 
 string vogel (generic_code_data code_data)

@@ -4,9 +4,7 @@
                   A. Bartholomew 25th November, 2001
 
 string invstr(string& str)
-void get_word (ifstream& input, string& buffer, string& title)
 void print_prog_params (ostream& os, string level, string prefix)
-void convert_rep (char*& word)
 string long_knot_concatenation (string ic1, string ic2)
 string set_long_knot_infinity_point (string input_string)
 string parse_long_knot_input_string (string input_string)
@@ -18,7 +16,6 @@ bool two_dominates(matrix<int>& Ua, matrix<int>& Da, matrix<int>& Ub, matrix<int
 bool power_2(matrix<int>& U, matrix<int>& D)
 int switch_order(matrix<int>& U, matrix<int>& D)
 void display_fixed_point_switch(matrix<int>& M, ostream& os, bool number_from_zero)
-bool valid_knotoid_input(generic_code_data& code_data, vector<int>& shortcut_crossing)
 void flip_braid(string& braid)
 void invert_braid(string& braid)
 void plane_reflect_braid(string& braid)
@@ -51,601 +48,11 @@ extern bool SIDEWAYS_SEARCH;
 #include <ctype.h>
 #include <braid.h>
 
-void read_peer_code (generic_code_data& code_data, string input_string);
-void write_peer_code(ostream& s, const generic_code_data& code_data, bool zig_zags=false, bool labelled=true);
-void read_immersion_code (generic_code_data& code_data, string input_string);
-void write_immersion_code(ostream& s, generic_code_data& code_data);
-void print_code_data(generic_code_data& code_data, ostream& s, string prefix="");
-void write_code_data(ostream& s, generic_code_data& code_data);
-void read_code_data (generic_code_data& code_data, string input_string);
-void renumber_peer_code(generic_code_data& code_data, vector<int> shift);
-bool valid_braid_input (string input_string, int& num_terms, int& num_strings);
+//bool valid_braid_input (string input_string, int& num_terms, int& num_strings, bool raw_output, bool silent_output, bool output_as_input);
 string braid_to_generic_code (string braid, int num_terms, int code_type);
-void parse_braid(string word, int num_terms, vector<int>& braid_num, vector<int>& type);
+//void parse_braid(string word, int num_terms, vector<int>& braid_num, vector<int>& type);
 bool Yang_Baxter_satisfied (matrix<int>& U, matrix<int>& D, bool rack_condition = false);
 bool rat_minor_determinant (Qpmatrix* Matrix_rep, int N, int Nr1, int Nc1, int Nc2, int* rperm, int* cperm, string title, polynomial<scalar,char,bigint>& hcf);
-
-/* invstr creates the inverse of src and returns it to the call.
-   The string src must be composed of si, -si, and ti components only.
-   The inverse of ti is again ti.
-*/
-string invstr(string& str)
-{
-    char*	src = c_string(str);
-    char*	loc_buf = new char[2*str.size() + 1]; // a slight overestimate, but always enough
-    char*	mark = src;
-    bool	not_finished = true;
-
-    /* start at the end of the string and work back */
-    char* cptr = strchr(src,0);
-    if (strlen(src))
-	    cptr--;  /* if src is the null string, cptr = src */
-
-    char* lptr = loc_buf;
-    do
-    {
-		if (isdigit(*cptr))
-	    	cptr--;
-		else
-		{
-		    if (*cptr == 's')
-	    	{
-				if (cptr !=src && *(cptr-1) == '-')
-			    	mark = cptr-1;
-				else
-				{
-		    		*lptr++ = '-';
-		    		mark = cptr;
-				}
-				*lptr++ = 's';
-	    	}
-	    	else if (*cptr == 't')
-	    	{
-				mark = cptr;
-				*lptr++ = 't';
-		    }
-
-		    cptr++;
-		    while (isdigit(*cptr))
-				*lptr++ = *cptr++;
-	    	if (mark == src)
-				not_finished = false;
-	    	else
-				cptr = mark-1;
-		}
-    } while (not_finished);
-
-    *lptr = '\0';
-    return string(loc_buf);
-}
-
-/* get_word retrieves the next braid word, Gauss code labelled peer code or 
-   labelled immersion code from the input file, carrying out any manipulation 
-   required, places the resultant word in buffer and any title string in title.  
-   The function does not remove the '--' leader from the title and sets the title 
-   to the empty string if none is found.  Any qualifiers are appended to the 
-   input string, the function does not remove the braces {} from around qualifiers.
-*/
-void get_word (ifstream& input, string& buffer, string& title)
-{
-    string 	next_line;
-	string qualifiers;
-    string 	loc_buf;
-	string	w1,w2,w3,w4,w5,w6,w7,w8;
-	string* target;
-	char*	lptr;
-    bool   	word_found = false;
-    bool	accept_braid_word = false;
-	bool	accept_immersion_code = false;
-	bool	accept_peer_code = false;
-	bool	accept_gauss_code = false;
-	bool	accepted_braid_input = false;
-	bool	accepted_non_braid_input = false;
-    bool	not_finished;
-
-    /* start by setting the buffer and title to the empty string */
-    buffer.clear();
-    title.clear();
-
-	if (braid_control::FIXED_POINT_INVARIANT || braid_control::RACK_POLYNOMIAL)
-	{
-		accept_braid_word = true;
-
-		if (braid_control::first_time)
-		{
-			if (!braid_control::SILENT_OPERATION)
-				cout << "\n\nReading braid words from input.\n\n";
-			if (!braid_control::RAW_OUTPUT)
-			{
-				output << "\n\n";
-				if (braid_control::OUTPUT_AS_INPUT)
-					output << ';';
-				output << "Reading braid words from input.\n\n";
-			}
-			braid_control::first_time = false;
-		}
-	}
-	else if (braid_control::SWITCH_POLYNOMIAL_INVARIANT)
-	{
-		accept_immersion_code = true;
-		accept_peer_code = true;
-		accept_braid_word = true;
-
-		if (braid_control::first_time)
-		{
-			if (!braid_control::SILENT_OPERATION)
-				cout << "\n\nReading braid words, labelled immersion codes and labelled peer codes from input.\n\n";
-			if (!braid_control::RAW_OUTPUT)
-			{
-				output << "\n\n";
-				if (braid_control::OUTPUT_AS_INPUT)
-					output << ';';
-				output << "Reading braid words, labelled immersion codes and labelled peer codes from input.\n\n";
-			}
-			braid_control::first_time = false;
-		}
-	}
-	else if (braid_control::VOGEL_ALGORITHM || braid_control::SATELLITE)
-	{
-		accept_peer_code = true;
-
-		if (braid_control::first_time)
-		{
-			if (!braid_control::SILENT_OPERATION)
-				cout << "\n\nReading labelled peer codes from input.\n\n";
-			if (!braid_control::RAW_OUTPUT)
-			{
-				output << "\n\n";
-				if (braid_control::OUTPUT_AS_INPUT)
-					output << ';';
-				output << "Reading labelled peer codes from input.\n\n";
-			}
-			braid_control::first_time = false;
-		}
-	}
-	else if (braid_control::GAUSS_CODE)
-	{
-		accept_immersion_code = true;
-		accept_peer_code = true;
-		accept_gauss_code = true;
-		accept_braid_word = true;
-
-		if (braid_control::first_time)
-		{
-			if (!braid_control::SILENT_OPERATION)
-				cout << "\n\nReading braid words, labelled immersion codes and labelled peer codes from input.\n\n";
-			if (!braid_control::RAW_OUTPUT)
-			{
-				output << "\n\n";
-				if (braid_control::OUTPUT_AS_INPUT)
-					output << ';';
-				output << "Reading braid words, labelled immersion codes and labelled peer codes from input.\n\n";
-			}
-			braid_control::first_time = false;
-		}
-	}
-	else if (braid_control::PEER_CODE)
-	{
-		accept_immersion_code = true;
-		accept_peer_code = true;
-		accept_gauss_code = true;
-		accept_braid_word = true;
-
-		if (braid_control::first_time)
-		{
-			if (!braid_control::SILENT_OPERATION)
-				cout << "\n\nReading braid words, labelled immersion codes and labelled peer codes from input.\n\n";
-			if (!braid_control::RAW_OUTPUT)
-			{
-				output << "\n\n";
-				if (braid_control::OUTPUT_AS_INPUT)
-					output << ';';
-				output << "Reading braid words, labelled immersion codes and labelled peer codes from input.\n\n";
-			}
-			braid_control::first_time = false;
-		}
-	}
-	else if (braid_control::DOWKER_CODE)
-	{
-		accept_braid_word = true;
-		accept_immersion_code = true;
-
-		if (braid_control::first_time)
-		{
-			if (!braid_control::SILENT_OPERATION)
-				cout << "\n\nReading braid words and labelled immersion codes from input.\n\n";
-			if (!braid_control::RAW_OUTPUT)
-			{
-				output << "\n\n";
-				if (braid_control::OUTPUT_AS_INPUT)
-					output << ';';
-				output << "Reading braid words and labelled immersion codes from input.\n\n";
-			}
-			braid_control::first_time = false;
-		}
-	}
-	else if (braid_control::KAUFFMAN_BRACKET || braid_control::JONES_POLYNOMIAL || braid_control::ARROW_POLYNOMIAL)
-	{
-		accept_immersion_code = true;
-		accept_peer_code = true;	
-		accept_gauss_code = true;  // only Gauss codes containing classical crossings are supported currently, not flat or doodle crossings
-
-		if (braid_control::first_time)
-		{
-			if (!braid_control::SILENT_OPERATION)
-				cout << "\n\nReading labelled immersion codes, labelled peer codes and Gauss codes from input.\n\n";
-			if (!braid_control::RAW_OUTPUT)
-			{
-				output << "\n\n";
-				if (braid_control::OUTPUT_AS_INPUT)
-					output << ';';
-				output << "Reading labelled immersion codes, labelled peer codes and Gauss codes from input.\n\n";
-			}
-			braid_control::first_time = false;
-		}
-	}
-	else if (braid_control::KNOTOID_BRACKET || braid_control::PARITY_BRACKET || braid_control::PARITY_ARROW)
-	{
-		accept_immersion_code = true;
-		accept_peer_code = true;
-
-		if (braid_control::first_time)
-		{
-			if (!braid_control::SILENT_OPERATION)
-				cout << "\n\nReading labelled immersion codes and labelled peer codes from input.\n\n";
-			if (!braid_control::RAW_OUTPUT)
-			{
-				output << "\n\n";
-				if (braid_control::OUTPUT_AS_INPUT)
-					output << ';';
-				output << "Reading labelled immersion codes and labelled peer codes from input.\n\n";
-			}
-			braid_control::first_time = false;
-		}
-	}
-	else if (braid_control::AFFINE_INDEX)
-	{
-		accept_immersion_code = true;
-		accept_peer_code = true;
-		accept_gauss_code = true; // only Gauss codes for classical diagrams are supported currently, not flat or doodle diagrams
-		accept_braid_word = true;
-
-		if (braid_control::first_time)
-		{
-			if (!braid_control::SILENT_OPERATION)
-				cout << "\n\nReading braid words, labelled immersion codes, labelled peer codes and Gauss codes from input.\n\n";
-			if (!braid_control::RAW_OUTPUT)
-			{
-				output << "\n\n";
-				if (braid_control::OUTPUT_AS_INPUT)
-					output << ';';
-				output << "Reading braid words, labelled immersion codes, labelled peer codes and Gauss codes from input.\n\n";
-			}
-			braid_control::first_time = false;
-		}
-	}
-	else
-	{
-		accept_braid_word = true;
-
-		if (braid_control::first_time)
-		{
-			if (!braid_control::SILENT_OPERATION)
-				cout << "\n\nReading braid words from input.\n\n";
-			if (!braid_control::RAW_OUTPUT)
-			{
-				output << "\n\n";
-				if (braid_control::OUTPUT_AS_INPUT)
-					output << ';';
-				output << "Reading braid words from input.\n\n";
-			}
-			braid_control::first_time = false;
-		}
-	}
-
-
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
-{
-    debug << "braid::get_word: accepting ";
-    if (accept_braid_word)
-		debug << "braid words ";
-    if (accept_immersion_code)
-		debug << "immersion codes ";
-    if (accept_peer_code)
-		debug << "peer codes ";
-    if (accept_gauss_code)
-		debug << "Gauss codes ";
-    debug << endl;
-}
-	
-	while (!word_found && getline(input, next_line))
-    {		
-
-if (braid_control::DEBUG >= braid_control::DETAIL)
-    debug << "braid::get_word: read line: " << next_line << endl;
-
-		/* kill the <cr> at the end of the line, if one exists */
-		string::size_type pos = next_line.find("\r");
-		if (pos != string::npos)
-		     next_line[pos] = ' ';
-		
-		/* remove any comments from the end of the line */
-		pos = next_line.find(';');
-		if (pos != string::npos)
-			next_line = next_line.substr(0,pos);
-
- 		
-		if (next_line.find("exit") != string::npos)
-			break;
-			
-		/* move any qualifiers from the end of the line into the qualifiers string 
-		   by assigning the qualifier sting here any misplaced qualifiers in the input file 
-		   are ignored.  Only when qualifiers are added to the end of a braid statement or the
-		   last line of a peer code or immersion code or Gauss code will they be acted upon.
-		   
-		   Also, removing the qualifiers from the current line at this stage avoids any 
-		   confusion between qualifiers and braid statement
-		*/
-		
-		pos = next_line.find('{');
-		if (pos != string::npos && next_line.find("--") != 0) // titles may contain braces
-		{
-			qualifiers = next_line.substr(pos);
-
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
-    debug << "braid::get_word: read qualifiers " << qualifiers << " from line " << next_line << endl;
-
-			next_line = next_line.substr(0,pos);
-			
-		}
-
-		char* line_buf = c_string(next_line);
-				
-	    /* if this line contains a switch, or programme options ignore it */
-	    if ( strchr(line_buf,'[') && !strchr(line_buf,'/') && !strchr(line_buf,'\\'))
-		{
-if (braid_control::DEBUG >= braid_control::DETAIL)
-    debug << "braid::get_word: line contains programme options, ignoring line" << endl;
-			goto done_with_line;
-		}
-		else if (  (strchr(line_buf,'s') || strchr(line_buf,'S')) && 
-			        strchr(line_buf,'=') && 
-				    !(strchr(line_buf,'w') && isdigit(*(strchr(line_buf,'w')+1))) //not a braid statement
-			    )
-		{
-if (braid_control::DEBUG >= braid_control::DETAIL)
-    debug << "braid::get_word: line contains a switch, ignoring line" << endl;
-			goto done_with_line;
-		}
-
-		
-	    /* is there any whitespace at the beginning of the line? */
-	    lptr = line_buf;
-	    while (isspace(*lptr))
-			lptr++;
-
-	    if (strlen(lptr) && *lptr != '\n')
-	    {
-			
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
-    debug << "braid::get_word: next word line = " << lptr << endl;
-
-			/* check for a title line */
-			char* cptr = lptr;
-			if (*cptr == '-' && *(cptr+1) == '-')
-			{
-		    	title = lptr;
-
-				goto done_with_line;
-			}
-
-			/* the target of the line parsing is either one of the word buffers 
-			   w1-w8, or is 'buffer', if the input is a braid statement, a peer code, an 
-			   immersion code, or a Gauss code, .  An immersion code is 
-			   indicated by the presence of a '(' character, a peer code by a '[' character.
-			   A Gauss code is indicated by the presence of a '/' or '\' character but no '(' or '['.			
-			*/
-			if (!accepted_non_braid_input && !accepted_braid_input)
-			{
-				if (strchr(lptr,'(') && accept_immersion_code)
-				{
-					accepted_non_braid_input = true;
-
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
-    debug << "braid::get_word: detected acceptable start of immersion code" << endl;
-				}
-				else if (strchr(line_buf,'[') && accept_peer_code)
-				{
-					accepted_non_braid_input = true;
-
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
-    debug << "braid::get_word: detected acceptable start of peer code" << endl;
-				}
-				else if ((strchr(lptr,'/') || strchr(lptr,'O') || strchr(lptr,'\\')) && accept_gauss_code)
-				{
-					accepted_non_braid_input = true;
-
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
-    debug << "braid::get_word: detected acceptable start of Gauss code" << endl;
-				}
-				else if ((strchr(line_buf,'s') || strchr(line_buf,'S') || 
-				          strchr(line_buf,'t') || strchr(line_buf,'T')) && accept_braid_word)
-				{
-					accepted_braid_input = true;
-
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
-    debug << "braid::get_word: detected acceptable start of braid word" << endl;
-				}
-				else
-					goto done_with_line;
-			}
-			
-			/* Here we have the kind of input we're looking for on the next_line */
-			if (accepted_non_braid_input && (accept_gauss_code || accept_immersion_code || accept_peer_code ))
-			{
-			    /* Take out line escapes and build up either the
-				   labelled immersion code or the Gauss code in buffer
-			    */
-			    cptr = strchr(lptr,'\\');
-			    if (cptr)
-					*cptr = ' ';
-
-			    /* copy the line into buffer and decide if there's more to come */
-				buffer += string(lptr);
-
-			    /* This test means we cannot break lines after
-				   the '/' character in the input file
-				*/
-				if (strchr(lptr,'/') || strchr(lptr,'O'))
-				{
-					word_found = true;					
-					
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
-    debug << "braid::get_word: adding qualifiers " << qualifiers << " to buffer " << buffer << endl;;
-
-					buffer += qualifiers;
-				}
-			    
-				goto done_with_line;
-			}
-			
-			/* Here we're looking for a braid word, first check whether this is 
-			   an assignment statement or a braid statement, if it's a braid
-			   statement, we're done once we've parsed this line. 
-			
-				Note the boolean accepted_braid_input is not actually needed in the
-				current code but has been included for completeness and readability.
-			*/
-			cptr = strchr(lptr, '=');
-			
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
-    debug << "braid::get_word: looking for a braid word...";
-
-			if (cptr) // assignment statement
-			{
-			    cptr = strchr(lptr,'w');
-		    	switch (*++cptr)
-		    	{
-					case '1': target = &w1; break;
-					case '2': target = &w2; break;
-					case '3': target = &w3; break;
-					case '4': target = &w4; break;
-					case '5': target = &w5; break;
-					case '6': target = &w6; break;
-					case '7': target = &w7; break;
-					case '8': target = &w8; break;
-					default: target = &w1;
-		    	}				
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
-    debug << "line is an assignment statement" << endl;
-			}
-			else // braid statement
-			{
-			    target = &buffer;
-		    	word_found = true;
-
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
-    debug << "line is a braid statement" << endl;;
-			}
-
-			/* now parse the line into target, first move cptr to the
-			   start of the line contents, i.e. past any = sign.
-			*/
-
-			cptr = strchr(lptr, '=');
-			if (cptr)
-			    cptr++;
-			else
-			    cptr = lptr;
-
-			/* move through whitespace */
-			while (isspace(*cptr))
-			    cptr++;
-
-			(*target).clear();
-			not_finished = true;
-			do
-			{
-			    if (isspace(*cptr) || *cptr == '\0')
-					not_finished = false;
-		    	else if (*cptr == 'w')
-		    	{
-					switch (*++cptr)
-					{
-			    		case '1': *target += w1; break;
-			    		case '2': *target += w2; break;
-			    		case '3': *target += w3; break;
-			    		case '4': *target += w4; break;
-			    		case '5': *target += w5; break;
-			    		case '6': *target += w6; break;
-			    		case '7': *target += w7; break;
-			    		case '8': *target += w8; break;
-			    		default: *target += w1;
-					}
-					cptr++;
-		    	}
-		    	else if (*cptr == '-' && *(cptr+1) == 'w')
-		    	{
-					cptr++; /* moves cptr to the w character */
-					switch (*++cptr)
-					{
-					    case '1': *target += invstr(w1); break;
-					    case '2': *target += invstr(w2); break;
-				    	case '3': *target += invstr(w3); break;
-				    	case '4': *target += invstr(w4); break;
-			    		case '5': *target += invstr(w5); break;
-				    	case '6': *target += invstr(w6); break;
-				    	case '7': *target += invstr(w7); break;
-				    	case '8': *target += invstr(w8); break;
-				    	default: *target += invstr(w1);
-					}
-					cptr++;
-		    	}
-		    	else
-		    	{
-					/* copy the characters up to the next whitespace or 'w' into 
-					   a local buffer and appent to target.
-				    */
-					char* copy_buf = new char[strlen(cptr)+1];
-					char* sptr = copy_buf;
-				
-					while (!isspace(*cptr) && *cptr != '\0' && *cptr != 'w')
-			    		*sptr++ = *cptr++;
-					if (*cptr == 'w' && *(cptr-1) == '-')
-					{
-			    		/* move back one */
-			    		cptr--;
-			    		sptr--;
-					}
-					*sptr = '\0';
-					*target += string(copy_buf);
-
-					delete[] copy_buf;
-		    	}
-			} while (not_finished);
-			
-			if (word_found)
-			{
-				/* we have just parsed a braid statement into the buffer so we
-				   append any qualifiers provided with that braid statement
-				*/
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
-    debug << "braid::get_word: adding qualifiers " << qualifiers << " to buffer " << buffer << endl;;
-
-				buffer += qualifiers;
-			}
-	    }
-done_with_line:
-		delete[] line_buf;
-    } //end of while (getline(input, next_line) && !word_found)
-
-    if (!word_found)
-    	buffer = "exit";
-		
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
-    debug << "braid::get_word: returning buffer " << buffer << endl;;
-		
-}
 
 void print_prog_params (ostream& os, string level, string prefix)
 {
@@ -722,52 +129,6 @@ void print_prog_params (ostream& os, string level, string prefix)
 	}
 }
 
-
-/* convert_rep takes a braid word in the standard representation using a,b,c,A,B,C etc.
-   and converts it into si, -si format.
-*/
-void convert_rep (char*& word)
-{
-    string local;
-    char* wptr=word;
-    bool not_complete = true;
-    bool inverse;
-
-	
-	do
-	{
-		if (*wptr == '\0')
-			not_complete = false;	
-	    else if (!isalpha(*wptr))
-		{
-			if (!braid_control::SILENT_OPERATION)
-				cout << "Error in input: non-alphabetical character " << *wptr << " \n";
-			strcpy(word,"");
-			return;
-		}
-		else
-		{
-			if (*wptr >= 'a')
-				inverse = false;
-			else
-				inverse = false;
-
-			/* write this term into local */
-			if (inverse)
-				local += "-";
-			local += "s";
-			ostringstream oss(local);
-			oss << *wptr - (inverse?'A':'a')+1;
-		}
-		wptr++;
-	    
-	} while (not_complete);
-
-	/* tidy up local, copy to word */
-	delete[] word;
-	word = c_string(local);
-}
-
 /* long_knot_concatenation yields a peer_code string representation of the concatination of the long knots
    determined by the input codes code1 and code2. The input codes can be either peer codes or immersion codes.
 
@@ -784,7 +145,7 @@ void convert_rep (char*& word)
 string long_knot_concatenation (string code1, string code2)
 {
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "long_knot_concatenation: presented with strings :" << endl;
 	debug << "long_knot_concatenation:   code1 = " << code1 << endl;
@@ -798,7 +159,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 	int n1 = code_data_1.num_crossings;
 
 /*
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "long_knot_concatenation: code data produced from input code code1:" << endl;
 	print (code_data_1,debug,"long_knot_concatenation: ");
@@ -808,7 +169,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 	matrix<int>& code_table_2 = code_data_2.code_table;
 	int n2 = code_data_2.num_crossings;
 /*	
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "long_knot_concatenation: code table produced from input code code2:" << endl;
 	print (code_data_2,debug,"long_knot_concatenation: "); 
@@ -837,7 +198,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 //	code_data_1.num_components += code_data_2.num_components - 1 ;
 	code_data_1.code_table = code_table;
 
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 {
 	debug << "long_knot_concatenation: concatenated code table:" << endl;
 	print_code_data (code_data_1, debug,"long_knot_concatenation: ");
@@ -851,7 +212,7 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 string set_long_knot_infinity_point (string input_string)
 {
 	
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 	debug << "set_long_knot_infinity_point: presented with input_string: " << input_string << endl;
 
 	generic_code_data code_data;
@@ -873,7 +234,7 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 		/* a shift of infinity has been requested for the long knot */
 		get_number(shift, cptr);
 		
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 	debug << "set_long_knot_infinity_point: long knot shift = " << shift << endl;
 
 		/* move over number so it can be removed from the input string */
@@ -882,12 +243,12 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 			cptr++;
 	}
 			
-	input_string.erase(0,cptr-inbuf);
+//	input_string.erase(0,cptr-inbuf);
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
-	debug << "set_long_knot_infinity_point: input string after L and shift removal " << input_string << endl;
+//if (debug_control::DEBUG >= debug_control::DETAIL)
+//	debug << "set_long_knot_infinity_point: input string after L and shift removal " << input_string << endl;
 
-	if (shift)
+	if (code_data.type == generic_code_data::peer_code && shift)
 	{			
 		/* The function renumber_peer_code moves the point at infinity forwards with respect
 		   to the orientation, so if the requested shift is negtive, we have to adjust it accordingly.
@@ -916,7 +277,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 	}
 
 
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 	debug << "set_long_knot_infinity_point: returning immersion code " << input_string << endl;
 
 	delete[] inbuf;
@@ -927,7 +288,7 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 string parse_long_knot_input_string (string input_string)
 {
 
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 	debug << "parse_long_knot_input_string: presented with input string " << input_string << endl;
 
 	/* Check to see if this is a concatenation of multiple long knots */
@@ -935,7 +296,7 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 
 	string result = set_long_knot_infinity_point(input_string.substr(0,tilde));
 
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 	debug << "parse_long_knot_input_string: initial component: " << result << endl;
 
 	while( result != "link" && tilde != string::npos) // result != "link" catches the case where the first component is a link
@@ -946,21 +307,21 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 		if (component =="link")
 		{
 
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 	debug << "parse_long_knot_input_string: next component: " << component << endl;
 
 			result = component;
 			break;
 		}
 
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 	debug << "parse_long_knot_input_string: next component: " << component << endl;
 
 		result = long_knot_concatenation (result, component);
 		tilde = next_tilde;
 	}
 		
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 	debug << "parse_long_knot_input_string: input string after parsing: " << result << endl;
 
 	return result;
@@ -1018,7 +379,7 @@ bool Yang_Baxter_satisfied (matrix<int>& U, matrix<int>& D,bool rack_condition)
 {
 	int n = U.numcols();
 
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 	debug << "  S-Yang-Baxter rules: " << endl;
 
 	vector<int> rof(3); //rule of five
@@ -1032,7 +393,7 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 			{
 				rof[2]=k;
 				
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "    rof: " << rof[0] << " " << rof[1] << " " << rof[2] << endl;
 
 				int& a = rof[0];
@@ -1041,61 +402,61 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 					
 				/* Up interchange */
 				int& a_up_b = U[b][a];
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "      a_up_b = " << a_up_b <<endl;
 
 				int& b_up_c = U[c][b];
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "      b_up_c = " << b_up_c <<endl;
 
 				int& a_up_b__up_c = U[c][a_up_b];
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "      a_up_b__up_c = " << a_up_b__up_c <<endl;
 
 				if (rack_condition)
 				{
 					/* a^bc = a^{cb^c} */
 					int& a_up_c = U[c][a];						
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "      a_up_c = " << a_up_c <<endl;
 
 					if (a_up_b__up_c != U[b_up_c][a_up_c])
 					{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "      rack up interchange condition fails" << endl;
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 	debug << "    fails" << endl;
 	
 						return false;
 					}
 					else
 					{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "      a_up_b__up_c == U[b_up_c][a_up_c]\n" << endl;
 					}
 				}
 				else 
 				{
 					int& c_down_b = D[b][c];					
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "      c_down_b = " << c_down_b <<endl;
 
 					int& a_up__c_down_b = U[c_down_b][a];
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "      a_up__c_down_b = " << a_up__c_down_b <<endl;
 					
 					if (a_up_b__up_c != U[b_up_c][a_up__c_down_b])
 					{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "      up interchange condition fails" << endl;
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 	debug << "    fails" << endl;
 	
 						return false;
 					}
 					else
 					{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "      a_up_b__up_c == U[b_up_c][a_up__c_down_b]\n" << endl;
 					}
 				}
@@ -1104,71 +465,71 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 				{
 					/* Down interchange */
 					int& c_up_b = U[b][c];
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "      c_up_b = " << c_up_b <<endl;
 
 					int& b_down_c = D[c][b];
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "      b_down_c = " << b_down_c <<endl;
 
 					int& a_down_b = D[b][a];
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "      a_down_b = " << a_down_b <<endl;
 
 					int& a_down_b__down_c = D[c][a_down_b];
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "      a_down_b__down_c = " << a_down_b__down_c <<endl;
 
 					int& a_down__c_up_b = D[c_up_b][a];
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "      a_down__c_up_b = " << a_down__c_up_b <<endl;
 					
 					if (a_down_b__down_c != D[b_down_c][a_down__c_up_b])
 					{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "      down interchange condition fails" << endl;
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 	debug << "    fails" << endl;
 	
 						return false;
 					}
 					else
 					{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "      a_down_b__down_c == D[b_down_c][a_down__c_up_b]\n" << endl;
 					}
 					
 					/* Rule of five */
 					int& b_up_a = U[a][b];
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "      b_up_a = " << b_up_a <<endl;
 	
 					int& a_up_c = U[c][a];
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "      a_up_c = " << a_up_c <<endl;
 	
 					int& c_down_a = D[a][c];
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "      c_down_a = " << c_down_a <<endl;
 	
 					int& b_up__c_down_a = U[c_down_a][b];
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "      b_up__c_down_a = " << b_up__c_down_a <<endl;
 		
 					int& c_down__b_up_a = D[b_up_a][c];
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "      c_down__b_up_a = " << c_down__b_up_a <<endl;
 	
 					int& a_down_b__up___c_down__b_up_a = U[c_down__b_up_a][a_down_b];
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "      a_down_b__up___c_down__b_up_a = " << a_down_b__up___c_down__b_up_a <<endl;
 	
 					
 					if (a_down_b__up___c_down__b_up_a != D[b_up__c_down_a][a_up_c])
 					{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "      rule of five condition fails" << endl;
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 	debug << "  fails" << endl;
 	
 						return false;
@@ -1178,7 +539,7 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 		}
 	}
 	
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 	debug << "    OK" << endl;
 
 	return true;
@@ -1401,7 +762,7 @@ int switch_order(matrix<int>& U, matrix<int>& D)
 	for (int k=1; k <= n*n; k++)
 	{
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	bool saved_bool = matrix_control::SINGLE_LINE_OUTPUT;
 	matrix_control::SINGLE_LINE_OUTPUT = true;
@@ -1438,7 +799,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 		if (identity)
 		{
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "braid::switch_order: returning " << k << endl;
 
 			return k;
@@ -1502,433 +863,6 @@ void display_fixed_point_switch(matrix<int>& M, ostream& os, bool number_from_ze
 	}
 }
 
-
-/* The generic code data code table and crossing number identify a valid knotoid if the
-   specified crossing is the start of a shortcut.  A shortcut from the head
-   to the leg of a knotoid must pass under all the strands of the knotoid; thus
-   if the label associated with the head crossing is '+' then the head lies on the
-   odd-numbered semi-arc of the diagram, and if the label is '-' it lies
-   on the even-numbered semi-arc.  From this arc onwards all the crossings we 
-   encounter must be approached on the under-arc if this is a valid knotoid 
-   combination of code_table and head.
-   
-   A shortcut is an embeded arc, so it is not permitted to contain self-intersections.
-
-   Furthermore, we require that the semi-arc containing the leg of a knotoid is labelled
-   zero.  This is required so that in the case of a multi-knotoid we can identify the segment 
-   component of a smoothed diagram when calculating the Turaev extended bracket polynomial.
-
-   Allowing arbitary numbering would require the identification of the leg as well as the head within 
-   the peer code, since one could not guarantee that the segment component numbering could start with 
-   the leg and preserve the requirement for odd and even terminating edges at each crossing.
-      
-   As we check the validity of the input we note the shortcut crossings and also
-   the algebraic number of intersections of the knotoid and the shortcut.  This is 
-   the number of times the knotoid crosses the shortcut from right to left minus 
-   the number of times it crosses from left to right.  However, for the definition
-   the shortcut is oriented from the leg to the head and we will be traversing it in 
-   the opposite direction.  
-   
-   We set shortcut_crossing[i] to be non-zero if the ith crossing is a shortcut crossing.
-   We set it to 1 if the knotoid crosses the shortcut from right to left and -1 if it crosses from 
-   left to right, orienting the shortcut from leg to head.
-   
-*/
-bool valid_knotoid_input(generic_code_data& code_data)
-{
-	matrix<int>& code_table = code_data.code_table;
-	vector<int> shortcut_crossing(code_data.num_crossings);
-	int head = code_data.head;
-	
-	/* we must have been given a crossing indicating the position of the head */
-	if (head == -1)
-	{
-		
-if (braid_control::DEBUG >= braid_control::BASIC)
-	debug << "valid_knotoid_input: no indication of knotoid head provided, returning false" << endl;
-	
-		return false;
-	}
-		
-	
-	int semi_arc;	
-	int peer;
-
-
-if (braid_control::DEBUG >= braid_control::BASIC)
-{
-	debug << "valid_knotoid_input: code_table " << endl;
-	print(code_table,debug,3,"valid_knotoid_input: ");	
-	debug << "valid_knotoid_input: head =" << head << endl;
-}
-
-	int component;
-	if (code_table[LABEL][head] == generic_code_data::POSITIVE)
-	{
-		semi_arc = code_table[OPEER][head];
-		peer = 2*head;
-		component = code_table[COMPONENT][(semi_arc-1)/2];
-	}
-	else if (code_table[LABEL][head] == generic_code_data::NEGATIVE)
-	{
-		semi_arc = 2*head;
-		peer = code_table[OPEER][head];
-		component = code_table[COMPONENT][head];
-	}
-	else
-	{
-		/* the first shortcut crossing cannot be virtual */
-if (braid_control::DEBUG >= braid_control::DETAIL)
-	debug << "valid_knotoid_input: head " << 0 << " indicates first shortcut crossing is virtual" << endl;
-		return false;
-	}
-
-if (braid_control::DEBUG >= braid_control::BASIC)
-	debug << "valid_knotoid_input: head " << head << " lies on semi-arc " << semi_arc << " in component " << component << " with peer edge " << peer << endl;
-	
-	if (component != 0)
-	{
-if (braid_control::DEBUG >= braid_control::DETAIL)
-	debug << "valid_knotoid_input: invalid knotoid code, the knotoid leg must lie on the semi-arc numbered 0" << endl;
-		return false;
-	}
-
-	if (semi_arc < peer && peer < code_data.num_component_edges[0])
-	{
-if (braid_control::DEBUG >= braid_control::DETAIL)
-	debug << "valid_knotoid_input: invalid knotoid code, peer edge also lies in the shortcut, which may not self-intersect" << endl;
-		return false;
-	}
-
-    /* set the shortcut crossing flag for the head crossing */
-    if (semi_arc % 2)
-    {
-		if (code_table[TYPE][head] == generic_code_data::TYPE1)				
-		{
-			shortcut_crossing[head] = -1; 
-if (braid_control::DEBUG >= braid_control::DETAIL)
-	debug << "valid_knotoid_input:   knotoid crosses shortcut at first shortcut crossing from the left" << endl;
-		}
-		else
-		{
-			shortcut_crossing[head] = 1;
-if (braid_control::DEBUG >= braid_control::DETAIL)
-	debug << "valid_knotoid_input:   knotoid crosses shortcut at first shortcut crossing from the right" << endl;
-		}
-	}
-	else
-	{
-		if (code_table[TYPE][head] == generic_code_data::TYPE1)				
-		{
-			shortcut_crossing[head] = 1; 
-if (braid_control::DEBUG >= braid_control::DETAIL)
-	debug << "valid_knotoid_input:   knotoid crosses shortcut at first shortcut crossing from the right" << endl;
-		}
-		else
-		{
-			shortcut_crossing[head] = -1;
-if (braid_control::DEBUG >= braid_control::DETAIL)
-	debug << "valid_knotoid_input:   knotoid crosses shortcut at first shortcut crossing from the left" << endl;
-		}
-	}
-		
-	bool valid = true;
-
-	for (int i = semi_arc+1; i< code_data.num_component_edges[0]; i++)
-	{
-
-if (braid_control::DEBUG >= braid_control::DETAIL)
-	debug << "valid_knotoid_input: semi-arc " << i << endl;
-	
-		/* check that semi-arc i is the under-arc at the next crossing */
-		if (i%2)
-		{				
-			int crossing = code_data.term_crossing[i];
-			peer = code_table[EVEN_TERMINATING][crossing];
-
-if (braid_control::DEBUG >= braid_control::DETAIL)
-	debug << "valid_knotoid_input:   crossing " << crossing << ", peer " << peer << endl;
-			
-			/* peer edge must not lie in the shortcut and the label for this crossing must be '+' if odd arc is under-arc */
-			if (semi_arc < peer && peer < code_data.num_component_edges[0])
-			{
-				valid = false;
-if (braid_control::DEBUG >= braid_control::DETAIL)
-	debug << "valid_knotoid_input: invalid knotoid code, peer edge also lies in the shortcut, which may not self-intersect" << endl;
-				break;
-			}
-			else if (code_table[LABEL][crossing] != generic_code_data::POSITIVE)
-			{
-				valid = false;
-if (braid_control::DEBUG >= braid_control::DETAIL)
-	debug << "valid_knotoid_input:   not positive, as required for valid knotoid" << endl;
-				break;
-			}
-			else
-			{
-			    /* The sortcut is oriented from the leg to the head, so we are tracing it in the
-				   reverse direction.  Thus, we must view the knotoid from the perspective of 
-				   looking back at the crossing from the originating shortcut edge
-				*/
-				if (code_table[TYPE][crossing] == generic_code_data::TYPE1)				
-				{
-					shortcut_crossing[crossing] = -1; 
-if (braid_control::DEBUG >= braid_control::DETAIL)
-	debug << "valid_knotoid_input:   OK, knotoid crosses from the left" << endl;
-				}
-				else
-				{
-					shortcut_crossing[crossing] = 1;
-if (braid_control::DEBUG >= braid_control::DETAIL)
-	debug << "valid_knotoid_input:   OK, knotoid crosses from the right" << endl;
-				}
-					
-			}
-		}
-		else
-		{
-			int crossing = i/2 ;
-			peer = code_table[ODD_TERMINATING][crossing];
-
-if (braid_control::DEBUG >= braid_control::DETAIL)
-	debug << "valid_knotoid_input:   crossing " << crossing << ", peer " << peer << endl;
-
-			/* peer edge must not lie in the shortcut and the label for this crossing must be '-' if even arc is under-arc */
-			if (semi_arc < peer && peer < code_data.num_component_edges[0])
-			{
-				valid = false;
-if (braid_control::DEBUG >= braid_control::DETAIL)
-	debug << "valid_knotoid_input: invalid knotoid code, peer edge also lies in the shortcut, which may not self-intersect" << endl;
-				break;
-			}
-			else if (code_table[LABEL][crossing] != generic_code_data::NEGATIVE)
-			{
-				valid = false;
-if (braid_control::DEBUG >= braid_control::DETAIL)
-	debug << "valid_knotoid_input:   not negative, as required for valid knotoid" << endl;
-				break;
-			}
-			else
-			{
-			    /* see comment above for the odd case */
-				if (code_table[TYPE][crossing] == generic_code_data::TYPE1)				
-				{
-					shortcut_crossing[crossing] = 1; 
-if (braid_control::DEBUG >= braid_control::DETAIL)
-	debug << "valid_knotoid_input:   OK, knotoid crosses from the right" << endl;
-				}
-				else
-				{
-					shortcut_crossing[crossing] = -1;
-if (braid_control::DEBUG >= braid_control::DETAIL)
-	debug << "valid_knotoid_input:   OK, knotoid crosses from the left" << endl;
-				}
-			}
-		}
-	}
-	
-if (braid_control::DEBUG >= braid_control::DETAIL)
-	debug << "valid_knotoid_input: returning " << valid << endl;
-	
-	code_data.shortcut_crossing = shortcut_crossing;
-	return valid;
-}
-
-
-
-/* flip_braid reverses the strand numbering of a braid whilst leaving the crossing type
-   unchanged.  Thus, for a braid on n strands, crossing +/-s_i is changed to +/-s_{n-i}
-   and t_i is changed to t_{n-i}.  This has the same effect as an ambient isotopy of R^3 
-   that turns over the braid, when considered to be laid on the plane R^2.
-*/
-void flip_braid(string& braid)
-{
-
-if (braid_control::DEBUG >= braid_control::DETAIL)
-	debug << "braid::flip_braid: flipping braid " << braid << endl;
-
-	int num_terms;
-	int num_strings;
-
-	if (valid_braid_input(braid, num_terms, num_strings))
-	{
-		vector<int> braid_num(num_terms);
-	    vector<int> type(num_terms);
-
-		parse_braid(braid, num_terms, braid_num, type);
-
-		ostringstream oss;
-		
-		for (int i=0; i< num_terms; i++)
-		{
-			if (type[i] == braid_crossing_type::POSITIVE)
-				oss << "s";
-			else if (type[i] == braid_crossing_type::NEGATIVE)
-				oss << "-s";
-			else 
-				oss << "t";
-			
-			oss << num_strings - braid_num[i];
-		}
-		
-		braid = oss.str();
-		
-if (braid_control::DEBUG >= braid_control::DETAIL)
-	debug << "braid::flip_braid: to give braid " << braid << endl;
-
-	}
-	else
-	{
-if (braid_control::DEBUG >= braid_control::DETAIL)
-	debug << "braid::flip_braid: not a valid braid, doing nothing" << endl;
-	}
-	
-}
-
-/* invert_braid reverses the order of the braid generators and their signs.
-   This has the same effect as reflecting the braid in a vertical line.
-*/
-void invert_braid(string& braid)
-{
-
-if (braid_control::DEBUG >= braid_control::DETAIL)
-	debug << "braid::invert_braid: inverting (vertical line reflecting) braid " << braid << endl;
-
-	int num_terms;
-	int num_strings;
-
-	if (valid_braid_input(braid, num_terms, num_strings))
-	{
-		vector<int> braid_num(num_terms);
-	    vector<int> type(num_terms);
-
-		parse_braid(braid, num_terms, braid_num, type);
-
-		ostringstream oss;
-		
-		for (int i=num_terms-1; i >= 0; i--)
-		{
-			if (type[i] == braid_crossing_type::POSITIVE)
-				oss << "-s";
-			else if (type[i] == braid_crossing_type::NEGATIVE)
-				oss << "s";
-			else 
-				oss << "t";
-			
-			oss << braid_num[i];
-		}
-		
-		braid = oss.str();
-		
-if (braid_control::DEBUG >= braid_control::DETAIL)
-	debug << "braid::invert_braid: to give braid " << braid << endl;
-
-	}
-	else
-	{
-if (braid_control::DEBUG >= braid_control::DETAIL)
-	debug << "braid::invert_braid: not a valid braid, doing nothing" << endl;
-	}
-	
-}
-
-/* plane_reflect_braid interchanges the sign of classical crossings.
-   This has the same effect as reflecting the braid in the plane of the diagram.
-   This is the same as Jeremy green's "vertical mirror"
-*/
-void plane_reflect_braid(string& braid)
-{
-
-if (braid_control::DEBUG >= braid_control::DETAIL)
-	debug << "braid::plane_reflect_braid: reflecting braid " << braid << endl;
-
-	int num_terms;
-	int num_strings;
-
-	if (valid_braid_input(braid, num_terms, num_strings))
-	{
-		vector<int> braid_num(num_terms);
-	    vector<int> type(num_terms);
-
-		parse_braid(braid, num_terms, braid_num, type);
-
-		ostringstream oss;
-		
-		for (int i=0; i< num_terms; i++)
-		{
-			if (type[i] == braid_crossing_type::POSITIVE)
-				oss << "-s";
-			else if (type[i] == braid_crossing_type::NEGATIVE)
-				oss << "s";
-			else 
-				oss << "t";
-			
-			oss << braid_num[i];
-		}
-		
-		braid = oss.str();
-		
-if (braid_control::DEBUG >= braid_control::DETAIL)
-	debug << "braid::plane_reflect_braid: to give braid " << braid << endl;
-
-	}
-	else
-	{
-if (braid_control::DEBUG >= braid_control::DETAIL)
-	debug << "braid::plane_reflect_braid: not a valid braid, doing nothing" << endl;
-	}
-	
-}
-
-/* line_reflect_braid reflects the braid in a horizontal line south of the braid diagram.
-   It reverses the strand numbering of a braid and toggles the classical crossing types.
-   Thus, for a braid on n strands, crossing +/-s_i is changed to -/+s_{n-i}
-   and t_i is changed to t_{n-i}.  
-*/
-void line_reflect_braid(string& braid)
-{
-
-if (braid_control::DEBUG >= braid_control::DETAIL)
-	debug << "braid::line_reflect_braid: (horizontal) line reflecting braid " << braid << endl;
-
-	int num_terms;
-	int num_strings;
-
-	if (valid_braid_input(braid, num_terms, num_strings))
-	{
-		vector<int> braid_num(num_terms);
-	    vector<int> type(num_terms);
-
-		parse_braid(braid, num_terms, braid_num, type);
-
-		ostringstream oss;
-		
-		for (int i=0; i< num_terms; i++)
-		{
-			if (type[i] == braid_crossing_type::POSITIVE)
-				oss << "-s";
-			else if (type[i] == braid_crossing_type::NEGATIVE)
-				oss << "s";
-			else 
-				oss << "t";
-			
-			oss << num_strings - braid_num[i];
-		}
-		
-		braid = oss.str();
-		
-if (braid_control::DEBUG >= braid_control::DETAIL)
-	debug << "braid::line_reflect_braid: to give braid " << braid << endl;
-
-	}
-	else
-	{
-if (braid_control::DEBUG >= braid_control::DETAIL)
-	debug << "braid::line_reflect_braid: not a valid braid, doing nothing" << endl;
-	}
-	
-}
-
 /* The Kamada double covering of a diagram is defined in "Colourings and doubled colourings of virtual doodles" for flat 
    virtuals and doodles, here implemented for braids.  Consider a braid reflected below within the plane, so that the 
    original strands 1,...,n and the reflected strands 1',...,n' are aligned as in the left side of the following left hand 
@@ -1965,13 +899,13 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 */
 void Kamada_double_covering(string& braid)
 {
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "braid::Kamada_double_covering: evaluating the double covering of braid " << braid << endl;
 
 	int num_terms;
 	int num_strings;
 
-	if (valid_braid_input(braid, num_terms, num_strings))
+	if (valid_braid_input(braid, num_terms, num_strings, braid_control::SILENT_OPERATION, braid_control::RAW_OUTPUT, braid_control::OUTPUT_AS_INPUT))
 	{
 		vector<int> braid_num(num_terms);
 	    vector<int> type(num_terms);
@@ -1984,7 +918,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 		{
 			if (type[i] == braid_crossing_type::VIRTUAL)
 			{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "braid::Kamada_double_covering:   crossing " << i << " is virtual, replacing t" << braid_num[i] << " with "
 	      << "t" << num_strings + braid_num[i] << " t" << num_strings - braid_num[i] << endl;
@@ -1994,7 +928,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 			}
 			else 
 			{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "braid::Kamada_double_covering:   crossing " << i << " is flat, replacing s" << braid_num[i] << " with "
 	      << "B_i s" << num_strings + braid_num[i] << " s" << num_strings - braid_num[i] << " B_i" << endl;
@@ -2017,7 +951,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 				    B_i << "t" << num_strings - j; 
 
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "braid::Kamada_double_covering:     where B_i = " << B_i.str() << endl;
 }				
@@ -2027,13 +961,13 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 		
 		braid = oss.str();
 		
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "braid::Kamada_double_covering: to give braid " << braid << endl;
 
 	}
 	else
 	{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "braid::Kamada_double_covering: not a valid braid, doing nothing" << endl;
 	}
 }
@@ -2049,7 +983,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 void commutative_automorphism_invariant(const Qpmatrix& phi, const Qpmatrix& psi, string input_string, string title)
 {
 
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "commutative_automorphism_invariant: Calculating commutative automorphism invariant for " << title << " = " << input_string << endl;
 
 	if (title.length())
@@ -2060,7 +994,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 			output << "\n\n" << title << "\n" << input_string << endl;
    	}		
    		
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 {
 	debug << "commutative_automorphism_invariant: phi = " << endl;
 	print(phi,debug,3,"commutative_automorphism_invariant: ");
@@ -2078,12 +1012,12 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 	{
 		int num_terms;
 		int num_strings;
-		if (valid_braid_input(input_string, num_terms, num_strings))
+		if (valid_braid_input(input_string, num_terms, num_strings, braid_control::SILENT_OPERATION, braid_control::RAW_OUTPUT, braid_control::OUTPUT_AS_INPUT))
 		{
 			input_string = braid_to_generic_code(input_string, num_terms, generic_code_data::peer_code);
 			read_peer_code(code_data, input_string);
 			
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "commutative_automorphism_invariant: valid braid input converted to peer code " << input_string << endl;
 
 		}
@@ -2124,7 +1058,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 	int matrix_N_size = 2*num_classical;  // number of N-rows
 	int matrix_size = N*matrix_N_size;  // number of actual rows
 
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 {
 	debug << "commutative_automorphism_invariant: num_components = " << num_components << endl;
 	debug << "commutative_automorphism_invariant: num_crossings = " << num_crossings << endl;
@@ -2149,14 +1083,14 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 	{
 		if (code_table[LABEL][i] == generic_code_data::VIRTUAL)
 		{
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 	debug << "commutative_automorphism_invariant: crossing " << i << " trivial variables = " << 2*i << " and " << code_table[OPEER][i] << endl;
 			trivial_variable_flags[2*i] = 1;
 			trivial_variable_flags[code_table[OPEER][i]] = 1;
 		}
 	}
 	
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 {
 	debug << "commutative_automorphism_invariant: trivial_variable_flags: ";
 	for (int i=0; i<2*num_crossings; i++)
@@ -2196,7 +1130,7 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 	}
 	
 	
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 {
 	debug << "commutative_automorphism_invariant: variables: ";
 	for (int i=0; i<2*num_crossings; i++)
@@ -2271,7 +1205,7 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 		else
 			crossing_type = braid_crossing_type::POSITIVE;
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {	
 	debug << "commutative_automorphism_invariant: crossing " << i;
 	if ( crossing_type == braid_crossing_type::NEGATIVE )
@@ -2299,7 +1233,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 				set_matrix_N_element(matrix_rep,2*row,code_table[EVEN_ORIGINATING][i],psi_minus_phi,0,0,N);
 				decrement_matrix_N_element(matrix_rep,2*row,code_table[ODD_ORIGINATING][i],N);
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << code_table[EVEN_TERMINATING][i] << ":phi    ";
 	debug << code_table[EVEN_ORIGINATING][i] << ":psi_minus_phi    ";
@@ -2312,7 +1246,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 				set_matrix_N_element(matrix_rep,2*row,code_table[ODD_ORIGINATING][i],psi_minus_phi,0,0,N);
 				decrement_matrix_N_element(matrix_rep,2*row,code_table[EVEN_ORIGINATING][i],N);
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << code_table[ODD_TERMINATING][i] << ":phi    ";
 	debug << code_table[ODD_ORIGINATING][i] << ":psi_minus_phi    ";
@@ -2328,7 +1262,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 				set_matrix_N_element(matrix_rep,2*row,code_table[EVEN_TERMINATING][i],psi_minus_phi,0,0,N);
 				decrement_matrix_N_element(matrix_rep,2*row,code_table[ODD_TERMINATING][i],N);
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << code_table[EVEN_ORIGINATING][i] << ":phi    ";
 	debug << code_table[EVEN_TERMINATING][i] << ":psi_minus_phi    ";
@@ -2341,7 +1275,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 				set_matrix_N_element(matrix_rep,2*row,code_table[ODD_TERMINATING][i],psi_minus_phi,0,0,N);
 				decrement_matrix_N_element(matrix_rep,2*row,code_table[EVEN_TERMINATING][i],N);
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << code_table[ODD_ORIGINATING][i] << ":phi    ";
 	debug << code_table[ODD_TERMINATING][i] << ":psi_minus_phi    ";
@@ -2351,7 +1285,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 		}
 		
    
-if (braid_control::DEBUG >= braid_control::DETAIL) 
+if (debug_control::DEBUG >= debug_control::DETAIL) 
 	debug << "commutative_automorphism_invariant: row " << 2*row+1 << " ";
 
 		/* now the down action in row 2*row+1 */	
@@ -2362,7 +1296,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 				set_matrix_N_element(matrix_rep,2*row+1,code_table[EVEN_ORIGINATING][i],psi,0,0,N);
 				decrement_matrix_N_element(matrix_rep,2*row+1,code_table[ODD_TERMINATING][i],N);
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << code_table[EVEN_ORIGINATING][i] << ":psi    ";
 	debug << code_table[ODD_TERMINATING][i] << ":-1     " << endl;
@@ -2373,7 +1307,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 				set_matrix_N_element(matrix_rep,2*row+1,code_table[ODD_ORIGINATING][i],psi,0,0,N);
 				decrement_matrix_N_element(matrix_rep,2*row+1,code_table[EVEN_TERMINATING][i],N);
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << code_table[ODD_ORIGINATING][i] << ":psi    ";
 	debug << code_table[EVEN_TERMINATING][i] << ":-1     " << endl;
@@ -2387,7 +1321,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 				set_matrix_N_element(matrix_rep,2*row+1,code_table[EVEN_TERMINATING][i],psi,0,0,N);
 				decrement_matrix_N_element(matrix_rep,2*row+1,code_table[ODD_ORIGINATING][i],N);
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << code_table[EVEN_TERMINATING][i] << ":psi    ";
 	debug << code_table[ODD_ORIGINATING][i] << ":-1     " << endl;
@@ -2398,7 +1332,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 				set_matrix_N_element(matrix_rep,2*row+1,code_table[ODD_TERMINATING][i],psi,0,0,N);
 				decrement_matrix_N_element(matrix_rep,2*row+1,code_table[EVEN_ORIGINATING][i],N);
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << code_table[ODD_TERMINATING][i] << ":psi    ";
 	debug << code_table[EVEN_ORIGINATING][i] << ":-1     " << endl;
@@ -2425,7 +1359,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 		}
 	}
 
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 {
     debug << "commutative_automorphism_invariant: matrix representation derived from generic code data:" << endl;
     debug << matrix_rep;
@@ -2459,7 +1393,7 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 	}
 	output << delta_0 << endl;
 
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "commutative_automorphism_invariant:Delta_0 = " << delta_0 << endl;
 
 	if (!braid_control::CALCULATE_DELTA_0_ONLY && (braid_control::ALWAYS_CALCULATE_DELTA_1 || delta_0 == Qpolynomial("0")))
@@ -2467,7 +1401,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 		/* hcf is used only in single variable examples */
 		polynomial<scalar,char,bigint> hcf = delta_0.getn();
 
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
     debug << "\ncommutative_automorphism_invariant:hcf initialized to " << hcf << endl;
 
 		int rperm[matrix_size];
@@ -2522,7 +1456,7 @@ rat_poly_delta_1_calculation_complete:
 			}
 			output << hcf << endl;
 
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "commutative_automorphism_invariant:" << "Delta_1 = " << hcf << endl;	
 
 		}

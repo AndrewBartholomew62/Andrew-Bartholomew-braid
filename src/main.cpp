@@ -83,7 +83,12 @@ documentation, available at www.layer8.co.uk/maths/braids
 				  Added the parity arrow polynomial for classical or virtual knots, and the relaxed parity arrow polynomial  for  classical and virtual knotoids
 	Version 23.0  Updated the syntax for knot-type knotoids and long knots to be "K:" and "L:"
 	              Extended the ability to convert Gauss codes to labelled peer codes based on Jeremy Green's algorithm for drawing virtual knots from Gauss codes.
-	              Added support for reading Gauss codes of the form sequence{(O|U)<crossing-num><crossing-sign>, e.g. O1-O2+U1-O3+O4+U2+U3+U4+
+	              Added support for reading Gauss codes of the form sequence{(O|U)<crossing-num><crossing-sign>, e.g. O1-O2+U1-O3+O4+U2+U3+U4+ (October 2021)
+	Version 23.1  Code overhaul to provide common code base for braid, draw and vlist programmes (November 2021)
+	Version 24.0  Added the opgc and uopgc options to the Gauss code task, added OU format for Gauss code output (December 2021)	
+	Version 25.0  Added planar diagram support as an alternative input format, added supprt for Gauss code and planar diagram
+	              input to the knotoid bracket, parity bracket and parity arrow polynomial tasks (March 2022)
+	
 ********************************************************************************************************************************************************/
 using namespace std;
 #include <string>
@@ -109,12 +114,12 @@ ifstream    input;
 #include <quaternion-scalar.h>
 #include <polynomial.h>
 #include <matrix.h>
+#include <input-control.h>
 #include <braid.h>
-
 #include <gauss-orientation.h>
 
 /******************** Control Variables **********************/
-string braid_control::version  = "23.0";
+string braid_control::version  = "25.0";
 
 int braid_control::gcd_initializing;
 
@@ -159,9 +164,12 @@ bool braid_control::MATRIX = false;
 bool braid_control::NORMALIZING_Q_POLYNOMIALS = false;
 bool braid_control::NORMALIZE_BRACKET = true;
 bool braid_control::NUMERATOR_GCD = false;
+bool braid_control::OPGC = false; // over preferred Gaus code
+bool braid_control::OU_FORMAT = false;
 bool braid_control::OUTPUT_AS_INPUT = false;
 bool braid_control::PARITY_ARROW = false;
 bool braid_control::PARITY_BRACKET = false;
+bool braid_control::PD_FORMAT = false;
 bool braid_control::PEER_CODE = false;
 bool braid_control::PLANE_REFLECT_BRAID = false;
 bool braid_control::PRIME_WEYL = false;
@@ -185,6 +193,7 @@ bool braid_control::TRUNCATED_WEYL = false;
 bool braid_control::T_VARIABLE = true;
 bool braid_control::LPGD = false; //  left preferred Gaus data
 bool braid_control::ULPGD = false; // unoriented left preferred Gaus data
+bool braid_control::UOPGC = false; // unoriented over preferred Gaus code
 bool braid_control::VERIFY_DELTA_0 = false;
 bool braid_control::VOGEL_ALGORITHM = false;
 bool braid_control::VOGEL_HEIGHT_ONLY = false;
@@ -206,7 +215,7 @@ bool braid_control::first_time = true;
 int braid_control::REMOVE_COMPONENT=0; // used to identify a component of a peer code to be removed
 int	braid_control::SWITCH_POWER=0; // used to control whether powers of switches are calculated.
 
-int braid_control::DEBUG = braid_control::OFF;
+int debug_control::DEBUG = debug_control::OFF;
 bool braid_control::VOGEL_DEBUG = false;
 
 /* RACK_TERMS is the default for number of positive and negative terms added to
@@ -225,7 +234,6 @@ int braid_control::reset_count = 0;
 
 /********************* Function prototypes ***********************/
 void braid(string input_string, string title);
-//void bracket_polynomial(string input_string, string title);
 bool get_next_input_string(string input_file,string& input_string, string& title);
 template <class T, class St> void report_switch_matrix (const matrix<T,St>& switch_matrix, 
 														const matrix<T,St>& switch_matrix_inverse, string message);
@@ -238,26 +246,15 @@ void set_programme_short_option(char* cptr);
 bool debug_setup(char* argv_ptr);
 void check_debug_option_parameters(char* pptr, string option);
 void set_cli_suboptions(char* optr, string option);
-void get_word (ifstream& input, string& buffer, string& title);
 void print_prog_params (ostream& os, string level, string prefix);
 Hmatrix H22inverse(Hmatrix& M);
 Hpmatrix Hpmatrix_from_q_switch(const Hmatrix& q_switch, bool t_variable);
-bool valid_braid_input (string input_string, int& num_terms, int& num_strings);
+bool valid_braid_input (string input_string, int& num_terms, int& num_strings, bool raw_output, bool silent_output, bool output_as_input);
 Qpmatrix adj2(Qpmatrix& M);
 void simplify_matrix (Qpmatrix& M);
-void read_immersion_code (generic_code_data& code_data, string input_string);
 string parse_long_knot_input_string (string input_string);
 void display_fixed_point_switch(matrix<int>& M, ostream& os, bool number_from_zero);
-void read_peer_code (generic_code_data& code_data, string input_string);
-void read_code_data (generic_code_data& code_data, string input_string);
 string vogel (generic_code_data code_data);
-//polynomial<int> sawollek(char* braid, int num_terms);
-//bool valid_braid_input (string input_string, int& num_terms, int& num_strings);
-//void standard_rep (char*& word);
-//void dynnikov(char* inbuf, int num_strings, int num_terms);
-//int dowker (char* braid, int num_terms, int*& code);
-//string gauss_code (char* input, int num_terms);
-//string immersion_code (char* input, int num_terms);
 			
 template <typename T, typename V, typename U, typename St> 
 matrix<polynomial<T,V,U>,St> C_study_matrix(const matrix<polynomial<T,V,U>,St>& H_matrix, int n=0, int m=0, int* rperm=0, int* cperm=0);
@@ -290,6 +287,7 @@ void rack_poly_invariant(matrix<int>& Su, matrix<int>& Sd, matrix<int>& invSu, m
 						 matrix<int>& Td, ST_pair_type pair_type, string input_string, string title);
 
 void commutative_automorphism_invariant(const Qpmatrix& phi, const Qpmatrix& psi, string input_string, string title);			
+void set_acceptable_input_type();
 
 void sigfpe_handler (int sig) 
 {
@@ -482,7 +480,7 @@ int main (int argc, char* argv[])
 		}	
     }
 
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 {
 	debug << "full command line: ";
 	for (int i = 0; i< argc; i++)
@@ -493,23 +491,46 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 
 	if (braid_control::DEVELOPMENT_MODE)
 	{	
-	
+		input_control::ACCEPT_MAP |= input_control::planar_diagram;
+
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+	debug << "development: input_control::ACCEPT_MAP set to 0x" << hex << input_control::ACCEPT_MAP << dec << endl;
+		
+		string buffer;
+		string title;
+    	input.open(input_file.c_str());
+    	if(!input)
+    	{
+			cout << "\nError opening input file\n";
+			exit(0);
+    	}	
+		
+		while (true)
+		{
+			get_input_word (input, buffer, title);
+			cout << "read " << buffer << endl;
+
+			if (buffer == "exit")
+				break;
+		}
+exit(0);
+
 		string input_string;// = "[5 11 7 1, 13 3 15 9]/+ * + + * * # #";
 		cout << "Code data: ";
 		getline(cin,input_string);
 		
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "development: input_string = " << input_string << endl;
 	
 		generic_code_data code_data;
 		read_peer_code(code_data,input_string);
 	
-void print_code_data(generic_code_data& code_data, ostream& s, string prefix);
-void write_peer_code(ostream& s, const generic_code_data& code_data, bool zig_zags=false, bool labelled=true);
+//void print_code_data(generic_code_data& code_data, ostream& s, string prefix);
+//void write_peer_code(ostream& s, const generic_code_data& code_data, bool zig_zags=false, bool labelled=true);
 bool remove_edge_flags_from_peer_code(generic_code_data& code_data, vector<int>& edge_flag);
 int remove_Reidemeister_II(generic_code_data& code_data, vector<int>& component_flags);
-int vertex_span (generic_code_data& code_data, int initial_crossing, vector<int>* exclude=0);
-bool valid_knotoid_input(generic_code_data& code_data);
+//int vertex_span (generic_code_data& code_data, int initial_crossing, vector<int>* exclude=0);
+//bool valid_knotoid_input(generic_code_data& code_data);
 generic_code_data partition_peer_code(generic_code_data& code_data);
 /*
 		matrix<int> input_zig_zag_count(2, code_data.num_crossings);
@@ -566,7 +587,7 @@ generic_code_data partition_peer_code(generic_code_data& code_data);
 */
 
 /*
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 {
 	debug << "Initial code_data:" << endl;
 	print_code_data(code_data, debug,"");
@@ -574,7 +595,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 }		
 		generic_code_data subsequent_code_data = partition_peer_code(code_data);
 		
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 {
 		debug << "partitioned code_data:" << endl;
 		print_code_data(code_data, debug,"");
@@ -596,7 +617,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 			cout << "\nError opening input file\n";
 			exit(0);
     	}	
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "braid::main: input file: " << input_file << "\n";
 
 		/* Read any options included in the input file */
@@ -611,7 +632,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 			if (strlen(line_buf))
 			{
 				cptr = strchr(line_buf,'[');
-				if (cptr && !strchr(line_buf,'\\') && !strchr(line_buf,'/'))
+				if (cptr && !strchr(line_buf,'\\') && !strchr(line_buf,'/') && !strchr(line_buf,'X'))
 				{		
 					/* this is an options line not a line containing a peer code
 					   make sure there's an end to the option definitions on this line 
@@ -638,7 +659,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
     	}
 	}
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	print_prog_params(debug, "detail", "print_prog_params: ");
 
     /* prepare output file */
@@ -780,7 +801,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 			cout<< " code of the closure";
 			cout << "\nof the braids ";
 			if (braid_control::PEER_CODE) 
-				cout << "or shifted peer codes, Gauss codes, or immersion codes ";
+				cout << "or shifted peer codes, Gauss codes, immersion codes, or planar diagrams ";
 			cout << "that you enter";
 			cout << (braid_control::IMMERSION_CODE?  ", provided they are knots.\n":".\n");
 		}
@@ -880,6 +901,8 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 				cout << "\nE.g. s1-s2t1-s3-s3" << endl;
 		}
     }
+    
+    set_acceptable_input_type();
 	
 try {
 
@@ -904,12 +927,12 @@ try {
 				if (next_line.find(';') != string::npos)
 					next_line.erase(next_line.find(';'));
 
-//if (braid_control::DEBUG >= braid_control::DETAIL)
+//if (debug_control::DEBUG >= debug_control::DETAIL)
 //	debug << "braid::main: read " << next_line<< " from input file" << endl;
 				
 				if (next_line.length())
 				{				
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "braid::main: processing input file line: " << next_line << endl;
 
 					if (next_line[0] == '-' && next_line[1] == '-')
@@ -977,14 +1000,14 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 								switch_cache.push_back(pair<string,string>(title,next_line));
 								title.clear();
 
-//if (braid_control::DEBUG >= braid_control::DETAIL)
+//if (debug_control::DEBUG >= debug_control::DETAIL)
 //	debug << "braid::main: added matrix switch " << next_line<< " to switch cache" << endl;
 							}
 							else if (braid_control::QUATERNION && !(*cptr))
 							{
 								switch_cache.push_back(pair<string,string>(title,next_line));
 								title.clear();
-//if (braid_control::DEBUG >= braid_control::DETAIL)
+//if (debug_control::DEBUG >= debug_control::DETAIL)
 //	debug << "braid::main: added quaternionic switch " << next_line<< " to switch cache" << endl;
 							}
 							delete[] c_next_line;
@@ -993,10 +1016,10 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 				}
 	    	}
 		
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "braid::main: inputfile contains " << switch_cache.size() << " switches" << endl;
 
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 {
 	if (switch_cache.size())
 	{
@@ -1025,7 +1048,7 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 				next_switch = switch_cache[s].second;
 				switch_title = switch_cache[s].first;
 
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "braid::main: next switch from switch_cache: " << next_switch << endl;
 
 			}
@@ -1061,7 +1084,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 
 			if (input_file_provided)
 			{
-				/* reset input ready for calls to get_word */
+				/* reset input ready for calls to get_input_word */
 				input.clear(); // state flags
 				input.seekg(0);
 			}
@@ -1134,7 +1157,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 
 					q_switch[1][0] = C;
 					q_switch[1][1] = D;
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 	debug << "braid::main: fundamenatal equation satisfied:\n" << "A = " << A << " B = " << B << " C = " << C << " D = " << D << endl;
 
 					Quaternion det = determinant(q_switch);
@@ -1180,7 +1203,7 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 								}
 							}
 					
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "braid::main: switch power = " << braid_control::SWITCH_POWER << "\n" << power << endl;
 	
 						}
@@ -1207,7 +1230,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 					}
 		    		output.flush();
 
-if (braid_control::DEBUG >= braid_control::BASIC)	
+if (debug_control::DEBUG >= debug_control::BASIC)	
 {
 	debug << "braid::main: switch elements " << A << " " << B << endl;
 	debug << "braid::main: do not satisfy the unit and fundamental equation requirements ." << endl;
@@ -1239,7 +1262,7 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 						output << "Error! Terms or comma missing from switch: " << next_switch << endl;
 					}
 					
-if (braid_control::DEBUG >= braid_control::SUMMARY)	
+if (debug_control::DEBUG >= debug_control::SUMMARY)	
     debug << "\nError! Terms or comma missing from switch: " << next_switch << endl;
 
 					continue; // with the next switch
@@ -1250,18 +1273,18 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 				{
 					braid_control::T_VARIABLE = true;
 
-if (braid_control::DEBUG >= braid_control::SUMMARY)	
+if (debug_control::DEBUG >= debug_control::SUMMARY)	
 	debug << "braid::main: t-variable read from input switch " << endl;
 				}
 				
 				
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)	
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)	
 	debug << "braid::main: matrix switch size = " << matrix_size << endl;
 
 				Qpmatrix A(matrix_size,matrix_size);
 				Qpmatrix B(matrix_size,matrix_size);
 
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)	
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)	
 	debug << "braid::main: reading matrix A from next_switch:" << endl;
 
 				/* read in A */				
@@ -1272,7 +1295,7 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 					string::size_type posB = next_switch.find(',',posA);
 					string term = next_switch.substr(posA, (posB==string::npos? posB: posB-posA));
 
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)	
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)	
 	debug << "braid::main:  next term = " << term << endl;
 
 					A[i][j] = Qpolynomial(term.substr(0,term.find('/')));
@@ -1286,7 +1309,7 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 					posA = posB+1;
 				}
 				
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 {
 	debug << "braid::main: A = \n" << A << endl;
 	debug << "braid::main: reading matrix B from next_switch:" << endl;
@@ -1299,7 +1322,7 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 					string::size_type posB = next_switch.find(',',posA);
 					string term = next_switch.substr(posA, (posB==string::npos? posB: posB-posA));
 
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)	
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)	
 	debug << "braid::main:  next term = " << term << endl;
 
 					B[i][j] = Qpolynomial(term.substr(0,term.find('/')));
@@ -1317,7 +1340,7 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 					posA = posB+1;
 				}
 				
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 	debug << "braid::main: B = \n" << B << endl;
 				
 
@@ -1335,7 +1358,7 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 						A1[i][j] *= Qpolynomial("-1");
 				}
 
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 	debug << "braid::main: 1-A = \n" << A1 << endl;
 
 				/* this is cheating really, it saves calling numcols etc 
@@ -1351,7 +1374,7 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 					invA = A.inverse();
 					invB = B.inverse();
 					
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 {
 	debug << "braid::main: invA = \n" << invA << endl;
 	Qpmatrix t1 = invA * A;
@@ -1367,7 +1390,7 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 					Qpmatrix AB = invA * invB * A * B;
 					Qpmatrix A1AB = A1 * AB;
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "braid::main: AB = " << AB << endl;
 	debug << "braid::main: A1AB = " << A1AB << endl;
@@ -1397,7 +1420,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 						cout << "\ncalculating C" << endl;
 				    Qpmatrix C = invA * invB * A * A1;
 
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 {
 	debug << "braid::main: fundamenatal equation satisfied:" << endl;
 	debug << "braid::main: C = \n" << C << endl;
@@ -1407,7 +1430,7 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 						cout << "calculating D" << endl;
 					Qpmatrix D = 1 - invA * invB * A * B;
 
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 	debug << "braid::main: D = \n" << D << endl;
 
 
@@ -1434,13 +1457,13 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 					for (int i=0; i< matrix_size; i++)
 					for (int j=0; j< matrix_size; j++)
 						switch_matrix[i+matrix_size][j+matrix_size] = D[i][j];
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 	debug << "braid::main: switch_matrix prior to cancellation = \n" << switch_matrix << endl;
 
 					simplify_matrix(switch_matrix);
 
 
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 	debug << "braid::main: switch_matrix = \n" << switch_matrix << endl;
 
 
@@ -1449,13 +1472,13 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 					matrix_control::wait_threshold = 3;
 					Qpmatrix switch_matrix_inverse = switch_matrix.inverse();
 
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 	debug << "braid::main: inverse of S prior to cancellation = \n" << switch_matrix_inverse << endl;
 
 
 					simplify_matrix(switch_matrix_inverse);
 
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 {
 	debug << "braid::main: switch_matrix_inverse = \n" << switch_matrix_inverse << endl;
 	Qpmatrix t3 = switch_matrix_inverse * switch_matrix;
@@ -1493,7 +1516,7 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 							}
 						}
 					
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "braid::main: switch power = " << braid_control::SWITCH_POWER << "\n" << power << endl;
 	
 					}
@@ -1539,7 +1562,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 					}
 		    		output.flush();
 
-if (braid_control::DEBUG >= braid_control::BASIC)	
+if (debug_control::DEBUG >= debug_control::BASIC)	
 {
 	debug << "braid::main: switch elements A = " << A << "\nB= " << B << endl;
 	debug << "braid::main: do not satisfy the unit and fundamental equation requirements .\n" << endl;
@@ -1574,7 +1597,7 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 				{
 					braid_control::T_VARIABLE = true;
 
-if (braid_control::DEBUG >= braid_control::SUMMARY)	
+if (debug_control::DEBUG >= debug_control::SUMMARY)	
 	debug << "braid::main: t-variable read from input switch " << endl;
 				}
 
@@ -1624,7 +1647,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 							output << "Error! Terms or comma missing from switch: " << next_switch << endl;							
 						}
 					
-if (braid_control::DEBUG >= braid_control::SUMMARY)	
+if (debug_control::DEBUG >= debug_control::SUMMARY)	
     debug << "\nError! Terms or comma missing from switch: " << next_switch << endl;
 
 						continue; // with the next switch
@@ -1692,7 +1715,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 					scalar::set_variant(scalar::MOD_P);	
 					polynomial_control::MOD_P = true;
 					mod_p::set_p(p);
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 {
 	debug << "braid::main: Weyl algebra switch requires MOD_P scalars with p = " << mod_p::get_p() << endl;
 	debug << "braid::main: setting polynomial_control::MOD_P = true" << endl;
@@ -1702,7 +1725,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 				{
 					scalar::set_variant(scalar::BIGINT); // here p==0 but we may have been given the global mod-p option
 					polynomial_control::MOD_P = false;
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 {
 	debug << "braid::main: Weyl algebra switch requires BIGINT scalars" << endl;
 	debug << "braid::main: setting polynomial_control::MOD_P = false" << endl;
@@ -1710,7 +1733,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 				}
 				else
 				{
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "braid::main: Weyl algebra switch using globally specified MOD_P scalars with p = " << mod_p::get_p() << endl;
 				}
 
@@ -1726,7 +1749,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 					if (next_switch.find('G') != string::npos)
 						braid_control::NUMERATOR_GCD = true;
 
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 {
 	debug << "braid::main: custom Weyl algebra switch, n = " << n << ", p = " << p << endl;
 	if (braid_control::QUANTUM_WEYL)
@@ -1777,7 +1800,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 						posA = posB+1;
 					}
 
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 {
 	debug << "braid::main: B (= U) = \n" << B << endl;
 	debug << "braid::main: V = \n" << V << endl;
@@ -1807,12 +1830,12 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 						for (int j=0; j< n; j++)
 							weyl_check[i][j] *= q;
 								
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 	debug << "braid::main: Weyl algebra check: B*V - qV*B = " << B*V - weyl_check << endl;
 					}
 					else
 					{
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 	debug << "braid::main: Weyl algebra check: B*V - V*B = " << B*V - weyl_check << endl;
 					}
 						
@@ -1825,7 +1848,7 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 					
 					if (braid_control::PRIME_WEYL)
 					{
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "braid::main: prime Weyl algebra switch with n = " << n << ", p = " << p << endl;
 
 						/* Assign B (= U) */
@@ -1858,18 +1881,18 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 									v++;
 							}
 						}
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 {
 	debug << "braid::main: B (= U) = \n" << B << endl;
 	debug << "braid::main: V = \n" << V << endl;
 }					
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "braid::main: Weyl algebra check: B*V - V*B = " << B*V - V*B << endl;
 					}
 					else if (braid_control::TRUNCATED_WEYL)
 					{
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "braid::main: truncated Weyl algebra switch with n = " << n << ", p = " << p << endl;
 
 						char var = 'a';
@@ -1913,12 +1936,12 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 						K_coeff[0] /= Wpolynomial("b"); // i_1^{-1}
 						Wpolynomial i1factor = Wpolynomial("-1") * K_coeff[0];
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "braid::main: i1 factor for K_coeffs = " << i1factor << endl;					
 
 						for (int r=1; r < n-1; r++)
 						{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "braid::main: r=" << r << endl;
 
 							Wpolynomial sum = Wpolynomial("0");
@@ -1928,10 +1951,10 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 								oss << k+1;
 								Wpolynomial term  = Wpolynomial(oss.str());
 								term *= I_coeff[k+1] * K_coeff[r-k];
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "braid::main: \t" << k+1 << "i" << k+1 << "k" << r-k << endl;							
 								sum += term;							
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "braid::main: \t\tterm = " << term << "\tsum = " << sum << endl;
 							}
 
@@ -1940,7 +1963,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 
 						/* Now calculate K_coeff[n-1] */
 						{ // new scope to make sum a local variable again
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "braid::main: r=" << n-1 << endl;
 
 							Wpolynomial sum = Wpolynomial("0");
@@ -1950,16 +1973,16 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 								oss << k+1;
 								Wpolynomial term  = Wpolynomial(oss.str());
 								term *= I_coeff[k+1] * K_coeff[n-1-k];
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "braid::main: \t" << k+1 << "i" << k+1 << "k" << n-1-k << endl;							
 								sum += term;							
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "braid::main: \t\tterm = " << term << "\tsum = " << sum << endl;
 							}
 							K_coeff[n-1] = i1factor * sum;
 						}
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "braid::main: I coefficients: ";
 	for (int i=0; i < n; i++)
@@ -2043,18 +2066,18 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 								}
 							}
 						}
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 {
 	debug << "braid::main: B (= U) = \n" << B << endl;
 	debug << "braid::main: V = \n" << V << endl;
 }
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "braid::main: Weyl algebra check: B*V - V*B = " << B*V - V*B << endl;
 					}
 					else if (braid_control::QUANTUM_WEYL)
 					{
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "braid::main: quantum Weyl algebra switch with n = " << n << ", p = " << p << endl;
 						/* Assign B (= U) */
 						for (int i = 0; i< n; i++)
@@ -2132,13 +2155,13 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 							}
 						}
 
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 {
 	debug << "braid::main: B (= U) = \n" << B << endl;
 	debug << "braid::main: V = \n" << V << endl;
 }					
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	Wmatrix weyl_check = V*B;					
 	Wpolynomial q("q");
@@ -2146,7 +2169,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 	for (int j=0; j< n; j++)
 		weyl_check[i][j] *= q;
 								
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "braid::main: Weyl algebra check: B*V - qV*B = " << B*V - weyl_check << endl;
 }
 					}
@@ -2156,7 +2179,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 				{
 					Wmatrix invB = B.inverse();
 					Wmatrix A = V.inverse() * invB;
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 {
 	debug << "braid::main: V.inverse() = \n" << V.inverse() << endl;
 	debug << "braid::main: check = " << V*V.inverse() << endl;
@@ -2185,7 +2208,7 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 					*/
 					Wmatrix invA=B*V;
 
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 {
 	debug << "braid::main: 1-A = \n" << A1 << endl;
 	debug << "braid::main: Ainv () = U*V = \n" << invA << endl;
@@ -2199,12 +2222,12 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 					// C = A^{-1}B^{-1}A(1-A)
 			    	Wmatrix C = invA * invB * A * A1;
 
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 	debug << "braid::main: C = \n" << C << endl;
 
 					Wmatrix D = 1 - invA * invB * A * B;
 
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 	debug << "braid::main: D = \n" << D << endl;
 
 					if (braid_control::EQUALITY_TEST)
@@ -2231,7 +2254,7 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 					for (int j=0; j< n; j++)
 						switch_matrix[i+n][j+n] = D[i][j];
 
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 	debug << "braid::main: switch_matrix  = \n" << switch_matrix << endl;
 
 
@@ -2242,7 +2265,7 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 					if (braid_control::QUANTUM_WEYL)
 						switch_matrix_inverse = switch_matrix.inverse();
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "braid::main: Weyl switch matrix inverse:\n" << switch_matrix_inverse << endl;
 	debug << "braid::main: Weyl switch matrix inverse check:\n" << switch_matrix * switch_matrix_inverse << endl;
@@ -2291,7 +2314,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 							}
 						}
 					
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "braid::main: switch power = " << braid_control::SWITCH_POWER << "\n" << power << endl;
 	
 					}
@@ -2337,7 +2360,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 					}
     				output.flush();
 
-if (braid_control::DEBUG >= braid_control::SUMMARY)	
+if (debug_control::DEBUG >= debug_control::SUMMARY)	
 {
 	debug << "braid::main: matrices\nU = \n" << B << "\nV= \n" << V << endl;
 	debug << "braid::main: do not define a Weyl algebra.\n";
@@ -2360,7 +2383,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 				   a zero matrix element is found
 				*/
 
-if (braid_control::DEBUG >= braid_control::DETAIL)	
+if (debug_control::DEBUG >= debug_control::DETAIL)	
 	debug << "braid::main: fixed-point switch matrix elements: ";
 	
 				bool number_from_zero = false;
@@ -2375,7 +2398,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 						get_number(matrix_element,cptr);
 						switch_terms++;
 
-if (braid_control::DEBUG >= braid_control::DETAIL)	
+if (debug_control::DEBUG >= debug_control::DETAIL)	
 	debug << matrix_element << " ";
 					
 						if (matrix_element > size)
@@ -2390,13 +2413,13 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 					}
 				}
 
-if (braid_control::DEBUG >= braid_control::DETAIL)	
+if (debug_control::DEBUG >= debug_control::DETAIL)	
 	debug << endl;
 				
 				if (number_from_zero)
 					size++;
 				
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)	
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)	
 {
 	debug << "braid::main: fixed-point switch size = " << size << endl;
 	debug << "braid::main: fixed-point number of switch terms detected = " << switch_terms << endl;
@@ -2405,25 +2428,25 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 				/* do we have a twist matrix specified */
 				bool default_twist = (strchr(str,'T')?false:true);
 
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)	
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)	
 	debug << "braid::main: fixed-point switch default_twist = " << (default_twist?"true":"false") << endl;
 				
 				/* Is this switch claimed to be an essential welded pair, suitable for use with welded braids? */
 				bool essential_welded_pair = (strchr(str,'W')?true:false);
 
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)	
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)	
 	debug << "braid::main: fixed-point switch essential_welded_pair = " << (essential_welded_pair?"true":"false") << endl;
 
 				/* Is this switch claimed to be an essential doodle pair, suitable for use with doodles? */
 				bool essential_doodle_pair = (strchr(str,'D')?true:false);
 
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)	
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)	
 	debug << "braid::main: fixed-point switch essential_doodle_pair = " << (essential_doodle_pair?"true":"false") << endl;
 	
 				/* If we are to evaluate welded invariants, we have to have a non-default twist */
 				if (essential_welded_pair && default_twist)
 				{
-if (braid_control::DEBUG >= braid_control::SUMMARY)	
+if (debug_control::DEBUG >= debug_control::SUMMARY)	
     debug << "\nError! Welded invariants requested with the default twist: " << next_switch << endl;
 					continue;
 				}
@@ -2444,7 +2467,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 						output << "Error! Incorrect number of terms in switch: " << next_switch << endl;
 					}
 					
-if (braid_control::DEBUG >= braid_control::SUMMARY)	
+if (debug_control::DEBUG >= debug_control::SUMMARY)	
     debug << "\nError! Incorrect number of terms in switch: " << next_switch << endl;
 
 					continue; // with the next switch
@@ -2540,7 +2563,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 
 				delete [] str;
 				
-if (braid_control::DEBUG >= braid_control::SUMMARY)	
+if (debug_control::DEBUG >= debug_control::SUMMARY)	
 {
 	bool loc_newline = matrix_control::SINGLE_LINE_OUTPUT;
 	matrix_control::SINGLE_LINE_OUTPUT = true;
@@ -2563,7 +2586,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 
 				if (!XxX_permutation (Su, Sd))
 				{
-if (braid_control::DEBUG >= braid_control::SUMMARY)	
+if (debug_control::DEBUG >= debug_control::SUMMARY)	
 	debug << "braid::main: fixed-point switch S is not a permutation of XxX" << endl;
 					continue;
 				}	
@@ -2571,14 +2594,14 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 				/* The rows of Su, Sd, Tu and Td must be permutations */
 				if (!rows_are_permutations(Su))
 				{
-if (braid_control::DEBUG >= braid_control::SUMMARY)	
+if (debug_control::DEBUG >= debug_control::SUMMARY)	
 	debug << "braid::main: fixed-point switch matrix Su has rows that are not permutations" << endl;
 					continue;
 				}
 				
 				if (!rows_are_permutations(Sd))
 				{
-if (braid_control::DEBUG >= braid_control::SUMMARY)	
+if (debug_control::DEBUG >= debug_control::SUMMARY)	
 	debug << "braid::main: fixed-point switch matrix Sd has rows that are not permutations" << endl;
 					continue;
 				}
@@ -2591,55 +2614,55 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 				{
 					if (!XxX_permutation (Tu, Td))
 					{
-if (braid_control::DEBUG >= braid_control::SUMMARY)	
+if (debug_control::DEBUG >= debug_control::SUMMARY)	
 	debug << "braid::main: fixed-point switch T is not a permutation of XxX" << endl;
 						continue;
 					}
 
 					if (!rows_are_permutations(Tu))
 					{
-if (braid_control::DEBUG >= braid_control::SUMMARY)	
+if (debug_control::DEBUG >= debug_control::SUMMARY)	
 	debug << "braid::main: fixed-point switch matrix Tu has rows that are not permutations" << endl;
 						continue;
 					}
 				
 					if (!rows_are_permutations(Td))
 					{
-if (braid_control::DEBUG >= braid_control::SUMMARY)	
+if (debug_control::DEBUG >= debug_control::SUMMARY)	
 	debug << "braid::main: fixed-point switch matrix Td has rows that are not permutations" << endl;
 						continue;
 					}
 				
-if (braid_control::DEBUG >= braid_control::SUMMARY)	
+if (debug_control::DEBUG >= debug_control::SUMMARY)	
 	debug << "braid::main: checking the Yang-Baxter relation for fixed-point switch T" << endl;
 
 					if (!Yang_Baxter_satisfied(Tu, Td))
 					{
-if (braid_control::DEBUG >= braid_control::SUMMARY)	
+if (debug_control::DEBUG >= debug_control::SUMMARY)	
 	debug << "braid::main: fixed-point switch T does not satisfy the Yang-Baxter relation" << endl;
 						continue;
 					}		
 
 					if (switch_order(Tu,Td) == 2)
 					{						
-if (braid_control::DEBUG >= braid_control::SUMMARY)	
+if (debug_control::DEBUG >= debug_control::SUMMARY)	
 	debug << "braid::main: fixed-point switch T has order 2" << endl;
 	
 						if (one_dominates(Tu,Td,Su,Sd))
 						{
-if (braid_control::DEBUG >= braid_control::SUMMARY)	
+if (debug_control::DEBUG >= debug_control::SUMMARY)	
 	debug << "braid::main: fixed-point switch T one-dominates S" << endl;
 						}
 						else
 						{
-if (braid_control::DEBUG >= braid_control::SUMMARY)	
+if (debug_control::DEBUG >= debug_control::SUMMARY)	
 	debug << "braid::main: fixed-point switch T does not one-dominate S" << endl;
 							continue;
 						}
 					}
 					else					
 					{
-if (braid_control::DEBUG >= braid_control::SUMMARY)	
+if (debug_control::DEBUG >= debug_control::SUMMARY)	
 	debug << "braid::main: fixed-point switch T does not have order 2" << endl;
 						continue;				
 					}   
@@ -2659,30 +2682,30 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 				bool S_of_order_2;
 				if (switch_order(Su, Sd) == 2)
 				{
-if (braid_control::DEBUG >= braid_control::SUMMARY)	
+if (debug_control::DEBUG >= debug_control::SUMMARY)	
 	debug << "braid::main: fixed-point switch S has order 2" << endl;
 						S_of_order_2 = true;
 				}
 				else
 				{
-if (braid_control::DEBUG >= braid_control::SUMMARY)	
+if (debug_control::DEBUG >= debug_control::SUMMARY)	
 	debug << "braid::main: fixed-point switch S does not have order 2" << endl;
 						S_of_order_2 = false;
 				}
 
-if (braid_control::DEBUG >= braid_control::SUMMARY)	
+if (debug_control::DEBUG >= debug_control::SUMMARY)	
 	debug << "braid::main: checking the Yang-Baxter relation for fixed-point switch S" << endl;
 
 				bool S_Yang_Baxter;
 				if (Yang_Baxter_satisfied(Su, Sd))
 				{
-if (braid_control::DEBUG >= braid_control::SUMMARY)	
+if (debug_control::DEBUG >= debug_control::SUMMARY)	
 	debug << "braid::main: fixed-point switch S satisfies the Yang-Baxter relation" << endl;
 						S_Yang_Baxter = true;
 				}
 				else
 				{
-if (braid_control::DEBUG >= braid_control::SUMMARY)	
+if (debug_control::DEBUG >= debug_control::SUMMARY)	
 	debug << "braid::main: fixed-point switch S does not satisfy the Yang-Baxter relation" << endl;
 						S_Yang_Baxter = false;
 				}
@@ -2690,13 +2713,13 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 				bool S_one_dominates_T;
 				if (one_dominates(Su,Sd,Tu,Td))
 				{
-if (braid_control::DEBUG >= braid_control::SUMMARY)	
+if (debug_control::DEBUG >= debug_control::SUMMARY)	
 	debug << "braid::main: fixed-point switch S one-dominates T" << endl;
 					S_one_dominates_T = true;
 				}
 				else
 				{
-if (braid_control::DEBUG >= braid_control::SUMMARY)	
+if (debug_control::DEBUG >= debug_control::SUMMARY)	
 	debug << "braid::main: fixed-point switch S does not one-dominate T" << endl;
 					S_one_dominates_T = false;
 
@@ -2705,13 +2728,13 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 				bool S_two_dominates_T;
 				if (two_dominates(Su,Sd,Tu,Td))
 				{
-if (braid_control::DEBUG >= braid_control::SUMMARY)	
+if (debug_control::DEBUG >= debug_control::SUMMARY)	
 	debug << "braid::main: fixed-point switch S two-dominates T" << endl;
 					S_two_dominates_T = true;
 				}
 				else
 				{
-if (braid_control::DEBUG >= braid_control::SUMMARY)	
+if (debug_control::DEBUG >= debug_control::SUMMARY)	
 	debug << "braid::main: fixed-point switch S does not two-dominate T" << endl;
 					S_two_dominates_T = false;
 
@@ -2722,14 +2745,14 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 				{
 					if (!S_of_order_2 || S_Yang_Baxter || S_one_dominates_T || S_two_dominates_T)
 					{
-if (braid_control::DEBUG >= braid_control::SUMMARY)	
+if (debug_control::DEBUG >= debug_control::SUMMARY)	
 	debug << "braid::main: fixed-point switches S and T do not satisfy the conditions for an essential doodle pair" << endl;
 						continue; // to the next switch
 					}
 					else
 					{
 						pair_type = ST_pair_type::ESSENTIAL_DOODLE;
-if (braid_control::DEBUG >= braid_control::SUMMARY)	
+if (debug_control::DEBUG >= debug_control::SUMMARY)	
 	debug << "braid::main: fixed-point switches S and T validated as an essential doodle pair" << endl;
 					}
 				}
@@ -2737,14 +2760,14 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 				{
 					if (!S_Yang_Baxter || !S_one_dominates_T || S_two_dominates_T)
 					{
-if (braid_control::DEBUG >= braid_control::SUMMARY)	
+if (debug_control::DEBUG >= debug_control::SUMMARY)	
 	debug << "braid::main: fixed-point switches S and T do not satisfy the conditions for an essential welded pair" << endl;
 						continue; // to the next switch
 					}
 					else
 					{
 						pair_type = ST_pair_type::ESSENTIAL_WELDED;
-if (braid_control::DEBUG >= braid_control::SUMMARY)	
+if (debug_control::DEBUG >= debug_control::SUMMARY)	
 	debug << "braid::main: fixed-point switches S and T validated as an essential welded pair" << endl;
 					}
 				}
@@ -2752,7 +2775,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 				{
 					if (!S_Yang_Baxter || S_one_dominates_T || S_two_dominates_T)
 					{
-if (braid_control::DEBUG >= braid_control::SUMMARY)	
+if (debug_control::DEBUG >= debug_control::SUMMARY)	
 	debug << "braid::main: fixed-point switches S and T do not satisfy the conditions for an essential virtual pair" << endl;
 						continue; // to the next switch
 					}
@@ -2761,13 +2784,13 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 						if(S_of_order_2)
 						{
 							pair_type = ST_pair_type::FLAT_ESSENTIAL_VIRTUAL;
-if (braid_control::DEBUG >= braid_control::SUMMARY)	
+if (debug_control::DEBUG >= debug_control::SUMMARY)	
 	debug << "braid::main: fixed-point switches S and T validated as a flat essential virtual pair" << endl;
 						}
 						else
 						{
 							pair_type = ST_pair_type::ESSENTIAL_VIRTUAL;
-if (braid_control::DEBUG >= braid_control::SUMMARY)	
+if (debug_control::DEBUG >= debug_control::SUMMARY)	
 	debug << "braid::main: fixed-point switches S and T validated as an essential virtual pair" << endl;
 						}
 					}
@@ -2796,7 +2819,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 				}
 
 
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 {
 	bool saved_bool = matrix_control::SINGLE_LINE_OUTPUT;
 	matrix_control::SINGLE_LINE_OUTPUT = true;
@@ -2804,7 +2827,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 	matrix_control::SINGLE_LINE_OUTPUT = saved_bool;
 }
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "braid::main: fixed-point switch S has order " << switch_order(Su,Sd) << endl;
 	debug << "braid::main: fixed-point switch invS has order " << switch_order(invSu,invSd) << endl;
@@ -2905,7 +2928,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 					matrix_control::SINGLE_LINE_OUTPUT = saved_bool;
 				}
 
-//if (braid_control::DEBUG >= braid_control::SUMMARY)
+//if (debug_control::DEBUG >= debug_control::SUMMARY)
 //{
 //	debug << (essential_pair? "Essential": "Virtual");
 //	debug << " pair\nSu = " << Su << " Sd = " << Sd << "\nTu = " << Tu << " Td = " << Td << endl;
@@ -2946,20 +2969,20 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 						output << "Error! Terms or comma missing from switch: " << next_switch << endl;
 					}
 					
-if (braid_control::DEBUG >= braid_control::SUMMARY)	
+if (debug_control::DEBUG >= debug_control::SUMMARY)	
     debug << "\nError! Terms or comma missing from switch: " << next_switch << endl;
 
 					continue; // with the next switch
 				}
 
 				
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)	
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)	
 	debug << "braid::main: commutative automorphism matrix size = " << matrix_size << endl;
 
 				Qpmatrix phi(matrix_size,matrix_size);
 				Qpmatrix psi(matrix_size,matrix_size);
 
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)	
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)	
 	debug << "braid::main: reading phi from next_switch:" << endl;
 
 				/* read in phi */				
@@ -2970,7 +2993,7 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 					string::size_type posB = next_switch.find(',',posA);
 					string term = next_switch.substr(posA, (posB==string::npos? posB: posB-posA));
 
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)	
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)	
 	debug << "braid::main:  next term = " << term << endl;
 
 					phi[i][j] = Qpolynomial(term.substr(0,term.find('/')));
@@ -2984,7 +3007,7 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 					posA = posB+1;
 				}
 				
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 {
 	debug << "braid::main: phi = \n" << phi << endl;
 	debug << "braid::main: reading psi from next_switch:" << endl;
@@ -2997,7 +3020,7 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 					string::size_type posB = next_switch.find(',',posA);
 					string term = next_switch.substr(posA, (posB==string::npos? posB: posB-posA));
 
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)	
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)	
 	debug << "braid::main:  next term = " << term << endl;
 
 					psi[i][j] = Qpolynomial(term.substr(0,term.find('/')));
@@ -3011,7 +3034,7 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 					posA = posB+1;
 				}
 				
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 	debug << "braid::main: psi = \n" << psi << endl;
 
 
@@ -3110,7 +3133,7 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 						}
 					}
 					
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "braid::main: switch power = " << braid_control::SWITCH_POWER << "\n" << power << endl;
 	
 				}
@@ -3121,7 +3144,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 
 					string::size_type pos = input_string.find('{');
 					
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 	debug << "braid::input_string = " << input_string << endl;
 
 					if (pos != string::npos && input_string.substr(pos).find("doodle") != string::npos)				
@@ -3129,7 +3152,7 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 					else
 						braid_control::DOODLE_ALEXANDER = false;
 						
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 	debug << "braid::braid_control::DOODLE_ALEXANDER = " << braid_control::DOODLE_ALEXANDER << endl;
 									
 					poly_invariant(switch_matrix, switch_matrix_inverse, input_string, title);	
@@ -3149,8 +3172,7 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 
 		while (get_next_input_string(input_file,input_string, title))
 		{
-			if (input_string.find('/') != string::npos || (input_string.find('O') != string::npos && input_string.find('U') != string::npos))
-//			if (input_string.find('/') != string::npos)
+			if (input_string.find('/') != string::npos || (input_string.find('O') != string::npos && input_string.find('U') != string::npos) || input_string.find('X') != string::npos )
 			{
 				generic_code(input_string, title);
 			}
@@ -3193,7 +3215,7 @@ catch (...)
     output.close();
 
 
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 {
 	debug << "\nRunning time: " << hh << " hours " << mm	<< " minutes " << ss << " seconds" << endl;
     debug.close();
@@ -3228,7 +3250,7 @@ Hpmatrix Hpmatrix_from_q_switch(const Hmatrix& q_switch, bool t_variable)
 
 void set_programme_long_option(char* cptr, string source)
 {
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "set_programme_long_option: passed " << cptr << " from " << source << endl;
 
 	char  loc_buf[40];
@@ -3253,7 +3275,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 	if (!strcmp(loc_buf,"affine-index"))
 	{
    		braid_control::AFFINE_INDEX = true;
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: AFFINE_INDEX read from " << source << endl;
 	}
 	else if (!strcmp(loc_buf,"alexander"))
@@ -3267,13 +3289,13 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 		braid_control::QUATERNION = false;
    		braid_control::RACK_POLYNOMIAL = false;
 		braid_control::WEYL = false;
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: SWITCH_POLYNOMIAL_INVARIANT read from " << source << endl;
 	}
 	else if (!strcmp(loc_buf,"arrow-polynomial"))
 	{
    		braid_control::ARROW_POLYNOMIAL = true;
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: ARROW_POLYNOMIAL read from " << source << endl;
 	}
 	else if (!strcmp(loc_buf,"automorphism"))
@@ -3287,7 +3309,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 		braid_control::QUATERNION = false;
    		braid_control::RACK_POLYNOMIAL = false;
 		braid_control::WEYL = false;
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: COMMUTATIVE_AUTOMORPHISM read from " << source << endl;
 	}
 	else if (!strcmp(loc_buf,"burau"))
@@ -3301,63 +3323,63 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 		braid_control::QUATERNION = false;
    		braid_control::RACK_POLYNOMIAL = false;
 		braid_control::WEYL = false;
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: BURAU read from " << source << endl;
 	}	
 	else if (!strcmp(loc_buf,"complex-delta1"))
 	{
     	braid_control::COMPLEX_STUDY_DELTA_1= true;
 		braid_control::QUATERNION = true;
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: COMPLEX_STUDY_DELTA_1 read from " << source << endl;
 	}
 	else if (!strcmp(loc_buf,"delta1-only"))
 	{
     	braid_control::DISPLAY_DELTA_1_ONLY = true;
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: DISPLAY_DELTA_1_ONLY read from " << source << endl;
 	}
 /*    else if (!strcmp(loc_buf,"doodle"))
 	{
 		braid_control::DOODLE_CONDITIONS = true;
 		braid_control::FLAT_VOGEL_MOVES = true;
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_options: DOODLE_CONDITIONS read from " << source << endl;
 	} */
     else if (!strcmp(loc_buf,"development"))
 	{
 		braid_control::DEVELOPMENT_MODE = true;
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: DEVELOPMENT_MODE read from " << source << endl;
 	}
     else if (!strcmp(loc_buf,"double-braid"))
 	{
 		braid_control::KAMADA_DOUBLE_COVERING = true;
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: KAMADA_DOUBLE_COVERING read from " << source << endl;
 	}
     else if (!strcmp(loc_buf,"dowker"))
 	{
 		braid_control::DOWKER_CODE = true;
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: DOWKER_CODE read from " << source << endl;
 	}
 	else if (!strcmp(loc_buf,"dynnikov"))
 	{
     	braid_control::DYNNIKOV_TEST = true;
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: DYNNIKOV_TEST read from " << source << endl;
 	}
 	else if (!strcmp(loc_buf,"equality"))
 	{
     	braid_control::EQUALITY_TEST = true;
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: EQUALITY_TEST read from " << source << endl;
 	}
 	else if (!strcmp(loc_buf,"extra-output"))
 	{
     	braid_control::EXTRA_OUTPUT = true;
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: EXTRA_OUTPUT read from " << source << endl;
 	}
 	else if (!strcmp(loc_buf,"fixed-point"))
@@ -3371,86 +3393,86 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 		braid_control::QUATERNION = false;
    		braid_control::RACK_POLYNOMIAL = false;
     	braid_control::WEYL = false;
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: FIXED_POINT_INVARIANT read from " << source << endl;
 	}
     else if (!strcmp(loc_buf,"flat"))
 	{
 		braid_control::FLAT_VOGEL_MOVES = true;
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_options: FLAT_VOGEL_MOVES read from " << source << endl;
 	}
 	else if (!strcmp(loc_buf,"flip-braid"))
 	{
 		braid_control::FLIP_BRAID = true;
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: FLIP_BRAID read from " << source << endl;
 	}
 	else if (!strcmp(loc_buf,"format"))
 	{
     	braid_control::OUTPUT_AS_INPUT = true;
 		braid_control::EXTRA_OUTPUT = false; 
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: braid_control::OUTPUT_AS_INPUT read from " << source << endl;
 	}
 	else if (!strcmp(loc_buf,"gauss"))
 	{
 		braid_control::GAUSS_CODE = true;
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: GAUSS_CODE read from " << source << endl;
 	}
 	else if (!strcmp(loc_buf,"homfly"))
 	{
     	braid_control::HOMFLY = true;
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: HOMFLY read from " << source << endl;
 	}
 	else if (!strcmp(loc_buf,"immersion"))
 	{
 		braid_control::IMMERSION_CODE = true;
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: IMMERSION_CODE read from " << source << endl;
 	}
 	else if (!strcmp(loc_buf,"info"))
 	{
 		braid_control::STATUS_INFORMATION = true;
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: STATUS_INFORMATION read from " << source << endl;
 	}
 	else if (!strcmp(loc_buf,"invert-braid"))
 	{
 		braid_control::INVERT_BRAID = true;
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: INVERT_BRAID read from " << source << endl;
 	}
 	else if (!strcmp(loc_buf,"jones-polynomial"))
 	{
    		braid_control::JONES_POLYNOMIAL = true;
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: JONES_POLYNOMIAL read from " << source << endl;
 	}
 	else if (!strcmp(loc_buf,"kauffman-bracket"))
 	{
    		braid_control::KAUFFMAN_BRACKET = true;
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: KAUFFMAN_BRACKET read from " << source << endl;
 	}
 	else if (!strcmp(loc_buf,"knotoid-bracket"))
 	{
    		braid_control::KNOTOID_BRACKET = true;
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: KNOTOID_BRACKET read from " << source << endl;
 	}
 	else if (!strcmp(loc_buf,"line-reflect-braid"))
 	{
 		braid_control::LINE_REFLECT_BRAID = true;
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: LINE_REFLECT_BRAID read from " << source << endl;
 	}
 	else if (!strcmp(loc_buf,"lpgd"))
 	{
     	braid_control::LPGD = true;
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: braid_control::LPGD read from " << source << endl;
 	}
 	else if (!strcmp(loc_buf,"matrix"))
@@ -3464,7 +3486,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 		braid_control::QUATERNION = false;
    		braid_control::RACK_POLYNOMIAL = false;
 		braid_control::WEYL = false;
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: MATRIX read from " << source << endl;
 	}
 	else if (!strcmp(loc_buf,"mod-p"))
@@ -3473,7 +3495,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 		scalar::set_variant(scalar::MOD_P);	
 		polynomial_control::MOD_P = true;
 
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: setting polynomial_control::MOD_P = true as a result of " << source << " option" << endl;
 
 		int p_value;
@@ -3489,67 +3511,85 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 			exit(0);
 		}
 		
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: MOD_P read from " << source << ", p = " << p_value << endl;
 	}
 	else if (!strcmp(loc_buf,"no-auto-delta1"))
 	{
 		braid_control::ALWAYS_CALCULATE_DELTA_1 = false;
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: clear ALWAYS_CALCULATE_DELTA_1 read from " << source << endl;
 	}
 	else if (!strcmp(loc_buf,"no-even-writhe"))
 	{
     	braid_control::EVEN_WRITHE = false;
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: clear EVEN_WRITHE read from " << source << endl;
 	}
 	else if (!strcmp(loc_buf,"no-expanded-bracket"))
 	{
 		braid_control::EXPANDED_BRACKET_POLYNOMIAL = false;
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: clear EXPANDED_BRACKET_POLYNOMIAL read from " << source << endl;
 	}
 	else if (!strcmp(loc_buf,"normalize-quaternions"))
 	{
 		braid_control::NORMALIZING_Q_POLYNOMIALS = true;
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: NORMALIZING_Q_POLYNOMIALS read from " << source << endl;
 	}
 	else if (!strcmp(loc_buf,"no-normalize-bracket"))
 	{
 		braid_control::NORMALIZE_BRACKET = false;
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: clear NORMALIZE_BRACKET read from " << source << endl;
+	}
+	else if (!strcmp(loc_buf,"opgc"))
+	{
+    	braid_control::OPGC = true;
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+	debug << "set_programme_long_option: braid_control::OPGC read from " << source << endl;
+	}
+	else if (!strcmp(loc_buf,"OU-format"))
+	{
+		braid_control::OU_FORMAT = true;
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+	debug << "set_programme_long_option: OU_FORMAT read from " << source << endl;
 	}
 	else if (!strcmp(loc_buf,"parity-arrow"))
 	{
    		braid_control::PARITY_ARROW = true;
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: PARITY_ARROW read from " << source << endl;
 	}
 	else if (!strcmp(loc_buf,"parity-bracket"))
 	{
    		braid_control::PARITY_BRACKET = true;
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: PARITY_BRACKET read from " << source << endl;
+	}
+	else if (!strcmp(loc_buf,"PD-format"))
+	{
+    	braid_control::PD_FORMAT = true;
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+	debug << "set_programme_long_option: braid_control::PD_FORMAT read from " << source << endl;
 	}
 	else if (!strcmp(loc_buf,"peer"))
 	{
 		braid_control::PEER_CODE = true;
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: PEER_CODE read from " << source << endl;
 	}
 	else if (!strcmp(loc_buf,"plane-reflect-braid"))
 	{
 		braid_control::PLANE_REFLECT_BRAID = true;
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: PLANE_REFLECT_BRAID read from " << source << endl;
 	}
 	else if (!strcmp(loc_buf,"power"))
 	{
 
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: setting SWITCH_POWER as a result of " << source << " option" << endl;
 
 		if (*c1 == '=')
@@ -3563,7 +3603,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 			cout << "\nYou must specify an integer n >= 2 if you use the power option, e.g. power=4" << endl;
 			exit(0);
 		}
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: SWITCH_POWER=" << braid_control::SWITCH_POWER << " read from " << source << endl;
 	}
 	else if (!strcmp(loc_buf,"quaternion"))
@@ -3577,7 +3617,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 		braid_control::QUATERNION = true;
    		braid_control::RACK_POLYNOMIAL = false;
 		braid_control::WEYL = false;
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: QUATERNION read from " << source << endl;
 	}
 	else if (!strcmp(loc_buf,"rack-polynomial"))
@@ -3591,7 +3631,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 		braid_control::QUATERNION = false;
    		braid_control::RACK_POLYNOMIAL = true;
     	braid_control::WEYL = false;
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: RACK_POLYNOMIAL read from " << source << endl;
 	}
 	else if (!strcmp(loc_buf,"rack-terms"))
@@ -3603,33 +3643,33 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 			cout << "\nyou must specify a value if you use the rack-terms option, e.g. rack-terms=7" << endl;
 			exit(0);
 		}
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: RACK_TERMS read from " << source << endl;
 	}
 	else if (!strcmp(loc_buf,"raw-output"))
 	{
 		braid_control::RAW_OUTPUT = true;
 		braid_control::EXTRA_OUTPUT = false;
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: braid_control::RAW_OUTPUT read from " << source << endl;
 	}
 //	else if (!strcmp(loc_buf,"real-delta1"))
 //	{
 //   	braid_control::REAL_STUDY_DELTA_1= true;
 //		braid_control::QUATERNION = true;
-//if (braid_control::DEBUG >= braid_control::SUMMARY)
+//if (debug_control::DEBUG >= debug_control::SUMMARY)
 //	debug << "set_programme_long_option: REAL_STUDY_DELTA_1 read from " << source << endl;
 //	}
 	else if (!strcmp(loc_buf,"relaxed-parity"))
 	{
     	braid_control::RELAXED_PARITY = true;
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: braid_control::RELAXED_PARITY read from " << source << endl;
 	}	
 	else if (!strcmp(loc_buf,"remove"))
 	{
 		braid_control::REMOVE_PEER_CODE_COMPONENT = true;
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: setting REMOVE_PEER_CODE_COMPONENT as a result of " << source << " option" << endl;
 
 		if (*c1 == '=')
@@ -3641,13 +3681,13 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 			cout << "\nYou must specify an integer n >= 0 if you use the remove option, e.g. remove=2" << endl;
 			exit(0);
 		}
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: REMOVE_COMPONENT=" << braid_control::REMOVE_COMPONENT << " read from " << source << endl;
 	}
 	else if (!strcmp(loc_buf,"rho"))
 	{
 		braid_control::STUDY_RHO_MAPPING = true;
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: STUDY_RHO_MAPPING read from " << source << endl;
 	}
 	else if (!strcmp(loc_buf,"satellite"))
@@ -3657,68 +3697,74 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 		else
 			braid_control::SATELLITE = 2;
 
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: SATELLITE  = " << braid_control::SATELLITE << " read from " << source << endl;
 	}
 	else if (!strcmp(loc_buf,"sawollek"))
 	{
     	braid_control::SAWOLLEK = true;
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: SAWOLLEK read from " << source << endl;
 	}
 	else if (!strcmp(loc_buf,"show-parity-peer-codes"))
 	{
     		polynomial_control::WRITE_PARITY_PEER_CODES = true;
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: polynomial_control::WRITE_PARITY_PEER_CODES set from " << source << endl;
 	}	
 	else if (!strcmp(loc_buf,"show-varmaps"))
 	{
     	polynomial_control::SUBSTITUTE_MAPPED_VARIABLES = false;
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: polynomial_control::SUBSTITUTE_MAPPED_VARIABLES cleared from " << source << endl;
 	}	
 	else if (!strcmp(loc_buf,"silent"))
 	{
     	braid_control::SILENT_OPERATION = true;
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: braid_control::SILENT_OPERATION read from " << source << endl;
 	}	
 	else if (!strcmp(loc_buf,"TeX-polynomials"))
 	{
     	braid_control::TeX_POLYNOMIAL_OUTPUT = true;
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: braid_control::TeX_POLYNOMIAL_OUTPUT read from " << source << endl;
 	}
 	else if (!strcmp(loc_buf,"ulpgd"))
 	{
     	braid_control::ULPGD = true;
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: braid_control::ULPGD read from " << source << endl;
+	}
+	else if (!strcmp(loc_buf,"uopgc"))
+	{
+    	braid_control::UOPGC = true;
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+	debug << "set_programme_long_option: braid_control::UOPGC read from " << source << endl;
 	}
 	else if (!strcmp(loc_buf,"vogel"))
 	{
     	braid_control::VOGEL_ALGORITHM = true;
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: VOGEL_ALGORITHM read from " << source << endl;
 	}
 	else if (!strcmp(loc_buf,"vogel-height"))
 	{
     	braid_control::VOGEL_HEIGHT_ONLY = true;
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: VOGEL_HEIGHT_ONLY read from " << source << endl;
 	}
 	else if (!strcmp(loc_buf,"wait"))
 	{
     	braid_control::WAIT_SWITCH = true;
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: WAIT_SWITCH read from " << source << endl;
    		if (*c1 == '=')
    		{
 			int threshold;
 			get_number(threshold,++c1);
 	    	braid_control::wait_threshold = max(threshold,2);
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "    wait_threshold " << braid_control::wait_threshold << " read from " << source << endl;
    		}
 	}
@@ -3733,18 +3779,18 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 		braid_control::QUATERNION = false;
    		braid_control::RACK_POLYNOMIAL = false;
     	braid_control::WEYL = true;
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: WEYL_SWITCH read from " << source << endl;
 	}
 	else if (!strcmp(loc_buf,"zig-zag-delta"))
 	{
 		braid_control::ZIG_ZAG_DELTA = true;	
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: ZIG_ZAG_DELTA read from " << source << endl;
 	}
 	else
 	{
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: invalid long option " << loc_buf << " read from " << source << endl;
 	
 		cout << "Invalid long option " << loc_buf << endl;
@@ -3842,8 +3888,11 @@ void set_programme_short_option(char* cptr)
 			cout << "  no-auto-delta1         only calculate Delta_1 if Delta_0 is zero\n";
 			cout << "  no-even-writhe         normalize the parity bracket polynomial with the full writhe rather than the even writhe\n";
 			cout << "  no-expanded-bracket    do not expand D=(-A^2-A^{-2}) in bracket polynomials\n";
-			cout << "  normalize-quaternions  normalize quaternionic polynomial invariants\n";
 			cout << "  no-normalize-bracket   do not normalize bracket polynomial invariants\n";
+			cout << "  normalize-quaternions  normalize quaternionic polynomial invariants\n";
+			cout << "  opgc                   calculate the over preferred Gauss code, rather than a standard Gauss code\n";
+			cout << "  OU-format              write Gauss codes as a sequence (O|U)<crossing-num><crossing-sign>\n";
+			cout << "  pd-data                write Gauss code as a planar diagram\n";
 			cout << "  plane-reflect          reflect all the braids in the file in the plane of the page\n";
 			cout << "  power=n                evaluate the nth power of the switch when calculating switch polynomial invariants\n";
 			cout << "  rack-terms=k           set the global value k for the number of terms to consider for rack-polynomials\n";
@@ -3856,6 +3905,7 @@ void set_programme_short_option(char* cptr)
 			cout << "  silent                 do not generate any output to the command line (stdout)\n";
 			cout << "  TeX-polynomials        display output polynomials in TeX format\n";
 			cout << "  ulpgd                  calculate the unoriented left preferred Gauss code, rather than a standard gauss code\n";
+			cout << "  uopgc                  calculate the unoriented over preferred Gauss code, rather than a standard gauss code\n";
 			cout << "  wait[=n]               display determinant wait information, (based on nxn minors, so larger n produces less frequent output)\n";
 			cout << "  zig-zag-delta          include delta with K_i and Lambda_i variables when calculating the arrow polynomial\n\n";
 		
@@ -3917,7 +3967,7 @@ void set_programme_short_option(char* cptr)
 
 		if (!debug_setup(cptr))  // could probably be dptr, but the original code used cptr
 		{
-			braid_control::DEBUG = braid_control::SUMMARY;
+			debug_control::DEBUG = debug_control::SUMMARY;
 			debug << "set_programme_short_option: default debug options set" << endl;
 		}
 
@@ -3981,7 +4031,7 @@ void set_programme_short_option(char* cptr)
 		scalar::set_variant(scalar::MOD_P);	
 		polynomial_control::MOD_P = true;
 
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 debug << "set_programme_short_option: setting polynomial_control::MOD_P = true as a result of command line option" << endl;
 
 	    char* c1 = strchr(cptr,'p')+1;
@@ -4021,7 +4071,7 @@ debug << "set_programme_short_option: setting polynomial_control::MOD_P = true a
 		{
 			get_number(braid_control::RACK_TERMS,++c1);
 			
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_short_option: setting RACK_TERMS = " << braid_control::RACK_TERMS << " as a result of command line option" << endl;
 		}
 		
@@ -4068,7 +4118,7 @@ bool get_next_input_string(string input_file,string& input_string, string& title
 	if (input_file.length())
 	{
 		/* get next word from input */
-		get_word(input, input_string, title);
+		get_input_word(input, input_string, title);
 	}
 	else
 	{
@@ -4089,7 +4139,7 @@ bool get_next_input_string(string input_file,string& input_string, string& title
 	else    	
 	{
 
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 {
     debug << "braid::get_next_input_string: got string " << input_string << endl;
 }
@@ -4220,7 +4270,7 @@ switch_matrix_inverse, string message)
 		output << endl;
 	}
 	
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 {
 	if (braid_control::WEYL)
 		debug << "\nUsing " << message << " switch S, where\n";
@@ -4276,7 +4326,7 @@ void poly_invariant(const matrix<T,St>& switch_matrix, const matrix<T,St>& switc
 	/* note the N-factor of the switch matrix, this is done explicitly as a debug check */
 	int switch_matrix_N_factor = switch_matrix.numcols()/2;
 	
-if(braid_control::DEBUG >= braid_control::DETAIL)
+if(debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "poly_invariant: switch_matrix_N_factor = " << switch_matrix_N_factor << endl;
 
 	/* If we're calculating the doodle-Alexander polynomial and have been given a peer code,
@@ -4289,14 +4339,14 @@ if(braid_control::DEBUG >= braid_control::DETAIL)
 		if (pos != string::npos)
 			input_string = input_string.substr(0,pos);
 			
-if(braid_control::DEBUG >= braid_control::SUMMARY)
+if(debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "poly_invariant: converting peer or immersion code to a braid for DOODLE_ALEXANDER" << endl;
 			
 		generic_code_data code_data;
 		read_code_data(code_data,input_string);
 		input_string = vogel(code_data);
 
-if(braid_control::DEBUG >= braid_control::SUMMARY)
+if(debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "poly_invariant: input_string set to " << input_string << endl;		
 	}
 	
@@ -4315,7 +4365,7 @@ if(braid_control::DEBUG >= braid_control::SUMMARY)
 			input_string = parse_long_knot_input_string(input_string);
 			
 			
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "poly_invariant: long knot: " << input_string << endl;
 	
 			if (input_string == "link")
@@ -4329,7 +4379,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 					output << "Error! long knot indicator provided for the peer code of a link" << endl;
 				}
 					
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "poly_invariant: Error! long knot indicator provided for the peer code of a link" << endl;
 
 				return;
@@ -4340,7 +4390,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 	
 		R_module_rep(Matrix_rep, switch_matrix, switch_matrix_inverse, input_string);
 	}
-	else if (valid_braid_input(input_string, num_terms, num_strings))
+	else if (valid_braid_input(input_string, num_terms, num_strings, braid_control::SILENT_OPERATION, braid_control::RAW_OUTPUT, braid_control::OUTPUT_AS_INPUT))
 	{ 
 
 		/* remove any unwanted qualifiers from the input string */
@@ -4424,13 +4474,13 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 				Un_minus_1 = Un;
 			}
 			
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "poly_invariant: U_(n-1) = " << Un << endl;
 			
 			for (int i=0; i< num_strings-1; i++)
 				Un *= T("-x");
 
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "poly_invariant: (-x)^(n-1) scaled Un = " << Un << endl;
 			
 			delta_0 /= Un;
@@ -4477,10 +4527,10 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 				for (int j = i+1; j<= matrix_cols; j++)
 					cperm[j-1] = j;
 
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 	debug << "poly_invariant: removing column " << i << endl;
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "poly_invariant: cperm: ";
    	for (int j = 0 ; j< matrix_cols-1; j++)
@@ -4494,12 +4544,12 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 				else
 					det =  determinant(*Matrix_rep, title, matrix_rows, rperm, cperm);
 
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "poly_invariant: p_0 generator det " << i << " = " << det << endl;
 
     			Laurent_scale (det);
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "poly_invariant: Laurent scaled p_0 generator det " << i << " = " << det << endl;
 
 
@@ -4510,7 +4560,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 					if (braid_control::WAIT_SWITCH)
 					    matrix_control::wait_count = 0;
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "poly_invariant: op_0  set to det " << i << " = " << op_0 << endl;
 
 				}
@@ -4521,7 +4571,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 					if (braid_control::WAIT_SWITCH)
 					    matrix_control::wait_count = 0;
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "poly_invariant: np_0  set to det " << i << " = " << np_0 << endl;
 
 					if (unit_detected)
@@ -4529,7 +4579,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 
 				}
 
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "poly_invariant:  p_0 gcd stands at " << delta_0 << endl;
 
 				if (braid_control::DELTA_1_UNIT_CHECK && det.isunit())
@@ -4551,7 +4601,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 						}
 					}
 
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "poly_invariant: unit generator detected, terminating calculation" << endl;
 				}
 				else
@@ -4575,7 +4625,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 							}
 						}
 
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "poly_invariant: unit gcd detected, terminating calculation" << endl;
 					}
 				}
@@ -4612,7 +4662,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 			}
 			output << np_0 << endl;
 
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 {
    	debug << "poly_invariant: p_0  = p^{(0)} = " << delta_0 << endl;
    	debug << "poly_invariant: \\op^{(0)} = " << op_0 << endl;
@@ -4660,7 +4710,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 						output << delta_0 << endl;
 					}
 
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 {
    	debug << "\npoly_invariant: Delta_0 = " << delta_0 << "\n";
 }
@@ -4689,7 +4739,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 
 					}
 
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 {
    	debug << "\npoly_invariant: Study determinant = " << delta_0 << "\n";
 }
@@ -4765,7 +4815,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 		    		cperm[i] = i;
 
 				matrix<T,St> C_study_matrix_rep = C_study_matrix(*Matrix_rep, matrix_rows, matrix_cols, rperm, cperm);
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "\npoly_invariant: complex Study matrix:\n";
 	debug << C_study_matrix_rep;
@@ -4777,7 +4827,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 				{
 					if (!braid_control::SILENT_OPERATION)
 						cout << "Evaluating the complex Study matrix" << endl;
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "\n\npoly_invariant: evaluating the complex Study matrix\n";	
 
 					if (!braid_control::RAW_OUTPUT)
@@ -4812,7 +4862,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 							cout << "\nDelta_1^C=1" << endl;
 						}
 						
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "\n\npoly_invariant: Delta_1^C=1";
 						if (!braid_control::RAW_OUTPUT)
 						{
@@ -4829,7 +4879,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 								cout << "\nDelta_2^C=1";
 
 //							cout << "\nTrying real Study matrix" << endl;
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 {	
 //	debug << "\n\npoly_invariant: Delta_2^C=1, trying the real Study matrix" << endl;
 	debug << "\n\npoly_invariant: Delta_2^C=1" << endl;
@@ -4875,7 +4925,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 							cout << delta << "\n";
 		   				output << delta << "\n";
 
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 {
 	debug << "\npoly_invariant: Delta_";
 	debug << (codimension == 1? "1" : "2");
@@ -4890,7 +4940,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 				{
 					display_delta = false;
 					cout << "\nEvaluating the real Study matrix";
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "\n\npoly_invariant: evaluating the real Study matrix\n";	
 
 					if (!braid_control::RAW_OUTPUT)
@@ -4905,7 +4955,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 					
 					matrix<T,St> R_study_matrix_rep = R_study_matrix(C_study_matrix_rep);
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "\npoly_invariant: real Study matrix:\n";
 	debug << R_study_matrix_rep;
@@ -4941,7 +4991,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 					else 
 					{
 						cout << "\nDelta_1^R=0";
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "\n\npoly_invariant: Delta_1^R=0";
 
 						if (!braid_control::RAW_OUTPUT)
@@ -4955,7 +5005,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 
 						if (delta == T("1"))
 						{
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "\n\npoly_invariant: Delta_2^R=1\n";	
 
 							cout << "\nDelta_2^R=1";
@@ -4992,7 +5042,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 		   				cout << delta << "\n";
 		   				output << delta << "\n";
 
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 {
 	debug << "\npoly_invariant: Delta_";
 	debug << (number == 1? "1" : "2");
@@ -5004,7 +5054,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 			}
 			else
 			{
-if (braid_control::DEBUG >= braid_control::SUMMARY && braid_control::QUATERNION)
+if (debug_control::DEBUG >= debug_control::SUMMARY && braid_control::QUATERNION)
 	debug << "\npoly_invariant: evaluating codimension 1 determinant in M_{n,m}(H) using Study determinant\n";
 
 				/* Use the normal procedure of taking the codimension 1 submatrices of the matrix 
@@ -5058,7 +5108,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY && braid_control::QUATERNION)
 					cout << delta << "\n";
 		    	output << delta << "\n";
 
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "\n\npoly_invariant: " << (braid_control::LONG_KNOT? "p^{(1)} = ":"Delta_1 = ") << delta << "\n";	
 
 			}
@@ -5095,7 +5145,7 @@ T study_determinant (const matrix<T,St>& H_matrix, string title, int n=0, int* r
 	*/
 	matrix<T,St> C_matrix = C_study_matrix(H_matrix, n, n, rperm, cperm);
 
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 {
     debug << "\nstudy_determinant: Complex Study matrix:\n";
     debug << C_matrix;
@@ -5126,7 +5176,7 @@ template <typename T, typename V, typename U, typename St>
 matrix<polynomial<T,V,U>,St> C_study_matrix(const matrix<polynomial<T,V,U>,St>& H_matrix, int n, int m, int* rperm, int* cperm)
 {
 
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 {
 	if (braid_control::STUDY_RHO_MAPPING)
 	    debug << "\nC_study_matrix: using rho-mapping to create complex Study matrix:" << endl;
@@ -5332,7 +5382,7 @@ template <typename T, typename St> T delta_1(const matrix<T,St>& M, int codimens
 	T hcf=delta_0; // needed for the non-commutative case where delta_0 is required as a generator of E_1
     Laurent_scale (hcf);
 
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
     debug << "delta_1: hcf initialized to " << hcf << endl;
 	
 	int matrix_rows = M.numrows();
@@ -5344,7 +5394,7 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 	if (codimension == 1)
 	{
 
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
     debug << "delta_1: codimension 1 generators of 1st elementary ideal, E_1:" << endl;
 
 		for (int r1=0;r1<matrix_rows;r1++)
@@ -5398,7 +5448,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 	else if (codimension == 2)
 	{
 
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
     debug << "delta_1: codimension 2 generators of intermediate 1st elementary ideal, E_1:" << endl;
 	
 		for (int r1=0;r1<matrix_rows;r1++)
@@ -5469,7 +5519,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 	{
 		if (!braid_control::SILENT_OPERATION)
 			cout << "\nError! Unsupported codimension parameter presented to function delta_1" << endl;
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
     debug << "delta_1: Error! Unsupported codimension parameter" << endl;
 		exit(0);
 	}
@@ -5496,7 +5546,7 @@ template <typename T, typename St> bool minor_determinant(T& hcf, const matrix<T
 	
 	T delta;
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
     debug << "minor_determinant: matrix_size = " << matrix_size << ", codimension = " << codimension
           << ", r1=" << r1 << ", r2=" << r2 << ", c1=" << c1 << ", c2=" << c2 << ", c3=" << c3 << endl;;
@@ -5569,7 +5619,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 		}
    	}
 
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 {
 	if (codimension == 2)
 		debug << "minor_determinant: generator (" << r1 << " & " << r2 << "," << c1 << " & " << c2 << ") = " << delta << endl;
@@ -5619,7 +5669,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 			}
    		}
 		
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
     debug << "minor_determinant: unit generator detected, terminating calculation" << endl;
 
 		return true; // unit generator encountered
@@ -5628,7 +5678,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 	{
 	    hcf = gcd(hcf,delta);
 
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
     debug << "minor_determinant: gcd stands at " << hcf << endl;
 
 		if (braid_control::DELTA_1_UNIT_CHECK && hcf.isunit())
@@ -5645,7 +5695,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 				}
 	   		}
 		
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
     debug << "minor_determinant: unit gcd detected, terminating calculation" << endl;
 
 			return true; // unit generator encountered
@@ -5654,7 +5704,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 	}
 	else
 	{
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
     debug << "minor_determinant: generator is zero, no change in gcd" << endl;
 	}
 	
@@ -5737,7 +5787,7 @@ bool braid_rep(matrix<T,St>*& Matrix_rep, const matrix<T,St>& switch_matrix, con
 			twist[i+switch_matrix_N_factor][j+switch_matrix_N_factor] = T("0");
 	}
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "\nbraid_rep: twist matrix:\n" << *Twist << endl;
 }
@@ -5775,7 +5825,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 //		for (int j=i+1; j<N*num_strings; j++)
 			identity[i][j] = T("0");
 	}
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "\nbraid_rep: identity:\n" << identity;
 
 
@@ -5844,7 +5894,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 		else
 			base = term.numcols() - switch_matrix.numcols() - (number-1)*N;  // 
 			                                                                      
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "\nbraid_rep: base for S in term matrix is " << base << endl;					
 	
 		/* If we're calculating the doodle Alexander polynomial, set the term 
@@ -5888,7 +5938,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 			
 		matrix_rep *= term;
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
     debug << "\nbraid_rep: term for right multiplication by ";
     if (inverse)
@@ -5903,7 +5953,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 
 }
 
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 {
     debug << "\nbraid_rep: matrix after right multiplication by ";
     if (inverse)
@@ -5930,7 +5980,7 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 		output << matrix_rep << endl;
 	}
 
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 {
     debug << "\nbraid_rep: matrix representation of braid word, M:\n";
     debug << matrix_rep << endl;
@@ -5953,7 +6003,7 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 		matrix_rep -= identity;
     	calculate_polys = true;
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
     debug << "\nbraid_rep: matrix representation minus the identity, M-I:\n";
     debug << matrix_rep << endl;
@@ -6011,7 +6061,7 @@ void R_module_rep(matrix<T,St>*& Matrix_rep, const matrix<T,St>& switch_matrix, 
 	int matrix_N_size = 2*num_classical;  // number of N-rows
 	int matrix_size = N*matrix_N_size;  // number of actual rows
 
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 {
 	debug << "R_module_rep: num_components = " << num_components << endl;
 	debug << "R_module_rep: num_crossings = " << num_crossings << endl;
@@ -6102,18 +6152,18 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 			   are trivial.
 			*/
 //			int twice_pi_minus1 = ((2*code_table[PERM][i] -1)+(2*num_crossings))%(2*num_crossings);
-//if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
+//if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 //	debug << "R_module_rep: crossing " << i << " trivial variables = " << 2*i << " and " << twice_pi_minus1 << endl;
 //			trivial_variable_flags[2*i] = 1;
 //			trivial_variable_flags[twice_pi_minus1] = 1;
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 	debug << "R_module_rep: crossing " << i << " trivial variables = " << 2*i << " and " << code_table[OPEER][i] << endl;
 			trivial_variable_flags[2*i] = 1;
 			trivial_variable_flags[code_table[OPEER][i]] = 1;
 		}
 	}
 	
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 {
 	debug << "R_module_rep: trivial_variable_flags: ";
 	for (int i=0; i<2*num_crossings; i++)
@@ -6158,7 +6208,7 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 //		count += trivial_variable_flags[i];
 //	}
 	
-//if (braid_control::DEBUG >= braid_control::DETAIL)
+//if (debug_control::DEBUG >= debug_control::DETAIL)
 //{
 //	debug << "R_module_rep: intermediate variables: ";
 //	for (int i=0; i<2*num_crossings; i++)
@@ -6178,7 +6228,7 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 //		}
 //	}
 	
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 {
 	debug << "R_module_rep: variables: ";
 	for (int i=0; i<2*num_crossings; i++)
@@ -6227,7 +6277,7 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 		else
 			crossing_type = braid_crossing_type::POSITIVE;
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {	
 	debug << "R_module_rep: crossing " << i;
 	if ( crossing_type == braid_crossing_type::NEGATIVE )
@@ -6258,12 +6308,12 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 				/* Record the A entry at j*/
 				if (crossing_type == braid_crossing_type::POSITIVE)
 				{
-if (braid_control::DEBUG >= braid_control::DETAIL) debug << j << ":S00    ";
+if (debug_control::DEBUG >= debug_control::DETAIL) debug << j << ":S00    ";
 					set_matrix_N_element(matrix_rep,2*row,j,switch_matrix,0,0,N);
 				}
 				else
 				{
-if (braid_control::DEBUG >= braid_control::DETAIL) debug << j << ":iS00   ";
+if (debug_control::DEBUG >= debug_control::DETAIL) debug << j << ":iS00   ";
 					set_matrix_N_element(matrix_rep,2*row,j,switch_matrix_inverse,0,0,N);				
 				}
 			}
@@ -6273,12 +6323,12 @@ if (braid_control::DEBUG >= braid_control::DETAIL) debug << j << ":iS00   ";
 				/* Record the B entry at j */
 				if (crossing_type == braid_crossing_type::POSITIVE)
 				{
-if (braid_control::DEBUG >= braid_control::DETAIL) debug << j << ":S01    ";
+if (debug_control::DEBUG >= debug_control::DETAIL) debug << j << ":S01    ";
 					set_matrix_N_element(matrix_rep,2*row,j,switch_matrix,0,1,N);				
 				}
 				else
 				{
-if (braid_control::DEBUG >= braid_control::DETAIL) debug << j << ":iS01   ";
+if (debug_control::DEBUG >= debug_control::DETAIL) debug << j << ":iS01   ";
 					set_matrix_N_element(matrix_rep,2*row,j,switch_matrix_inverse,0,1,N);				
 				}
 			}
@@ -6313,13 +6363,13 @@ if (braid_control::DEBUG >= braid_control::DETAIL) debug << j << ":iS01   ";
 					if (braid_control::LONG_KNOT && j == 0) 
 					{
 						/* Add -1 to the polynomial at (*matrixptr)[2*row][matrix_N_size] */
-if (braid_control::DEBUG >= braid_control::DETAIL) debug << matrix_N_size << ":-1     ";
+if (debug_control::DEBUG >= debug_control::DETAIL) debug << matrix_N_size << ":-1     ";
 						decrement_matrix_N_element(matrix_rep,2*row,matrix_N_size,N);
 					}
 					else
 					{
 						/* Add -1 to the polynomial at (*matrixptr)[2*row][j] */
-if (braid_control::DEBUG >= braid_control::DETAIL) debug << j << ":-1     ";
+if (debug_control::DEBUG >= debug_control::DETAIL) debug << j << ":-1     ";
 						decrement_matrix_N_element(matrix_rep,2*row,j,N);
 					}
 				}
@@ -6327,12 +6377,12 @@ if (braid_control::DEBUG >= braid_control::DETAIL) debug << j << ":-1     ";
 				{
 					/* We've already set the location to zero, so record it
 					   in the debug file if necessary */
-if (braid_control::DEBUG >= braid_control::DETAIL) debug << j << ":0      ";
+if (debug_control::DEBUG >= debug_control::DETAIL) debug << j << ":0      ";
 				}
 			}
 		}
    
-if (braid_control::DEBUG >= braid_control::DETAIL) 
+if (debug_control::DEBUG >= debug_control::DETAIL) 
 	debug << "\nR_module_rep: row " << 2*row+1 << "\nR_module_rep: \t\t";
 
 		/* now row 2*row+1 */	
@@ -6344,12 +6394,12 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 				/* Record the C entry at j */
 				if (crossing_type == braid_crossing_type::POSITIVE)
 				{
-if (braid_control::DEBUG >= braid_control::DETAIL) debug << j << ":S10    ";
+if (debug_control::DEBUG >= debug_control::DETAIL) debug << j << ":S10    ";
 					set_matrix_N_element(matrix_rep,2*row+1,j,switch_matrix,1,0,N);				
 				}
 				else 
 				{
-if (braid_control::DEBUG >= braid_control::DETAIL) debug << j << ":iS10   ";
+if (debug_control::DEBUG >= debug_control::DETAIL) debug << j << ":iS10   ";
 					set_matrix_N_element(matrix_rep,2*row+1,j,switch_matrix_inverse,1,0,N);				
 				}
 			}
@@ -6359,12 +6409,12 @@ if (braid_control::DEBUG >= braid_control::DETAIL) debug << j << ":iS10   ";
 				/* Record the D entry at j */
 				if (crossing_type == braid_crossing_type::POSITIVE)
 				{
-if (braid_control::DEBUG >= braid_control::DETAIL) debug << j << ":S11    ";
+if (debug_control::DEBUG >= debug_control::DETAIL) debug << j << ":S11    ";
 					set_matrix_N_element(matrix_rep,2*row+1,j,switch_matrix,1,1,N);				
 				}
 				else 
 				{
-if (braid_control::DEBUG >= braid_control::DETAIL) debug << j << ":iS11   ";
+if (debug_control::DEBUG >= debug_control::DETAIL) debug << j << ":iS11   ";
 					set_matrix_N_element(matrix_rep,2*row+1,j,switch_matrix_inverse,1,1,N);				
 				}
 			}
@@ -6377,13 +6427,13 @@ if (braid_control::DEBUG >= braid_control::DETAIL) debug << j << ":iS11   ";
 					if (braid_control::LONG_KNOT && j == 0)
 					{
 						/* Add -1 to the polynomial at (*matrixptr)[2*row+1][matrix_N_size] */
-if (braid_control::DEBUG >= braid_control::DETAIL) debug << matrix_N_size << ":-1     ";
+if (debug_control::DEBUG >= debug_control::DETAIL) debug << matrix_N_size << ":-1     ";
 						decrement_matrix_N_element(matrix_rep,2*row+1,matrix_N_size,N);
 					}
 					else
 					{
 						/* Add -1 to the polynomial at (*matrixptr)[2*row+1][j] */
-if (braid_control::DEBUG >= braid_control::DETAIL) debug << j << ":-1     ";
+if (debug_control::DEBUG >= debug_control::DETAIL) debug << j << ":-1     ";
 						decrement_matrix_N_element(matrix_rep,2*row+1,j,N);
 					}
 				}
@@ -6391,12 +6441,12 @@ if (braid_control::DEBUG >= braid_control::DETAIL) debug << j << ":-1     ";
 				{
 					/* We've already set the location to zero, so record it
 					   in the debug file if necessary */
-if (braid_control::DEBUG >= braid_control::DETAIL) debug << j << ":0      ";
+if (debug_control::DEBUG >= debug_control::DETAIL) debug << j << ":0      ";
 				}
 			}
 		}
 
-if (braid_control::DEBUG >= braid_control::DETAIL) 
+if (debug_control::DEBUG >= debug_control::DETAIL) 
 	debug << endl;
 		
 		row++;
@@ -6414,7 +6464,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 		output << matrix_rep << endl;
 	}
 
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 {
     debug << "R_module_rep: matrix representation derived from generic code data:" << endl;
     debug << matrix_rep;
@@ -6432,14 +6482,14 @@ bool rat_minor_determinant (Qpmatrix* Matrix_rep, int N, int Nr1, int Nc1, int N
 	int matrix_rows = Matrix_rep->numrows();
 	Qpolynomial det = determinant(*Matrix_rep, title,  matrix_rows - N, rperm, cperm);
 
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 {
 	debug << "rat_minor_determinant: " << (braid_control::LONG_KNOT? "p^{(1)}":"Delta_1") << " generator " << N << "-row/column (" << Nr1 << "," << Nc1;
 	if (braid_control::LONG_KNOT)
 		debug << "&" << Nc2;
 	debug << ")" << endl;
 }
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "rat_minor_determinant: rperm: ";
     for (int k = 0 ; k< matrix_rows-N; k++)
@@ -6469,7 +6519,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 		output << ") = " << det;
 	}
 
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 {
 	debug << "rat_minor_determinant: ";
 	debug << (braid_control::LONG_KNOT? "p^{(1)}":"Delta_1") << " generator det = " << det << endl;
@@ -6490,7 +6540,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 			output << "unit generator detected, terminating calculation" << endl;
 		}
 		
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "rat_minor_determinant: unit generator detected, terminating calculation" << endl;
 
 		if (braid_control::NUMERATOR_GCD)
@@ -6511,7 +6561,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 	    	output << "numerator gcd stands at " << hcf << endl;
 		}
 
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
    	debug << "rat_minor_determinant:  numerator gcd stands at " << hcf << endl;
 	
 		if (braid_control::DELTA_1_UNIT_CHECK && hcf.isunit())
@@ -6524,7 +6574,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 				output << "unit gcd detected, terminating calculation" << endl;
 			}
 
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "rat_minor_determinant: unit gcd detected, terminating calculation" << endl;
 
 			return true;; 
@@ -6569,7 +6619,7 @@ void rat_poly_invariant(const Qpmatrix& switch_matrix, const Qpmatrix& switch_ma
 	/* note the N-factor of the switch matrix */
 	int switch_matrix_N_factor = switch_matrix.numcols()/2;
 	
-if(braid_control::DEBUG >= braid_control::INTERMEDIATE)
+if(debug_control::DEBUG >= debug_control::INTERMEDIATE)
 	debug << "rat_poly_invariant: switch_matrix_N_factor = " << switch_matrix_N_factor << endl;
 
 	/* The two cases of the next conditional clause are in-line rather than function calls only because
@@ -6589,7 +6639,7 @@ if(braid_control::DEBUG >= braid_control::INTERMEDIATE)
 
 			input_string = parse_long_knot_input_string(input_string);
 			
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "rat_poly_invariant: long knot: " << input_string << endl;
 	
 			if (input_string == "link")
@@ -6603,7 +6653,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 					output << "Error! long knot indicator provided for the peer code of a link" << endl;
 				}
 					
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "rat_poly_invariant: Error! long knot indicator provided for the peer code of a link" << endl;
 	
 				return;
@@ -6614,7 +6664,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 	
 		R_module_rep(Matrix_rep, switch_matrix, switch_matrix_inverse, input_string);
 	}
-	else if (valid_braid_input(input_string, num_terms, num_strings))
+	else if (valid_braid_input(input_string, num_terms, num_strings, braid_control::SILENT_OPERATION, braid_control::RAW_OUTPUT, braid_control::OUTPUT_AS_INPUT))
 	{ 
 
 		/* remove any unwanted qualifiers from the input string */
@@ -6700,10 +6750,10 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 				for (int j=N*i+N; j<matrix_cols; j++)
   						cperm[j-N] = j;
 
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 	debug << "rat_poly_invariant: removing N-column " << i << endl;
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "rat_poly_invariant: cperm: ";
    	for (int j = 0 ; j< matrix_cols-N; j++)
@@ -6718,7 +6768,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 					output << "p^{(0)} generator " << i << " = " << det;
 				}
 
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 	debug << "rat_poly_invariant: p_0 generator det " << i << " = " << det << endl;
 
 				if (i == 0)
@@ -6728,7 +6778,7 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 					if (braid_control::WAIT_SWITCH)
 					    matrix_control::wait_count = 0;
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "rat_poly_invariant: op_0  set to det " << i << " = " << op_0 << endl;
 
 				}
@@ -6739,7 +6789,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 					if (braid_control::WAIT_SWITCH)
 					    matrix_control::wait_count = 0;
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "rat_poly_invariant: np_0  set to det " << i << " = " << np_0 << endl;
 	
 					if (unit_detected)
@@ -6771,7 +6821,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 						output << "unit generator detected, terminating calculation" << endl;
 					}
 
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "rat_poly_invariant: unit generator detected, terminating calculation" << endl;
 				}
 				else if (braid_control::NUMERATOR_GCD)
@@ -6790,7 +6840,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 		    			output << " numerator gcd stands at " << hcf << endl;
 					}
 
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "rat_poly_invariant:  numerator gcd stands at " << hcf << endl;
 
 					if (braid_control::DELTA_1_UNIT_CHECK && hcf.isunit())
@@ -6803,7 +6853,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 							output << "unit gcd detected, terminating calculation" << endl;
 						}
 
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "rat_poly_invariant: unit gcd detected, terminating calculation" << endl;
 
 						unit_detected = true; 
@@ -6853,7 +6903,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 			}
 			output << np_0 << endl;		
 
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 {
    	debug << "rat_poly_invariant: p_0  = p^{(0)} = " << delta_0 << endl;
    	debug << "rat_poly_invariant: \\op^{(0)} = " << op_0 << endl;
@@ -6888,7 +6938,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 				}
 				output << delta_0 << endl;
 
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "rat_poly_invariant: Delta_0 = " << delta_0 << endl;
 
 				if (delta_0 == Qpolynomial("0"))
@@ -6922,7 +6972,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 			/* hcf is used only in single variable examples */
 			polynomial<scalar,char,bigint> hcf = delta_0.getn();
 
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
     debug << "\nrat_poly_invariant: hcf initialized to " << hcf << endl;
 
 
@@ -6997,7 +7047,7 @@ rat_poly_delta_1_calculation_complete:
 				}
 				output << hcf << endl;
 
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "rat_poly_invariant: " << (braid_control::LONG_KNOT? "p^{(1)} = ":"Delta_1 = ") << hcf << endl;	
 
 			}
@@ -7017,12 +7067,12 @@ template <typename T1, typename U, typename T2, typename St>  void normalize(pol
 void normalize(Hpolynomial& poly, const Hpmatrix& switch_matrix)
 {
 	
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 	debug << "\nnormalize: normalizing " << poly << endl;
 
 	if (poly.get_pterms() == NULL)
 	{
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 	debug << "\nnormalize: doing nothing, poly is zero\n" << endl;
 		return;
 	}
@@ -7033,13 +7083,13 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 	if (pterm_ptr->n.Qr() < 0)
 		poly *= Hpolynomial("-1");
 
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 	debug << "\nnormalize: scaled poly = " << poly << endl;
 
 	/* if the constant term is 1 already, there's nothing to do */
 	if (pterm_ptr->n == Quaternion(1))
 	{	
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 	debug << "\nnormalize: constant term is already 1, nothing to do" << endl;			
 		return;
 	}
@@ -7057,7 +7107,7 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 	Quaternion delta = conj(B)*A*Quaternion(norm_sqrd(D)) - conj(D)*C*Quaternion(norm_sqrd(B));
 	factor[4] = Hpolynomial(norm_sqrd(delta));
 	
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 {
 	debug << "normalize: initial factors : ";
 	for (int i=0; i<5; i++)
@@ -7076,7 +7126,7 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 		}
 	}
 	
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 {
 	debug << "normalize: zeroed factors : ";
 	for (int i=0; i<5; i++)
@@ -7086,7 +7136,7 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 
 	if (num_factors == 0)
 	{
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 	debug << "normalize: all factors are 1, we're done." << endl;
 		return;
 	}
@@ -7127,7 +7177,7 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 		}		
 	}
 
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 {	
 	debug << "normalize: available factors ";
 	for (int i=0; i<num_factors; i++)
@@ -7160,20 +7210,20 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 			
 			if (multiply_or_divide == 'd')
 			{
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE) 
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE) 
 	debug << "\nnormalize: dividing by ";
 				cfactor /= pfactor;
 				poly /= pfactor;
 			}
 			else
 			{
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 	debug << "\nnormalize: multiplying by ";
 				cfactor *= pfactor;
 				poly *= pfactor;			
 			}
 
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 	debug << pfactor;
 			
 			pterm_ptr = poly.get_pterms(); // the pterms may have been changed
@@ -7185,7 +7235,7 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 		}
 	} while (rfactor);
 
-if(braid_control::DEBUG >= braid_control::INTERMEDIATE)
+if(debug_control::DEBUG >= debug_control::INTERMEDIATE)
 	debug << "\nnormalize: total multiplicative factor applied = " << cfactor;
 
 	cout << "\nNormalized poly = " << poly << endl;	
@@ -7218,7 +7268,7 @@ template <typename T> void equality_test (T x, T y, bool A)
 			}
 		}
 
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 {
 	if (A)
 		debug << "braid::main: switch elements A and D are equal" << endl;
@@ -7251,7 +7301,7 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 			}
 		}
 
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 {
 	if (A)
 		debug << "braid::main: switch elements A and D are not equal" << endl;
@@ -7300,8 +7350,8 @@ void set_main_debug_option(char* start, char* end)
 	
 	if (!strcmp(loc_buf,"braid"))
 	{
-		braid_control::DEBUG = braid_control::SUMMARY;
-		debug << "main::set_main_debug_option: setting debug option braid_control::DEBUG = braid_control::SUMMARY\n";		
+		debug_control::DEBUG = debug_control::SUMMARY;
+		debug << "main::set_main_debug_option: setting debug option debug_control::DEBUG = debug_control::SUMMARY\n";		
 		
 		if (pptr)
 		{
@@ -7331,28 +7381,28 @@ void set_main_debug_option_parameter(char* pptr, string option)
 		{
 			if (!strcmp(pptr,"summary") || !strcmp(pptr,"1") )
 			{
-				braid_control::DEBUG = braid_control::BASIC;
-				debug << "main::set_main_debug_option_parameter: setting debug option braid_control::DEBUG = braid_control::BASIC\n";		
+				debug_control::DEBUG = debug_control::BASIC;
+				debug << "main::set_main_debug_option_parameter: setting debug option debug_control::DEBUG = debug_control::BASIC\n";		
 			}
 			if (!strcmp(pptr,"basic") || !strcmp(pptr,"2") )
 			{
-				braid_control::DEBUG = braid_control::BASIC;
-				debug << "main::set_main_debug_option_parameter: setting debug option braid_control::DEBUG = braid_control::BASIC\n";		
+				debug_control::DEBUG = debug_control::BASIC;
+				debug << "main::set_main_debug_option_parameter: setting debug option debug_control::DEBUG = debug_control::BASIC\n";		
 			}
 			else if (!strcmp(pptr,"intermediate") || !strcmp(pptr,"3"))
 			{
-				braid_control::DEBUG = braid_control::INTERMEDIATE;
-				debug << "main::set_main_debug_option_parameter: setting debug option braid_control::DEBUG = braid_control::INTERMEDIATE\n";		
+				debug_control::DEBUG = debug_control::INTERMEDIATE;
+				debug << "main::set_main_debug_option_parameter: setting debug option debug_control::DEBUG = debug_control::INTERMEDIATE\n";		
 			}
 			else if (!strcmp(pptr,"detail") || !strcmp(pptr,"4"))
 			{
-				braid_control::DEBUG = braid_control::DETAIL;
-				debug << "main::set_main_debug_option_parameter: setting debug option braid_control::DEBUG = braid_control::DETAIL\n";		
+				debug_control::DEBUG = debug_control::DETAIL;
+				debug << "main::set_main_debug_option_parameter: setting debug option debug_control::DEBUG = debug_control::DETAIL\n";		
 			}
 			else if (!strcmp(pptr,"exhaustive") || !strcmp(pptr,"5"))
 			{
-				braid_control::DEBUG = braid_control::EXHAUSTIVE;
-				debug << "main::set_main_debug_option_parameter: setting debug option braid_control::DEBUG = braid_control::EXHAUSTIVE\n";		
+				debug_control::DEBUG = debug_control::EXHAUSTIVE;
+				debug << "main::set_main_debug_option_parameter: setting debug option debug_control::DEBUG = debug_control::EXHAUSTIVE\n";		
 			}
 		}
 	}
@@ -7395,4 +7445,173 @@ void set_cli_suboptions(char* optr, string option)
 	
 	/* remove the {...} we've just processed */
 	strcpy(start_of_option+1,cptr+1);
+}
+
+void set_acceptable_input_type()
+{
+	if (braid_control::FIXED_POINT_INVARIANT || braid_control::RACK_POLYNOMIAL)
+	{
+		input_control::ACCEPT_MAP |= input_control::braid_word;
+
+		if (!braid_control::SILENT_OPERATION)
+			cout << "\n\nReading braid words from input.\n\n";
+		if (!braid_control::RAW_OUTPUT)
+		{
+			output << "\n\n";
+			if (braid_control::OUTPUT_AS_INPUT)
+				output << ';';
+			output << "Reading braid words from input.\n\n";
+		}
+	}
+	else if (braid_control::SWITCH_POLYNOMIAL_INVARIANT)
+	{
+		input_control::ACCEPT_MAP |= input_control::immersion_code;
+		input_control::ACCEPT_MAP |= input_control::peer_code;
+		input_control::ACCEPT_MAP |= input_control::braid_word;
+
+		if (!braid_control::SILENT_OPERATION)
+			cout << "\n\nReading braid words, labelled immersion codes and labelled peer codes from input.\n\n";
+		if (!braid_control::RAW_OUTPUT)
+		{
+			output << "\n\n";
+			if (braid_control::OUTPUT_AS_INPUT)
+				output << ';';
+			output << "Reading braid words, labelled immersion codes and labelled peer codes from input.\n\n";
+		}
+	}
+	else if (braid_control::VOGEL_ALGORITHM || braid_control::SATELLITE)
+	{
+		input_control::ACCEPT_MAP |= input_control::peer_code;
+
+		if (!braid_control::SILENT_OPERATION)
+			cout << "\n\nReading labelled peer codes from input.\n\n";
+		if (!braid_control::RAW_OUTPUT)
+		{
+			output << "\n\n";
+			if (braid_control::OUTPUT_AS_INPUT)
+				output << ';';
+			output << "Reading labelled peer codes from input.\n\n";
+		}
+	}
+	else if (braid_control::GAUSS_CODE)
+	{
+		input_control::ACCEPT_MAP |= input_control::immersion_code;
+		input_control::ACCEPT_MAP |= input_control::peer_code;
+		input_control::ACCEPT_MAP |= input_control::gauss_code;
+		input_control::ACCEPT_MAP |= input_control::braid_word;
+		input_control::ACCEPT_MAP |= input_control::planar_diagram;
+
+		if (!braid_control::SILENT_OPERATION)
+			cout << "\n\nReading braid words, labelled immersion codes, labelled peer codes and planar diagrams from input.\n\n";
+		if (!braid_control::RAW_OUTPUT)
+		{
+			output << "\n\n";
+			if (braid_control::OUTPUT_AS_INPUT)
+				output << ';';
+			output << "Reading braid words, labelled immersion codes, labelled peer codes and planar diagrams from input.\n\n";
+		}
+	}
+	else if (braid_control::PEER_CODE)
+	{
+		input_control::ACCEPT_MAP |= input_control::immersion_code;
+		input_control::ACCEPT_MAP |= input_control::peer_code;
+		input_control::ACCEPT_MAP |= input_control::gauss_code;
+		input_control::ACCEPT_MAP |= input_control::braid_word;
+		input_control::ACCEPT_MAP |= input_control::planar_diagram;
+
+
+		if (!braid_control::SILENT_OPERATION)
+			cout << "\n\nReading braid words, labelled immersion codes and labelled peer codes from input.\n\n";
+		if (!braid_control::RAW_OUTPUT)
+		{
+			output << "\n\n";
+			if (braid_control::OUTPUT_AS_INPUT)
+				output << ';';
+			output << "Reading braid words, labelled immersion codes and labelled peer codes from input.\n\n";
+		}
+	}
+	else if (braid_control::DOWKER_CODE)
+	{
+		input_control::ACCEPT_MAP |= input_control::braid_word;
+		input_control::ACCEPT_MAP |= input_control::immersion_code;
+
+		if (!braid_control::SILENT_OPERATION)
+			cout << "\n\nReading braid words and labelled immersion codes from input.\n\n";
+		if (!braid_control::RAW_OUTPUT)
+		{
+			output << "\n\n";
+			if (braid_control::OUTPUT_AS_INPUT)
+				output << ';';
+			output << "Reading braid words and labelled immersion codes from input.\n\n";
+		}
+	}
+	else if (braid_control::KAUFFMAN_BRACKET || braid_control::JONES_POLYNOMIAL || braid_control::ARROW_POLYNOMIAL)
+	{
+		input_control::ACCEPT_MAP |= input_control::immersion_code;
+		input_control::ACCEPT_MAP |= input_control::peer_code;
+		input_control::ACCEPT_MAP |= input_control::gauss_code;  // only Gauss codes containing classical crossings are supported currently, not flat or doodle crossings
+		input_control::ACCEPT_MAP |= input_control::planar_diagram;
+
+
+		if (!braid_control::SILENT_OPERATION)
+			cout << "\n\nReading labelled immersion codes, labelled peer codes and Gauss codes from input.\n\n";
+		if (!braid_control::RAW_OUTPUT)
+		{
+			output << "\n\n";
+			if (braid_control::OUTPUT_AS_INPUT)
+				output << ';';
+			output << "Reading labelled immersion codes, labelled peer codes and Gauss codes from input.\n\n";
+		}
+	}
+	else if (braid_control::KNOTOID_BRACKET || braid_control::PARITY_BRACKET || braid_control::PARITY_ARROW)
+	{
+		input_control::ACCEPT_MAP |= input_control::immersion_code;
+		input_control::ACCEPT_MAP |= input_control::peer_code;
+		input_control::ACCEPT_MAP |= input_control::gauss_code;
+
+		if (!braid_control::SILENT_OPERATION)
+			cout << "\n\nReading labelled peer codes and Gauss codes from input.\n\n";
+		if (!braid_control::RAW_OUTPUT)
+		{
+			output << "\n\n";
+			if (braid_control::OUTPUT_AS_INPUT)
+				output << ';';
+			output << "Reading labelled peer codes and Gauss codes from input.\n\n";
+		}
+	}
+	else if (braid_control::AFFINE_INDEX)
+	{
+		input_control::ACCEPT_MAP |= input_control::immersion_code;
+		input_control::ACCEPT_MAP |= input_control::peer_code;
+		input_control::ACCEPT_MAP |= input_control::gauss_code; // only Gauss codes for classical diagrams are supported currently, not flat or doodle diagrams
+		input_control::ACCEPT_MAP |= input_control::braid_word;
+		input_control::ACCEPT_MAP |= input_control::planar_diagram;		
+
+		if (!braid_control::SILENT_OPERATION)
+			cout << "\n\nReading braid words, labelled immersion codes, labelled peer codes and Gauss codes from input.\n\n";
+		if (!braid_control::RAW_OUTPUT)
+		{
+			output << "\n\n";
+			if (braid_control::OUTPUT_AS_INPUT)
+				output << ';';
+			output << "Reading braid words, labelled immersion codes, labelled peer codes and Gauss codes from input.\n\n";
+		}
+	}
+	else
+	{
+		input_control::ACCEPT_MAP |= input_control::braid_word;
+
+		if (!braid_control::SILENT_OPERATION)
+			cout << "\n\nReading braid words from input.\n\n";
+		if (!braid_control::RAW_OUTPUT)
+		{
+			output << "\n\n";
+			if (braid_control::OUTPUT_AS_INPUT)
+				output << ';';
+			output << "Reading braid words from input.\n\n";
+		}
+	}
+	
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+	debug << "set_acceptable_input_type: input_control::ACCEPT_MAP set to 0x" << hex << input_control::ACCEPT_MAP << dec << endl;
 }

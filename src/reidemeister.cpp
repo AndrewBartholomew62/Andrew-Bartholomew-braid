@@ -13,7 +13,7 @@ virtual_Reidemeister_II_plus_return virtual_Reidemeister_II_plus(generic_code_da
 int remove_Reidemeister_II(generic_code_data& code_data, vector<int>& component_flags)	
 void align_label_numbers (matrix<int>& edge_labels, int num_components,vector<int> new_first_component_edge,vector<int> new_last_component_edge)
 void clear_component_flag(int component, vector<int>& component_flags)
-
+Reidemeister_III_return Reidemeister_III_present (generic_code_data code_data)
 **************************************************************************/
 #include <string>
 #include <sstream>
@@ -27,6 +27,7 @@ void clear_component_flag(int component, vector<int>& component_flags)
 #include <ctype.h>
 #include <stdio.h>
 #include <algorithm>
+#include <tuple>
 
 using namespace std;
 
@@ -38,24 +39,13 @@ extern ifstream     input;
 #include <quaternion-scalar.h>
 #include <polynomial.h>
 #include <matrix.h>
-#include <braid.h>
+#include <generic-code.h>
+#include <debug-control.h>
 #include <gauss-orientation.h>
 #include <reidemeister.h>
 
-
-/********************* Function prototypes ***********************/
-void write_code_data(ostream& s, generic_code_data& code_data);
-void read_peer_code (generic_code_data& code_data, string input_string);
-void write_peer_code(ostream& s, const generic_code_data& code_data, bool zig_zags=false, bool labelled=true);
-void print_code_data(generic_code_data& code_data, ostream& s, string prefix);
-bool classical_gauss_to_peer_code(generic_code_data gauss_code_data, generic_code_data& peer_code_data);
-int remove_edge_flags_from_peer_code(generic_code_data& code_data, vector<int>& edge_flag, vector<int>& component_flags);
-bool valid_knotoid_input(generic_code_data& code_data);
-bool calculate_turning_cycles(generic_code_data& code_data, matrix<int>& cycle, int& num_left_cycles, int& num_cycles);
-int remove_peer_code_component(generic_code_data& code_data, int component, vector<int>& component_flags);
-void align_label_numbers (matrix<int>& edge_labels, int num_components,vector<int> new_first_component_edge,vector<int> new_last_component_edge);
-int amalgamate_zig_zag_counts(int a, int b);
-void clear_component_flag(int component, vector<int>& component_flags);
+//bool gauss_to_peer_code(generic_code_data gauss_code_data, generic_code_data& peer_code_data, bool optimal = true);
+bool gauss_to_peer_code(generic_code_data gauss_code_data, generic_code_data& peer_code_data, bool optimal=true, vector<int>* gauss_crossing_perm=0, bool evaluate_gauss_crossing_perm=false);
 
 /* virtual_Reidemeister_I_present detects virtual Reidemeister I monogons and also virtual Reidemeister I 
    detours that, in the case of knotoids, may also encounter the shortcut.
@@ -68,6 +58,21 @@ void clear_component_flag(int component, vector<int>& component_flags);
 */
 bool virtual_Reidemeister_I_present(generic_code_data code_data)
 {
+
+	if (code_data.type == generic_code_data::gauss_code)
+	{
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
+	debug << "virtual_Reidemeister_I_present: presented with a Gauss code, returning false;" << endl;
+		
+		return false;
+	}
+
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
+{
+	debug << "virtual_Reidemeister_I_present: presented with code data ";
+	write_code_data(debug,code_data);	
+	debug << endl;
+}
 	gauss_orientation_data gauss_data(code_data, true); // true gives us the extended version
 	int num_terms = gauss_data.num_terms;
 	matrix<int>& orientation_matrix = gauss_data.orientation_matrix;
@@ -83,7 +88,7 @@ bool virtual_Reidemeister_I_present(generic_code_data code_data)
 	{
 		int immersion_crossing = gauss_data.immersion_crossing[abs(orientation_matrix[1][i])-1];
 		
-if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
+if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
 {
 	debug << "virtual_Reidemeister_I_present: term " << i << " immersion_crossing = " << immersion_crossing << ", label = " 
 	      << code_data.code_table[LABEL][immersion_crossing] << endl;
@@ -91,7 +96,7 @@ if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
 		/* we're only interested in terms related to virtual and shortcut crossings */
 		if (code_data.code_table[LABEL][immersion_crossing] != generic_code_data::VIRTUAL && !(ignore_shortcut && shortcut_crossing[immersion_crossing]))
 		{
-if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
+if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
 	debug << "virtual_Reidemeister_I_present: term " << i << " does not correspond to a virtual crossing" << endl;
 	
 			continue;
@@ -111,14 +116,14 @@ if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
 		   exists, it may lie between the first and second occurrence in the code, or between the second and 
 		   first (wrapping around the code).
 		*/
-if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
+if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
 	debug << "virtual_Reidemeister_I_present: checking term " << i << ", component " << ith_term_component << endl;
 
 		for (int j=1; j< num_terms-1; j++)
 		{
 			if (orientation_matrix[1][(i+j)%num_terms] > 0)
 			{
-if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
+if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
 	debug << "virtual_Reidemeister_I_present:   term " << (i+j)%num_terms << " not virtual, no virtual Reidemeister I at term  " << i << endl;
 				break;
 			}
@@ -135,7 +140,7 @@ if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
 						break;
 				}
 		
-if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
+if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
 {
 	debug << "virtual_Reidemeister_I_present:   term " << (i+j)%num_terms << " is the second encounter corresponding to term " << i 
 	      << ", succeeding_term_component = " << succeeding_term_component << endl;
@@ -143,20 +148,20 @@ if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
 
 				if (ith_term_component == succeeding_term_component)
 				{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "virtual_Reidemeister_I_present: found virtual Reidemeister I move in gauss_data term " << i << endl;
 					return true;
 				}
 			}
 			else
 			{
-if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
+if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
 	debug << "virtual_Reidemeister_I_present:   term " << (i+j)%num_terms << " is virtual, or a shortcut crossing" << endl;
 			}
 		}
 	}
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 	debug << "virtual_Reidemeister_I_present: no virtual Reidemeister I move found" << endl;
 	
 	return false;
@@ -173,7 +178,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 int remove_virtual_Reidemeister_I(generic_code_data& code_data, vector<int>& component_flags)
 {
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 {
 	debug << "remove_virtual_Reidemeister_I: presented with code data ";
 	write_code_data(debug,code_data);	
@@ -204,11 +209,11 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 			cout << "\nError! Function remove_virtual_Reidemeister_I presented with a knotoid code whose first shortcut crossing is virtual." << endl;
 			exit(0);
 		}
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_virtual_Reidemeister_I: head_semi_arc = " << head_semi_arc << endl;			
 	}
 	
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_virtual_Reidemeister_I: processing code data with " << num_crossings << " crossings" << endl;
 
 	/* We record which edges terminate at a crossing involved in a Reidemeister I move */
@@ -223,7 +228,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 		int start_label = code_table[LABEL][crossing];
 		bool head_semi_arc_in_Reidemeister_I_loop = false;
 		
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_virtual_Reidemeister_I: starting edge " << start << ", crossing " << crossing << ", label = " << start_label << endl;
 	
 		/* Check added for parity bracket as part of braid programme to force detection of virtual 
@@ -236,7 +241,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 		*/
 		if (RI_edge_flag[start] == 1)
 		{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_virtual_Reidemeister_I: starting edge already identified as part of a Reidemeister I loop" << endl;
 			continue;
 		}
@@ -258,7 +263,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 			peer_component = code_table[COMPONENT][(peer-1)/2]; 
 		}
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "remove_virtual_Reidemeister_I:   start = " << start << ", peer = " << peer << ", start component = " << component 
 	      << ", peer_component = " << peer_component << endl;	
@@ -276,7 +281,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 				{
 					head_semi_arc_in_Reidemeister_I_loop = true;
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_virtual_Reidemeister_I:   knotoid head_semi_arc " << head_semi_arc << " encountered" << endl;						
 				}
 				
@@ -286,7 +291,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 				*/
 				if (term_crossing[edge] == crossing && edge != start)
 				{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_virtual_Reidemeister_I:   edge " << edge << " arrives back at crossing " << crossing << endl;
 
 					/* we may have been given the peer code of a knot-like (non-pure) knotoid where the Reidemeister I 
@@ -299,7 +304,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 					if (ignore_shortcut && start_label != generic_code_data::VIRTUAL && !code_data.shortcut_crossing[crossing] &&
 					    component == 0 && (head_semi_arc_in_Reidemeister_I_loop || edge < start)) // latter implies leg is in the Reidemeister						
 					{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_virtual_Reidemeister_I:   knotoid leg or head_semi_arc in Reidemeister I loop, not a valid Reidemeister I configuration" << endl;											
 					}
 					else
@@ -319,7 +324,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 							}
 						}
 					
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "remove_virtual_Reidemeister_I:   Reidemeister_I configuration found, Reidemeister_I_count = "
 	      << Reidemeister_I_count << endl;
@@ -328,7 +333,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 						if (edge > start) // we might have cycled around the component 
 						{
 							start = edge;
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_virtual_Reidemeister_I:   start adjusted to " << start << endl;
 
 						}
@@ -339,18 +344,18 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 				else if (code_table[LABEL][term_crossing[edge]] == generic_code_data::VIRTUAL)
 				{
 					virtual_crossing_flag[term_crossing[edge]] = 1;
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_virtual_Reidemeister_I:   edge " << edge << " terminates at a virtual crossing" << endl;
 				}
 				else if (ignore_shortcut && shortcut_crossing[term_crossing[edge]])
 				{
 					virtual_crossing_flag[term_crossing[edge]] = 1;
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_virtual_Reidemeister_I:   edge " << edge << " terminates at a shortcut crossing" << endl;
 				}
 				else
 				{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_virtual_Reidemeister_I:   edge " << edge << " terminates at a different, non-virtual, crossing" << endl;
 	
 					/* note that we cannot advance start to this non-virtual crossing, since there may be virtual Reidemeister I
@@ -362,15 +367,15 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 		}
 		else
 		{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_virtual_Reidemeister_I:   crossing involves two components, moving on"<< endl;
 		}		
 	}
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_virtual_Reidemeister_I: found " << Reidemeister_I_count << " Reidemeister I moves" << endl;
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "remove_virtual_Reidemeister_I: RI_edge_flags ";
 	for (int i=0; i< 2*num_crossings; i++)
@@ -382,29 +387,29 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 	{
 		num_components_removed = remove_edge_flags_from_peer_code(code_data, RI_edge_flag,component_flags);
 		
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_virtual_Reidemeister_I: removing_edge_flags_from_peer_code removes " << num_components_removed << " components" << endl;
 			
 		/* recurse in case there are multiple twists to be removed */
 		if (code_data.num_crossings > 0)
 		{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_virtual_Reidemeister_I: recursing..." << endl;
 			num_components_removed += remove_virtual_Reidemeister_I(code_data,component_flags);
 		}
 		else
 		{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_virtual_Reidemeister_I: reduced peer code to a set of disjoint simple closed curves" << endl;
 		}
 	}
 	else
 	{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 	debug << "remove_virtual_Reidemeister_I: no Reidemeister I moves detected." << endl;	
 	}
 	
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_virtual_Reidemeister_I: returning num_components_removed = " << num_components_removed << endl;	
 	return num_components_removed;	
 }
@@ -428,7 +433,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 */
 int remove_edge_flags_from_peer_code(generic_code_data& code_data, vector<int>& edge_flag, vector<int>& component_flags)
 {
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "remove_edge_flags_from_peer_code: presented with code data ";
 	write_code_data(debug,code_data);	
@@ -454,7 +459,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 	else
 		track_zig_zag_counts = false;
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_edge_flags_from_peer_code: track_zig_zag_counts = " << track_zig_zag_counts << endl;			
 		
 	
@@ -472,7 +477,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 			cout << "\nError! Function remove_edge_flags_from_peer_code presented with a knotoid code whose first shortcut crossing is virtual." << endl;
 			exit(0);
 		}
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_edge_flags_from_peer_code: head_semi_arc = " << head_semi_arc << endl;			
 	}
 	
@@ -515,7 +520,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 			
 		if (old_edge_component != new_edge_component)
 		{
-if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
+if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
 	debug << "remove_edge_flags_from_peer_code:   reached end of component " << new_edge_component << endl;				 
 			new_last_component_edge[new_edge_component] = new_edge-1;
 
@@ -533,7 +538,7 @@ if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
 
 				
 			*/
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_edge_flags_from_peer_code: amalgamated_zig_zag_count = " << amalgamated_zig_zag_count << " at the end of component " << new_edge_component << endl;
 	
 			if (code_data.immersion != generic_code_data::character::CLOSED && new_edge_component == 0)
@@ -542,15 +547,15 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 				if (code_data.immersion == generic_code_data::character::PURE_KNOTOID)
 				{
 					code_data.head_zig_zag_count = amalgamated_zig_zag_count;
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_edge_flags_from_peer_code:   pure knotoid segment component, code_data.head_zig_zag_count set to " << code_data.head_zig_zag_count << endl;
 				}
 				else
 				{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_edge_flags_from_peer_code:   knot-type knotoid or long knot segment component, amalgamated with code_data.head_zig_zag_count " << code_data.head_zig_zag_count;
 						code_data.head_zig_zag_count = amalgamate_zig_zag_counts(amalgamated_zig_zag_count, code_data.head_zig_zag_count);
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << " to give " << code_data.head_zig_zag_count << endl;
 				}
 			
@@ -580,21 +585,21 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 					int crossing = code_data.term_crossing[edge];
 					int row = (edge%2 == 0?0:1);
 					
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_edge_flags_from_peer_code:   old edge " << edge << " terminates at crossing " << crossing << " row = " << row << endl;
 					
 					if (code_table[LABEL][crossing] != generic_code_data::VIRTUAL && !(pure_knotoid_code_data && shortcut_crossing[crossing]))
 					{
 						if (new_edge_labels[row][crossing] != -1)
 						{								
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "remove_edge_flags_from_peer_code:   loop component, amalgamating with count " << initial_new_zig_zag_count[row][crossing] << " for old edge " 
 	      << edge << ": row = " << row << " crossing = " << crossing << endl;
 }
 							initial_new_zig_zag_count[row][crossing] = amalgamate_zig_zag_counts(amalgamated_zig_zag_count, initial_new_zig_zag_count[row][crossing]);
 										
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_edge_flags_from_peer_code:   count updated to " << initial_new_zig_zag_count[row][crossing] << endl;
 	
 							edge_found = true;
@@ -605,7 +610,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 				
 				if (!edge_found)
 				{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_edge_flags_from_peer_code:   loop component, no edge found, component being removed" << endl;
 				}					
 			}
@@ -620,12 +625,12 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 			int crossing = code_data.term_crossing[old_edge];
 			int old_edge_zig_zag_count = (old_edge %2 == 1? code_data.zig_zag_count[1][crossing]:code_data.zig_zag_count[0][crossing]);
 			
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_edge_flags_from_peer_code: old_edge " << old_edge << " terminates at crossing " << crossing << ", old_edge_zig_zag_count = " << old_edge_zig_zag_count << endl;				 
 			
 			amalgamated_zig_zag_count = amalgamate_zig_zag_counts(amalgamated_zig_zag_count, old_edge_zig_zag_count);
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_edge_flags_from_peer_code:   amalgamated_zig_zag_count adjusted to " << amalgamated_zig_zag_count << endl;				 
 		}
 		
@@ -648,7 +653,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 				}
 			}
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_edge_flags_from_peer_code:   old_edge " << old_edge << " lies in position " << (row==ODD_TERMINATING? "ODD_TERMINATING" : "EVEN_TERMINATING") << ", " << col << ", new_edge = " << new_edge << endl;				 
 				
 			/* we'll write the new edges corresponding to the old even edges into the first row of new_edge_labels 
@@ -668,7 +673,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 				{					
 					initial_new_zig_zag_count[row][col] = amalgamated_zig_zag_count;
 					amalgamated_zig_zag_count = 0;				
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_edge_flags_from_peer_code:   new_edge " << new_edge << " initial_new_zig_zag_count[" << row << "][" << col << "] = " << initial_new_zig_zag_count[row][col] << endl;
 				}
 			}
@@ -676,7 +681,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 		}
 		else
 		{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_edge_flags_from_peer_code:   old_edge " << old_edge << " terminates at a crossing to be removed" << endl;				 	
 		}	
 	}
@@ -685,7 +690,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 	    is retained, then we need to amalgamate this count with either the head_zig_zag_count or the first edge of the component otherwise.  
 		See comments above.
 	*/
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_edge_flags_from_peer_code: amalgamated_zig_zag_count = " << amalgamated_zig_zag_count << " at the end of component " << new_edge_component << endl;
 	
 	if (code_data.immersion != generic_code_data::character::CLOSED && new_edge_component == 0)
@@ -694,17 +699,17 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 		if (code_data.immersion == generic_code_data::character::PURE_KNOTOID)
 		{
 			code_data.head_zig_zag_count = amalgamated_zig_zag_count;
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_edge_flags_from_peer_code:   pure knotoid segment component, code_data.head_zig_zag_count set to " << code_data.head_zig_zag_count << endl;
 		}
 		else
 		{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "remove_edge_flags_from_peer_code:   knot-type knotoid or long knot segment component, amalgamated with code_data.head_zig_zag_count " << code_data.head_zig_zag_count;
 }
 			code_data.head_zig_zag_count = amalgamate_zig_zag_counts(amalgamated_zig_zag_count, code_data.head_zig_zag_count);
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << " to give " << code_data.head_zig_zag_count << endl;
 		}
 					
@@ -721,21 +726,21 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 			int crossing = code_data.term_crossing[edge];
 			int row = (edge%2 == 0?0:1);
 					
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_edge_flags_from_peer_code:   old edge " << edge << " terminates at crossing " << crossing << " row = " << row << endl;
 					
 			if (code_table[LABEL][crossing] != generic_code_data::VIRTUAL && !(pure_knotoid_code_data && shortcut_crossing[crossing]))
 			{
 				if (new_edge_labels[row][crossing] != -1)
 				{	
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "remove_edge_flags_from_peer_code:   loop component, amalgamating with count " << initial_new_zig_zag_count[row][crossing] << " for old edge " 
 	      << edge << ": row = " << row << " crossing = " << crossing << endl;
 }
 					initial_new_zig_zag_count[row][crossing] = amalgamate_zig_zag_counts(amalgamated_zig_zag_count, initial_new_zig_zag_count[row][crossing]);
 										
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_edge_flags_from_peer_code:   count updated to " << initial_new_zig_zag_count[row][crossing] << endl;
 	
 					edge_found = true;
@@ -746,7 +751,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 		
 		if (!edge_found)
 		{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_edge_flags_from_peer_code:   loop component, no edge found, component being removed" << endl;
 		}				
 	}
@@ -758,7 +763,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 	*/
 	new_last_component_edge[new_edge_component] = new_edge-1;
 					
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "remove_edge_flags_from_peer_code: new_first_component_edge ";
 	for (int i=0; i< num_components; i++)
@@ -787,7 +792,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 	/* new_edge now indicates the number of edges in the reduced diagram, so we can note the new number of crossings */
 	int new_num_crossings = new_edge/2;
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_edge_flags_from_peer_code: new_num_crossings = " << new_num_crossings << endl;		
 
 	if (new_num_crossings > 0)
@@ -808,13 +813,13 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 			{
 				code_data.head = -1;
 				pure_knotoid_code_data = false;
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_edge_flags_from_peer_code: removed first component completely, cleared code_data.head and pure_knotoid_code_data." << endl;			
 			}
 			else
 			{
 				new_head_semi_arc %= (new_last_component_edge[0]+1); 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_edge_flags_from_peer_code: reset new_head_semi_arc = " << new_head_semi_arc << endl;			
 			}
 		}
@@ -829,14 +834,14 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 		{
 			int component_zero_shift = new_edge_labels[0][0];
 		
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_edge_flags_from_peer_code: knotoid: need to shift numbering of component zero by " << component_zero_shift << endl;	
 	
 			int new_num_edges = num_component_edges[0];
 			for (int i = 0; i < num_component_edges[0]; i++)
 				new_num_edges -= edge_flag[i];
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_edge_flags_from_peer_code: knotoid: component zero new_num_edges = " << new_num_edges << endl;
 					
 			for (int j=0; j< num_crossings; j++)
@@ -850,7 +855,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 			
 			new_head_semi_arc = (new_head_semi_arc - component_zero_shift + new_num_edges)%new_num_edges;
 		
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "remove_edge_flags_from_peer_code: knotoid: after shifting component zero new_edge_labels: " << endl;
 	print(new_edge_labels, debug,3,"remove_edge_flags_from_peer_code: ");
@@ -866,7 +871,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 		*/
 		align_label_numbers (new_edge_labels, num_components,new_first_component_edge,new_last_component_edge);
 		
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "remove_edge_flags_from_peer_code: final new_edge_labels: " << endl;
 	print(new_edge_labels, debug,3,"remove_edge_flags_from_peer_code: ");
@@ -884,12 +889,12 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 				int crossing = code_data.term_crossing[edge];
 				int row = (edge%2 == 0?0:1);
 				
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_edge_flags_from_peer_code: old edge " << edge << " terminates at crossing " << crossing << " row = " << row << endl;
 	
 				if (new_edge_labels[row][crossing] != -1)
 				{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_edge_flags_from_peer_code:   new edge label " << new_edge_labels[row][crossing] << endl;
 	
 					component_removed = false;
@@ -902,7 +907,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 				/* we adjust the immersion character below, if necessary */
 				clear_component_flag(i,component_flags);
 				
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "remove_edge_flags_from_peer_code: removing edge flags disconnects component " << i << endl;
 	debug << "remove_edge_flags_from_peer_code:   component_flags updated to: ";
@@ -913,7 +918,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 			}
 			else
 			{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_edge_flags_from_peer_code:   removing edge flags retains component " << i << endl;
 			}
 		}
@@ -995,7 +1000,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 			}
 		}
 		
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "remove_edge_flags_from_peer_code: new_code_table" << endl;
 	debug << "remove_edge_flags_from_peer_code:  type: ";
@@ -1071,11 +1076,11 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 				pure_knotoid_code_data = false;
 				
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_edge_flags_from_peer_code: new_head_semi_arc is zero, clearing knotoid status of code data" << endl;
 	
 				code_data.immersion = generic_code_data::character::KNOTOID;
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_edge_flags_from_peer_code: set code_data.immersion = generic_code_data::character::KNOTOID to indicate knot-type knotoid" << endl;
 	
 			}
@@ -1084,7 +1089,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 			else
 				code_data.head = new_head_semi_arc/2;
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_edge_flags_from_peer_code: new peer code head = " << code_data.head << endl;
 			
 		}
@@ -1093,7 +1098,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 		ostringstream oss;
 		write_code_data (oss, code_data);
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_edge_flags_from_peer_code: new peer code = " << oss.str() << endl;
 	
 		/* read back the peer code into code_data */
@@ -1120,14 +1125,14 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 		code_data.num_crossings = 0;
 		code_data.num_components = 0;
 		
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "remove_edge_flags_from_peer_code: reduced peer code to a set of disjoint simple closed curves" << endl;
 	debug << "remove_edge_flags_from_peer_code: set code_data.num_components to zero, clearing component_flags" << endl;
 }
 	}
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "remove_edge_flags_from_peer_code: new code_data: " << endl;
 	print_code_data (code_data, debug, "remove_edge_flags_from_peer_code: \t");
@@ -1196,7 +1201,7 @@ bool Gauss_Reidemeister_II_labels(int start_edge, int end_bigon_edge_a, int end_
 	int end_crossing = code_data.term_crossing[end_edge];
 
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "Gauss_Reidemeister_II_labels: start_edge = " << start_edge << ", component = " << component << ", end_edge = " << end_edge << endl;	
 	debug << "Gauss_Reidemeister_II_labels: start_crossing = " << start_crossing << ", end_crossing = " << end_crossing << endl;	
@@ -1204,7 +1209,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 
 	if (code_table[LABEL][start_crossing] == generic_code_data::FLAT && code_table[LABEL][end_crossing] == generic_code_data::FLAT)
 	{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "Gauss_Reidemeister_II_labels: start and end crossings both FLAT, compatible Reidemeister II labels" << endl;	
 		
 		return true;
@@ -1213,7 +1218,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 	       && (code_table[LABEL][end_crossing] == generic_code_data::POSITIVE || code_table[LABEL][end_crossing] == generic_code_data::NEGATIVE))
 	{	
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "Gauss_Reidemeister_II_labels: both start and end crossings are classical" << endl;	
 
 		bool start_under_arc;
@@ -1248,20 +1253,20 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 				end_under_arc = true;
 		}
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "Gauss_Reidemeister_II_labels: start_under_arc = " << start_under_arc << ", end _under_arc = " << end_under_arc << endl;	
 	
 		bool Reidemeister_II = false;
 		
 		if ((start_under_arc && end_under_arc) || (!start_under_arc && !end_under_arc))
 		{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "Gauss_Reidemeister_II_labels: compatible Reidemeister II labels "<< endl;	
 			Reidemeister_II = true;
 		}
 		else
 		{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "Gauss_Reidemeister_II_labels: incompatible Reidemeister II labels "<< endl;	
 		}
 			
@@ -1269,7 +1274,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 	}
 	else 
 	{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "Gauss_Reidemeister_II_labels: start and end crossings of mixed type, or both VIRTUAL, incompatible Reidemeister II labels" << endl;	
 		
 		return false;
@@ -1336,7 +1341,7 @@ simple_Reidemeister_II_return simple_Reidemeister_II_present(generic_code_data& 
 	vector<int>& RII_edge_flag = _return.RII_edge_flag;
 	bool& Reidemeister_II_found = _return.Reidemeister_II_found;
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 {
 	debug << "simple_Reidemeister_II_present: presented with code data ";
 	write_code_data(debug,code_data);	
@@ -1358,7 +1363,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 			exit(0);
 		}
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "simple_Reidemeister_II_present: head_semi_arc = " << head_semi_arc << endl;		
 	
 		pure_knotoid_code_data = true;
@@ -1396,7 +1401,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 		if (code_table[OPEER][j] == successor && simple_Reidemeister_II_labels(code_table[LABEL][i],code_table[LABEL][j]))
 	    {
 			/* 1) peer of 2j is 2i+1; i.e peer of peer_successor is successor */
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "simple_Reidemeister_II_present:  i = " << i << ", naming edge = " << 2*i << ", peer = " << peer 
 	      << ", peer of peer_sucessor=" << peer_successor << " is sucessor=" << successor << ", " << endl;
@@ -1404,19 +1409,19 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 			if (pure_knotoid_code_data && code_table[LABEL][i] != generic_code_data::VIRTUAL &&
 			    (successor == 0 || successor == head_semi_arc || peer_successor == 0 || peer_successor == head_semi_arc))
 			{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "simple_Reidemeister_II_present: case 1, bigon bounded by successor and peer_successor includes knotoid leg (0) or head (" << head_semi_arc << ")" << endl;
 			}
 			else if (code_data.immersion == generic_code_data::character::LONG_KNOT && 
 			         code_table[LABEL][i] != generic_code_data::VIRTUAL && (successor == 0 || peer_successor == 0 ))
 			{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "simple_Reidemeister_II_present: case 1, bigon bounded by successor and peer_successor includes long knot ends" << endl;
 			}
 			else if (code_data.immersion == generic_code_data::character::KNOTOID && 
 			         code_table[LABEL][i] != generic_code_data::VIRTUAL && (successor == 0 || peer_successor == 0 ))
 			{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	if (code_data.type == generic_code_data::peer_code)
 		debug << "simple_Reidemeister_II_present: case 1, bigon bounded by successor and peer_successor includes knot-type knotoid leg and head" << endl;
@@ -1435,7 +1440,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 		else if (code_table[OPEER][j] == predecessor && simple_Reidemeister_II_labels(code_table[LABEL][i],code_table[LABEL][j]))
 	    {
 			/* 4) peer of 2j is 2i-1 i.e peer of peer_successor is predecessor */
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "simple_Reidemeister_II_present:  i = " << i << ", naming edge = " << 2*i << ", peer = " << peer 
 	      << ", peer of peer_successor=" << peer_successor << " is predecessor=" << predecessor << ", " << endl;
@@ -1443,19 +1448,19 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 			if (pure_knotoid_code_data && code_table[LABEL][i] != generic_code_data::VIRTUAL &&
 			    (2*i == 0 || 2*i == head_semi_arc || peer_successor == 0 || peer_successor == head_semi_arc))
 			{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "simple_Reidemeister_II_present: case 4, bigon bounded by naming edge and peer_successor includes knotoid leg (0) or head (" << head_semi_arc << ")" << endl;
 			}
 			else if (code_data.immersion == generic_code_data::character::LONG_KNOT && 
 			         code_table[LABEL][i] != generic_code_data::VIRTUAL && (2*i == 0 || peer_successor == 0))
 			{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "simple_Reidemeister_II_present: case 4, bigon bounded by naming edge and peer_successor includes long knot ends" << endl;
 			}
 			else if (code_data.immersion == generic_code_data::character::KNOTOID && 
 			         code_table[LABEL][i] != generic_code_data::VIRTUAL && (2*i == 0 || peer_successor == 0))
 			{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	if (code_data.type == generic_code_data::peer_code)
 		debug << "simple_Reidemeister_II_present: case 4, bigon bounded by naming edge and peer_successor includes knot-type knotoid leg and head" << endl;
@@ -1474,7 +1479,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 		else if (code_table[OPEER][j1] == successor && simple_Reidemeister_II_labels(code_table[LABEL][i],code_table[LABEL][j1]))
 		{
 			/* 2) peer of 2j-2 is 2i+1 i.e peer of peer_predecessor is successor */
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "simple_Reidemeister_II_present:  i = " << i << ", naming edge = " << 2*i << ", peer = " << peer 
 	      << ", peer of peer_predecessor=" << peer_predecessor << " is successor=" << successor << ", " << endl;
@@ -1482,19 +1487,19 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 			if (pure_knotoid_code_data && code_table[LABEL][i] != generic_code_data::VIRTUAL &&
 			    (peer == 0 || peer == head_semi_arc || successor == 0 || successor == head_semi_arc))
 			{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "simple_Reidemeister_II_present: case 2, bigon bounded by peer and successor includes knotoid  leg (0) or head (" << head_semi_arc << ")" << endl;
 			}
 			else if (code_data.immersion == generic_code_data::character::LONG_KNOT && 
 			         code_table[LABEL][i] != generic_code_data::VIRTUAL && (peer == 0 || successor == 0))
 			{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "simple_Reidemeister_II_present: case 2, bigon bounded by peer and successor includes long knot ends" << endl;
 			}
 			else if (code_data.immersion == generic_code_data::character::KNOTOID && 
 			         code_table[LABEL][i] != generic_code_data::VIRTUAL && (peer == 0 || successor == 0))
 			{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	if (code_data.type == generic_code_data::peer_code)
 		debug << "simple_Reidemeister_II_present: case 2, bigon bounded by peer and successor includes knot-type knotoid leg and head" << endl;
@@ -1513,7 +1518,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 		else if (code_table[OPEER][j1] == predecessor && simple_Reidemeister_II_labels(code_table[LABEL][i],code_table[LABEL][j1]))
 		{
 			/* 3) peer of 2j-2 is 2i-1 i.e peer of peer_predecessor is predecessor */
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "simple_Reidemeister_II_present:  i = " << i << ", naming edge = " << 2*i << ", peer = " << peer 
 	      << ", peer of peer_predecessor=" << peer_predecessor << " is predecessor=" << predecessor << ", " << endl;
@@ -1522,19 +1527,19 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 			if (pure_knotoid_code_data && code_table[LABEL][i] != generic_code_data::VIRTUAL &&
 			    (2*i == 0 || 2*i == head_semi_arc || peer == 0 || peer == head_semi_arc))
 			{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "simple_Reidemeister_II_present: case 3, bigon bounded by naming edge and peer includes knotoid leg (0) or head (" << head_semi_arc << ")" << endl;
 			}
 			else if (code_data.immersion == generic_code_data::character::LONG_KNOT && 
 			         code_table[LABEL][i] != generic_code_data::VIRTUAL && (2*i == 0 || peer == 0))
 			{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "simple_Reidemeister_II_present: case 3, bigon bounded by naming edge and peer includes long knot ends" << endl;
 			}
 			else if (code_data.immersion == generic_code_data::character::KNOTOID && 
 			         code_table[LABEL][i] != generic_code_data::VIRTUAL && (2*i == 0 || peer == 0))
 			{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	if (code_data.type == generic_code_data::peer_code)
 		debug << "simple_Reidemeister_II_present: case 3, bigon bounded by naming edge and peer includes knot-type knotoid leg and head" << endl;
@@ -1551,6 +1556,10 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 			}
 		}
 	}
+	
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
+	debug << "simple_Reidemeister_II_present: Reidemeister_II_found = " << Reidemeister_II_found << endl;
+	
 	return _return;
 }
 
@@ -1625,7 +1634,7 @@ Gauss_Reidemeister_II_return Gauss_Reidemeister_II_present(generic_code_data& co
 		exit (0);
 	}
 	
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 {
 	debug << "Gauss_Reidemeister_II_present: gauss_data = ";
 	write_gauss_data (gauss_data, debug);
@@ -1651,7 +1660,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 	{
 		if (num_terms_in_component[i] == 0)
 		{		
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "Gauss_Reidemeister_II_present: floating, unknotted component detected" << endl;
 			_return.floating_component = i+1;
 			return _return; // return with Reidemeister_II_found set false, since here we have a floating component.
@@ -1680,7 +1689,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 		
 		int successor = (i+1-start_of_component[first_component])%num_terms_in_component[first_component] + start_of_component[first_component];
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "Gauss_Reidemeister_II_present: term " << i << ", first_component " << first_component << ", succeeding term " << successor << endl;
 		
 		if (orientation_matrix[0][i] != orientation_matrix[0][successor] && orientation_matrix[1][i] != orientation_matrix[1][successor]) // LiRj or RiLj sequence
@@ -1692,7 +1701,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 			rendezvous_gauss_crossing = orientation_matrix[1][successor]-1;
 			rendezvous_immersion_crossing = gauss_data.immersion_crossing[rendezvous_gauss_crossing];
 						
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "Gauss_Reidemeister_II_present: potential RII sequence found at term " << i << endl;
 	debug << "Gauss_Reidemeister_II_present:   start_gauss_crossing " << start_gauss_crossing+1 << ", start_immersion_crossing = " << start_immersion_crossing << endl;
@@ -1717,7 +1726,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 				start_peer = code_table[EVEN_TERMINATING][start_immersion_crossing];
 			}
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "Gauss_Reidemeister_II_present:   start_edge = " << start_edge << ", start_peer = " << start_peer << endl;
 
 			/* We cannot determine the compatibility of the crossings involved in a potential Reidemeister II configuration until 
@@ -1743,7 +1752,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 
 				successor = (j+1-start_of_component[second_component])%num_terms_in_component[second_component] + start_of_component[second_component];
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "Gauss_Reidemeister_II_present:   term " << j << ", second_component " << second_component << ", succeeding term " << successor << endl;
 					
 				/* In orientation data such as R1 L2 L3 L1 R3 R2, it is possible that the successor of j(=5) is the starting point i(=0) but there is
@@ -1759,12 +1768,12 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 				{
 					if (orientation_matrix[1][j]-1 == start_gauss_crossing)
 					{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "Gauss_Reidemeister_II_present:     term " << j << " involves start_gauss_crossing" << endl;
 	
 						if (orientation_matrix[1][successor]-1 == rendezvous_gauss_crossing)
 						{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "Gauss_Reidemeister_II_present:     succeeding term " << successor << " involves rendezvous_gauss_crossing" << endl;
 
 							start_bigon_edge_a = code_table[EVEN_ORIGINATING][start_immersion_crossing];
@@ -1778,7 +1787,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 							if ((Reidemeister_II_found = Gauss_Reidemeister_II_labels(start_edge, end_bigon_edge_a, end_bigon_edge_b, code_data)))
 							{
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "Gauss_Reidemeister_II_present: Reidemeister_II configuration found, with rendezvous starting at term " << j << ", moving forwards from start_peer " << endl;
 	debug << "Gauss_Reidemeister_II_present: start_bigon_edges " << start_bigon_edge_a << " and " << start_bigon_edge_b << endl;
@@ -1789,18 +1798,18 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 						}
 						else
 						{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "Gauss_Reidemeister_II_present:     succeeding term " << successor << " does not involve rendezvous_gauss_crossing" << endl;
 						}
 					}
 					else if (orientation_matrix[1][j]-1 == rendezvous_gauss_crossing)
 					{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "Gauss_Reidemeister_II_present:     term " << j << " involves rendezvous_gauss_crossing" << endl;
 	
 						if (orientation_matrix[1][successor]-1 == start_gauss_crossing)
 						{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "Gauss_Reidemeister_II_present:     succeeding term " << successor << " involves start_gauss_crossing" << endl;
 
 							if ((start_edge_parity == gauss_orientation_data::RIGHT && code_table[TYPE][start_immersion_crossing] == generic_code_data::TYPE1) ||
@@ -1832,7 +1841,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 
 							if ((Reidemeister_II_found = Gauss_Reidemeister_II_labels(start_edge, end_bigon_edge_a, end_bigon_edge_b, code_data)))
 							{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "Gauss_Reidemeister_II_present: Reidemeister_II configuration found, with rendezvous starting at term " << j << ", moving backwards from start_peer " << endl;
 	debug << "Gauss_Reidemeister_II_present: start_bigon_edges " << start_bigon_edge_a << " and " << start_bigon_edge_b << endl;
@@ -1843,13 +1852,13 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 						}
 						else
 						{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "Gauss_Reidemeister_II_present:     succeeding term " << successor << " does not involve start_gauss_crossing" << endl;
 						}
 					}
 					else
 					{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "Gauss_Reidemeister_II_present:     term " << j << " does not involve start_gauss_crossing or rendezvous_gauss_crossing" << endl;
 					}
 				}
@@ -1884,7 +1893,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 					
 					if (edge == 0)
 					{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "Gauss_Reidemeister_II_present: knotoid check: edge zero found on the start path, cannot remove the bigon in the underlying immersion" << endl;
 	
 						Reidemeister_II_found = false;
@@ -1906,14 +1915,14 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 				if (Reidemeister_II_found)
 				{
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "Gauss_Reidemeister_II_present: knotoid check: start path does not contain edge zero, rendezvous_end_edge identified as " << rendezvous_end_edge << endl;
 				
 					if (second_component == 0)
 					{
 						if ((forwards_from_peer && start_peer > rendezvous_end_edge) || (!forwards_from_peer && rendezvous_end_edge > start_peer))
 						{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "Gauss_Reidemeister_II_present: knotoid check: edge zero found on the rendezvous path, cannot remove the bigon in the underlying immersion" << endl;
 							Reidemeister_II_found = false;
 						}
@@ -1921,7 +1930,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 					
 					if (Reidemeister_II_found)
 					{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "Gauss_Reidemeister_II_present: knotoid check: rendezvous path does not contain edge zero" << endl;
 					}
 				}
@@ -1930,7 +1939,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 			
 			if (Reidemeister_II_found)
 			{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "Gauss_Reidemeister_II_present: Gauss_Reidemeister_II found, with rendezvous starting at term " << rendezvous_start_term 
 	      << ", moving " << (forwards_from_peer? "forwards": "backwards") << " from start_peer " << endl;
@@ -1940,7 +1949,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 			}
 			else
 			{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "Gauss_Reidemeister_II_present: no corresponding pair of terms found, not a Gauss_Reidemeister_II" << endl;
 			}			
 		}
@@ -1949,7 +1958,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 			break;
 	}
 
-if (braid_control::DEBUG >= braid_control::DETAIL && !Reidemeister_II_found)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE && !Reidemeister_II_found)
 	debug << "Gauss_Reidemeister_II_present: no Gauss Reidemeister II move found" << endl;
 	
 	return _return;
@@ -1999,7 +2008,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL && !Reidemeister_II_found)
    Thus the scenarios in 3 and 4 are examples of non-Reidemeister II detours that may be detected by the function and may still result in a 
    simplification of a diagram if the number of virtual crossings is reduced by moving the start of peer path, hence the word "plus" in name of the function.
 */
-virtual_Reidemeister_II_plus_return virtual_Reidemeister_II_plus(generic_code_data& code_data, matrix<int>& cycle, int num_cycles, int num_left_cycles, bool mark_special=false)
+virtual_Reidemeister_II_plus_return virtual_Reidemeister_II_plus(generic_code_data& code_data, matrix<int>& cycle, int num_cycles, int num_left_cycles, bool mark_special)
 {
 	int num_crossings = code_data.num_crossings;
 	int num_edges = 2*num_crossings;
@@ -2009,14 +2018,14 @@ virtual_Reidemeister_II_plus_return virtual_Reidemeister_II_plus(generic_code_da
 	int end_bigon_edge_a;
 	int end_bigon_edge_b;
 	
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 {
 	debug << "virtual_Reidemeister_II_plus (full): presented with code data ";
 	write_code_data(debug,code_data);
 	debug << endl;
 }
 	
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	print_code_data(code_data,debug,"virtual_Reidemeister_II_plus: ");
 }	
@@ -2049,7 +2058,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 		else
 			start_edge_parity = gauss_orientation_data::LEFT;
 		
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "virtual_Reidemeister_II_plus: edge " << i << " crossing = " << start_crossing << ", label = " 
 	      << code_table[LABEL][start_crossing] << ", start_edge_parity = " << (start_edge_parity == gauss_orientation_data::RIGHT? "RIGHT" : "LEFT") << endl;
@@ -2058,7 +2067,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 		/* we're only interested in starting at edges related to virtual or shortcut crossings */
 		if (code_table[LABEL][start_crossing] != generic_code_data::VIRTUAL && !(ignore_shortcut && shortcut_crossing[start_crossing]))
 		{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "virtual_Reidemeister_II_plus:   edge " << i << " does not terminate at a virtual crossing or a shortcut crossing" << endl;
 	
 			continue;
@@ -2067,12 +2076,12 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 		if (code_table[LABEL][start_crossing] == generic_code_data::VIRTUAL)
 		{		
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "virtual_Reidemeister_II_plus:   edge " << i << " terminates at a virtual crossing, check all subsequent crossings reached via virtual or shortcut crossings" << endl;
 		}
 		else
 		{	
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "virtual_Reidemeister_II_plus:   edge " << i << " terminates at a shortcut crossing, check all subsequent crossings reached via virtual or shortcut crossings" << endl;
 		}
 
@@ -2085,7 +2094,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 		vector<int> start_virtual_crossing_flag(num_crossings);
 		start_virtual_crossing_flag[start_crossing] = 1;  
 				
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "virtual_Reidemeister_II_plus:   set start_virtual_crossing_flag[" << start_crossing << ']' << endl;
 
 		start_edge = i;
@@ -2094,7 +2103,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 		else
 			start_peer = code_table[ODD_TERMINATING][start_crossing];
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "virtual_Reidemeister_II_plus:   start_edge = " << start_edge << ", start_peer = " << start_peer << endl;
 
 		/* Look forward from the ith edge around the component to which start_edge belongs at each subsequent edge for which all 
@@ -2105,7 +2114,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 		int ith_edge_component = code_table[COMPONENT][(start_edge%2 == 0? start_edge/2: (start_edge-1)/2)];
 		int num_initial_component_edges = code_data.num_component_edges[ith_edge_component];
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "virtual_Reidemeister_II_plus:   look around component " << ith_edge_component << ", which has " << num_initial_component_edges << " edges" << endl;
 
 		
@@ -2127,13 +2136,13 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 			
 			if (code_table[LABEL][jth_crossing] != generic_code_data::VIRTUAL && !(ignore_shortcut && shortcut_crossing[jth_crossing]))
 			{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "virtual_Reidemeister_II_plus:     edge " << jth_edge << " does not terminate at a virtual or shortcut crossing, stop checking crossings reached from edge " << i << endl;
 				break;
 			}
 			else if (jth_crossing == start_crossing)
 			{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "virtual_Reidemeister_II_plus:     edge " << jth_edge << " returns to start_crossing " << start_crossing << " stop checking crossings reached from edge " << i << endl;
 				break;
 			}
@@ -2143,10 +2152,10 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 				int rendezvous_crossing = jth_crossing;			
 				start_virtual_crossing_flag[rendezvous_crossing] = 1;
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "virtual_Reidemeister_II_plus:     set start_virtual_crossing_flag[" << rendezvous_crossing << ']' << endl;			
 				
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "virtual_Reidemeister_II_plus:     checking for a virtual Reidemeister II configuration between start_edge " << start_edge << " and jth_edge " << jth_edge << endl;				
 	debug << "virtual_Reidemeister_II_plus:     start_crossing = " << start_crossing << ", rendezvous_crossing = " << rendezvous_crossing << endl;
@@ -2157,7 +2166,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 				else
 					standard_Reidemeister_II_configuration = true;
 					
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "virtual_Reidemeister_II_plus:     standard_Reidemeister_II_configuration = " << standard_Reidemeister_II_configuration << endl;					
 				
 				int peer_path_start_edge;
@@ -2205,7 +2214,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 					else
 						num_component_edges_to_consider = num_component_edges[component];
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "virtual_Reidemeister_II_plus:     component " << component << " num_component_edges_to_consider = " << num_component_edges_to_consider << endl;
 	debug << "virtual_Reidemeister_II_plus:     first_edge_on_component " << first_edge_on_component[component] << " num_component_edges = " << num_component_edges[component] << endl;
@@ -2222,7 +2231,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 						
 						if (code_data.term_crossing[component_edge] == start_crossing)
 						{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "virtual_Reidemeister_II_plus:       edge " << component_edge << " is the second encounter with the start crossing " 
 	      << start_crossing << endl;
@@ -2243,7 +2252,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 						}
 						else if (code_data.term_crossing[component_edge] == rendezvous_crossing)
 						{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "virtual_Reidemeister_II_plus:       edge " << component_edge  << " is the second encounter with the rendezvous crossing " << rendezvous_crossing << endl;
 
 							peer_path_start_edge = component_edge;
@@ -2276,13 +2285,13 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 						}
 						else
 						{
-if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
+if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
 	debug << "virtual_Reidemeister_II_plus:       edge " << component_edge << " not in the subsequent path" << endl;
 						}
 	
 						if (subsequent_start_found)
 						{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "virtual_Reidemeister_II_plus:         peer_path_start_edge = " << peer_path_start_edge << " subsequent_path_end_crossing = " 
 	      << subsequent_path_end_crossing << ", forwards_from_peer = " << forwards_from_peer << endl;
@@ -2294,7 +2303,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 							peer_virtual_crossing_flag[start_crossing] = 1;
 							peer_virtual_crossing_flag[rendezvous_crossing] = 1;
 	
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "virtual_Reidemeister_II_plus:         set peer_virtual_crossing_flag[" << start_crossing << ']' 
 	      << " and peer_virtual_crossing_flag[" << rendezvous_crossing << ']' << endl;
@@ -2306,7 +2315,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 							int num_subsequent_component_edges = code_data.num_component_edges[subsequent_component];						
 							bool peer_path_shortcut_crossing = false;
 	
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "virtual_Reidemeister_II_plus:         look around component " << subsequent_component << ", which has " 
 	      << num_subsequent_component_edges << " edges" << endl;
@@ -2319,14 +2328,14 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 								
 								if ( kth_crossing == subsequent_path_end_crossing)
 								{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "virtual_Reidemeister_II_plus:           edge " << kth_edge << " is the second encounter with crossing " << subsequent_path_end_crossing << endl;
 	
 									break;
 								}
 								else if (code_table[LABEL][kth_crossing] != generic_code_data::VIRTUAL && !(ignore_shortcut && shortcut_crossing[kth_crossing]))
 								{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "virtual_Reidemeister_II_plus:           edge " << kth_edge << " does not terminate at a virtual or shortcut crossing" << endl;
 									virtual_Reidemeister_II = false;
 									subsequent_start_found = false;
@@ -2342,7 +2351,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 										peer_path_shortcut_crossing = true;
 									}
 										
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "virtual_Reidemeister_II_plus:           edge " << kth_edge << " terminates at a virtual or shortcut crossing, set peer_virtual_crossing_flag[" << kth_crossing << ']' << endl;
 	debug << "virtual_Reidemeister_II_plus:           peer_path_shortcut_crossing = " << peer_path_shortcut_crossing << endl;
@@ -2352,13 +2361,13 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 	
 							if (virtual_Reidemeister_II)
 							{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "virtual_Reidemeister_II_plus: found virtual Reidemeister II move between edges " << i << " and " << jth_edge  
 	      << ", crossings " << start_crossing << " and " << rendezvous_crossing << endl;
 }
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "virtual_Reidemeister_II_plus: start_bigon_edge_a = " << start_bigon_edge_a << " start_bigon_edge_b = " << start_bigon_edge_b
 		  << " end_bigon_edge_a = " << end_bigon_edge_a << " end_bigon_edge_b = " << end_bigon_edge_b << endl;
@@ -2408,7 +2417,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 									{
 										same_turning_cycle = true;
 										
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "virtual_Reidemeister_II_plus: start and rendezvous crossings lie in the same turning cycle, keep Reidemeister II configuration" << endl;
 
 										break;
@@ -2417,7 +2426,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 								
 								if (!same_turning_cycle)
 								{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "virtual_Reidemeister_II_plus: start and rendezvous crossings not in the same turning cycle, check crossing counts" << endl;
 	debug << "virtual_Reidemeister_II_plus:   initial num_crossings = " << num_crossings << endl;
@@ -2436,7 +2445,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 											num_start_virtual_crossings++;
 									}
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "virtual_Reidemeister_II_plus:   number of non-peer-path start path virtual crossings = " << num_start_virtual_crossings << endl;
 
 									/* we will not have counted the start and rendezvous crossings in the above calculation */
@@ -2450,19 +2459,19 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 									if (!standard_Reidemeister_II_configuration)
 										new_num_crossings++;  // we can't remove both the start and rendezvous virtual crossings in these cases
 									
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "virtual_Reidemeister_II_plus:   moving the peer path results in new_num_crossings = " << new_num_crossings << endl;
 
 									if (new_num_crossings >= num_crossings)
 									{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "virtual_Reidemeister_II_plus:   moving the peer path does not reduce the number of crossings"  << endl;
 
 										move_peer_path_allowed = false;
 									}																		
 									else
 									{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "virtual_Reidemeister_II_plus:   moving the peer path reduces the number of crossings"  << endl;
 									}																											
 																		
@@ -2473,7 +2482,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 											num_peer_virtual_crossings++;
 									}
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "virtual_Reidemeister_II_plus:   number of non-start-path peer path virtual crossings = " << num_peer_virtual_crossings << endl;
 									
 									/* we will not have counted the start and rendezvous crossings in the above calculation */
@@ -2487,23 +2496,23 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 									if (!standard_Reidemeister_II_configuration)
 										new_num_crossings++;  // we can't remove both the start and rendezvous virtual crossings in these cases
 									
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "virtual_Reidemeister_II_plus:   moving the start path results in new_num_crossings = " << new_num_crossings << endl;
 										
 									if (new_num_crossings >= num_crossings)
 									{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "virtual_Reidemeister_II_plus:   moving the start path does not reduce the number of crossings"  << endl;
 
 										move_start_path_allowed = false;
 									}
 									else
 									{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "virtual_Reidemeister_II_plus:   moving the start path reduces the number of crossings"  << endl;
 									}									
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "virtual_Reidemeister_II_plus:   move_peer_path_allowed = " << move_peer_path_allowed << endl;
 	debug << "virtual_Reidemeister_II_plus:   move_start_path_allowed = " << move_start_path_allowed << endl;
@@ -2511,14 +2520,14 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 																	
 									if (!move_peer_path_allowed && !move_start_path_allowed)
 									{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "virtual_Reidemeister_II_plus: removing the Reidemeister II configuration does not reduce the number of crossings, discarded" << endl;
 	
 											virtual_Reidemeister_II = false;
 									}
 									else
 									{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "virtual_Reidemeister_II_plus: removing the Reidemeister II configuration reduces the number of crossings, retained" << endl;
 									}
 								}
@@ -2537,19 +2546,19 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 							}
 							else
 							{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "virtual_Reidemeister_II_plus:         no virtual Reidemeister II peer path from peer_path_start_edge = " << peer_path_start_edge << endl;
 							}
 						}
 					}
 				}	
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "virtual_Reidemeister_II_plus:     no virtual Reidemeister II move between start_edge " << start_edge << " and jth_edge " << jth_edge << endl;				
 			}			
 		}
 	}
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 	debug << "virtual_Reidemeister_II_plus: no virtual Reidemeister II move found" << endl;
 	
 	_return.Reidemeister_II_found = false;
@@ -2621,7 +2630,7 @@ int remove_Reidemeister_II(generic_code_data& code_data, vector<int>& component_
 	int num_components = code_data.num_components;
 	int floating_component;
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "remove_Reidemeister_II: presented with code data ";
 	write_code_data(debug,code_data);
@@ -2660,7 +2669,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 			exit(0);
 		}
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II: head_semi_arc = " << head_semi_arc << endl;		
 	
 		pure_knotoid_code_data = true;
@@ -2672,7 +2681,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 	else
 		track_zig_zag_counts = false;
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II: track_zig_zag_counts = " << track_zig_zag_counts << endl;			
 		
 	int num_left_cycles=0;
@@ -2689,7 +2698,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 
 	if (Reidemeister_II_found)
 	{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II: simple Reidemister II move found" << endl;
 	
 		/* First check that removing the simple Reidemeister II move does not reduce the diagram to the unknot */
@@ -2697,12 +2706,12 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 		for (int i=0; i< 2*num_crossings; i++)
 			num_edges_remaining -= RII_edge_flag[i];
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II:  num_edges_remaining = "<< num_edges_remaining << endl;
 			
 		if (num_edges_remaining == 0)
 		{	
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II:  removing simple Reidemeister II moves reduces the diagram to as set of disjoint simple closed curves" << endl;
 	
 			/* we clear the component flags below in this case */
@@ -2710,7 +2719,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 		}
 		else
 		{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "remove_Reidemeister_II:  removing RII_edge_flags ";
 	for (int i=0; i< 2*num_crossings; i++)
@@ -2722,7 +2731,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 	}
 	else
 	{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II: no simple Reidemeister II move found, looking for a Reidemeister II detour" << endl;
 		/* look for a Reidemeister II detour */
 		Gauss_Reidemeister_II_return Gauss_Reidemeister_II_data = Gauss_Reidemeister_II_present(code_data,gauss_data);
@@ -2735,7 +2744,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 
 		if (floating_component != 0)  // then we have detected that component floating_component-1 contains only virtual crossings
 		{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "remove_Reidemeister_II: floating component " << floating_component-1 << " detected by Gauss_Reideister_II_present" << endl;
 	debug << "remove_Reidemeister_II: Reidemeister_II_found is " << Reidemeister_II_found << " (should be false, since here we have a floating component)" << endl;
@@ -2744,7 +2753,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 			{
 				pure_knotoid_code_data = false;
 				code_data.head = -1;
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II: knotoid: floating segment component clearing pure_knotoid_code_data and setting code_data.head = -1" << endl;
 				
 			}
@@ -2753,7 +2762,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 		}
 		else if (Reidemeister_II_found)
 		{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II: (standard) Gauss Reidemister II detour found" << endl;
 			standard_Reidemeister_II_configuration = true;
 		}
@@ -2769,7 +2778,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 
 			if (Reidemeister_II_found)
 			{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "remove_Reidemeister_II: virtual Reidemister II detour found" << endl;
 	print_code_data(code_data, debug, "remove_Reidemeister_II: ");
@@ -2778,7 +2787,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 	
 				if (!move_peer_path_allowed) 
 				{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II: virtual Reidemister II detour requires start path to be moved, not the peer path" << endl;					
 				}
 			}			
@@ -2790,7 +2799,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 			int start_crossing = term_crossing[start];	
 			int start_label = code_table[LABEL][start_crossing];
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "remove_Reidemeister_II: Reidemister II detour found" << endl;
 	debug << "remove_Reidemeister_II: start = " << start << ", start_crossing " << start_crossing << ", label = ";
@@ -2821,7 +2830,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 				peer_component = code_table[COMPONENT][(peer-1)/2]; 
 			}
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "remove_Reidemeister_II: peer = " << peer << endl;	
 	debug << "remove_Reidemeister_II: start component = " << start_component << ", peer_component = " << peer_component << endl;	
@@ -2838,7 +2847,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 			bool head_semi_arc_in_start_path = false;
 			bool leg_semi_arc_in_start_path = false;
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II:   moving forwards from start..." << endl;
 			for (int i=1; i< num_component_edges[start_component]; i++)
 			{
@@ -2853,7 +2862,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 				{
 					rendezvous_crossing = term_crossing[edge];
 					
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II:   edge " << edge << " terminates at the rendezvous crossing, " << rendezvous_crossing << endl;
 	
 					break;
@@ -2861,20 +2870,20 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 				else if (code_table[LABEL][term_crossing[edge]] == generic_code_data::VIRTUAL)
 				{
 					start_virtual_crossing_flag[term_crossing[edge]] = 1;
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II:   edge " << edge << " terminates at a virtual crossing" << endl;
 				}
 				else if (pure_knotoid_code_data && shortcut_crossing[term_crossing[edge]])
 				{
 					start_virtual_crossing_flag[term_crossing[edge]] = 1;
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II:   edge " << edge << " terminates at a shortcut crossing" << endl;
 				}
 				else
 				{
 					rendezvous_crossing = term_crossing[edge];
 					
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II:   edge " << edge << " terminates at the rendezvous crossing, " << rendezvous_crossing << endl;
 	
 					break;
@@ -2892,7 +2901,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 			bool head_semi_arc_in_peer_path = false;
 			bool leg_semi_arc_in_peer_path = false;
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	if (forwards_from_peer)
 		debug << "remove_Reidemeister_II:   moving forwards from peer..." << endl;
@@ -2914,7 +2923,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 
 				if (code_table[LABEL][term_crossing[edge]] == generic_code_data::VOID)
 				{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II:   edge " << edge << " terminates at the rendezvous crossing, " << rendezvous_crossing << endl;
 					if (!forwards_from_peer)
 						peer_detour_entry_edge = edge;
@@ -2924,19 +2933,19 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 				{
 					peer_virtual_crossing_flag[term_crossing[edge]] = 1;
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II:   edge " << edge << " terminates at a virtual crossing" << endl;	
 				}
 				else if (pure_knotoid_code_data && shortcut_crossing[term_crossing[edge]])
 				{
 					peer_virtual_crossing_flag[term_crossing[edge]] = 1;
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II:   edge " << edge << " terminates at a shortcut crossing" << endl;	
 				}
 				else
 				{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II:   edge " << edge << " terminates at the rendezvous crossing, " << rendezvous_crossing << endl;
 					if (!forwards_from_peer)
 						peer_detour_entry_edge = edge;
@@ -2951,10 +2960,10 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 				code_table[LABEL][rendezvous_crossing] = copy_code_table[LABEL][rendezvous_crossing];
 			}
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II:   peer_detour_entry_edge = " << peer_detour_entry_edge << endl;
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "remove_Reidemeister_II: start_virtual_crossing_flag ";
 	for (int k=0; k< num_crossings; k++)
@@ -2985,7 +2994,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 			   whether we've traced forwards or backwards, then we're in the same turning cycle.			   
 			*/
 				
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II: checking turning cycles" << endl;
 			
 			bool same_turning_cycle = false;
@@ -3013,7 +3022,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 												num_component_edges[peer_component] + first_edge_on_component[peer_component];
 			}
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "remove_Reidemeister_II:   starting edges " << start_path_start_edge << " and " << peer_path_start_edge << endl;
 	debug << "remove_Reidemeister_II:   rendezvous edges " << start_path_rendezvous_edge << " and " << peer_path_rendezvous_edge << endl;
@@ -3049,7 +3058,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 
 			if (same_turning_cycle)
 			{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II: start and rendezvous edges lie in the same turning cycle" << endl;
 
 				/* we just need to remove all the virtual crossings we've identified plus the two non-virtual crossings */
@@ -3068,7 +3077,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 					}
 				}
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "remove_Reidemeister_II: removing RII_edge_flags ";
 	for (int i=0; i< 2*num_crossings; i++)
@@ -3080,13 +3089,13 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 				for (int i=0; i< 2*num_crossings; i++)
 					num_edges_remaining -= RII_edge_flag[i];
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II: num_edges_remaining = "<< num_edges_remaining << endl;
 
 			
 				if (num_edges_remaining == 0)
 				{	
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II:  removing Reidemeister II move in the same turning cycle reduces the diagram to as set of disjoint simple closed curves" << endl;
 	
 					code_data.num_crossings = 0;
@@ -3098,7 +3107,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 			}
 			else
 			{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II: start and rendezvous edges lie in different turning cycles" << endl;
 
 				/* If we need to move the start path rather than the peer path, swap start_edge and peer_entry_edge,
@@ -3125,7 +3134,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 						swap(start_path_rendezvous_edge, peer_path_start_edge);
 						peer = peer_path_start_edge; // was the start_path_rendezvous_edge
 					}	
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "remove_Reidemeister_II: moving the start path not the peer path" << endl;
 	debug << "remove_Reidemeister_II:   start reset to " << start << ", peer_detour_entry_edge reset to " << peer_detour_entry_edge << endl;
@@ -3153,7 +3162,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 }
 					if (forwards_from_peer)
 					{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "remove_Reidemeister_II:   forwards from peer: start crossing remains" << start_crossing 
 	      << ", rendezvous_crossing remains " << rendezvous_crossing << endl;
@@ -3163,7 +3172,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 					{
 						swap(start_crossing,rendezvous_crossing);
 						
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "remove_Reidemeister_II:   backwards from peer: start crossing reset to " << start_crossing 
 	      << ", rendezvous_crossing reset to " << rendezvous_crossing << endl;
@@ -3205,7 +3214,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 					if (start_virtual_crossing_flag[i])
 						num_initial_start_virtual_crossings++;
 				}
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II: num_initial_start_virtual_crossings (includes peer path intersections) = " << num_initial_start_virtual_crossings << endl;
 
 				for (int i=0; i< num_crossings; i++)
@@ -3213,7 +3222,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 					if (start_virtual_crossing_flag[i] && peer_virtual_crossing_flag[i])
 					{
 						start_virtual_crossing_flag[i] = 0;  // has the effect of removing this virtual crossing
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II: crossing " << i << " lies on both the start and peer detours, crossing will be removed when peer detour is moved" << endl;
 					}
 				}
@@ -3225,7 +3234,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 						num_start_virtual_crossings++;
 				}
 
-if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
+if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
 	debug << "remove_Reidemeister_II: num_start_virtual_crossings (excluding peer path intersections) = " << num_start_virtual_crossings << endl;
 	
 				int new_num_crossings = num_crossings-2+num_start_virtual_crossings;
@@ -3233,7 +3242,7 @@ if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
 				if (!standard_Reidemeister_II_configuration)
 				{
 					new_num_crossings++;
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II: non-standard Reidemeister II condition, retaining rendezvous crossing" << endl;
 				}
 				
@@ -3243,12 +3252,12 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 						new_num_crossings--;
 				}
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II: number of crossings remaining after moving the peer detour, new_num_crossings = " << new_num_crossings << endl;
 			
 				if (new_num_crossings == 0)
 				{	
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II:  removing Reidemeister II move in different turning cycles reduces the diagram to as set of disjoint simple closed curves" << endl;
 	
 					/* we clear the component flags below in this case */
@@ -3272,7 +3281,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 							RII_edge_flag[code_table[ODD_TERMINATING][start_crossing]] = 1;
 							RII_edge_flag[code_table[EVEN_TERMINATING][start_crossing]] = 1;
 							
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "remove_Reidemeister_II: non-standard Reidemeister II condition, forwards from peer, retaining rendezvous crossing terminating edges ";
 	debug << code_table[ODD_TERMINATING][rendezvous_crossing] << " and " << code_table[EVEN_TERMINATING][rendezvous_crossing] << endl;
@@ -3283,7 +3292,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 							RII_edge_flag[code_table[ODD_TERMINATING][rendezvous_crossing]] = 1;
 							RII_edge_flag[code_table[EVEN_TERMINATING][rendezvous_crossing]] = 1;
 							
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "remove_Reidemeister_II: non-standard Reidemeister II condition, backwards from peer, retaining start crossing terminating edges ";
 	debug << code_table[ODD_TERMINATING][start_crossing] << " and " << code_table[EVEN_TERMINATING][start_crossing] << endl;
@@ -3300,7 +3309,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 						}
 					}
 	
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "remove_Reidemeister_II: removing RII_edge_flags ";
 	for (int i=0; i< 2*num_crossings; i++)
@@ -3319,12 +3328,12 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 					{
 						start_polarity = gauss_orientation_data::LEFT;
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II: start_crossing is a LEFT crossing from start edge perspective" << endl;
 					}
 					else
 					{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II: start_crossing is a RIGHT crossing from start edge perspective" << endl;
 						start_polarity = gauss_orientation_data::RIGHT;
 					}
@@ -3359,7 +3368,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 						}
 					}
 	
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II:   stay_left_of_start_detour = " << stay_left_of_start_detour << endl;
 	
 					/* Re-number the diagram missing out those edges that terminate at the virtual crossings we are removing
@@ -3456,7 +3465,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 						/* the peer_detour_skip_edge needs moving back one edge within the peer component to account for the 
 						   fact that we are retaining the crossing at the end of the peer path
 						*/
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "remove_Reidemeister_II: non-standard Reidemeister II configuration, moving the initial peer_detour_skip_edge = " 
 	      << peer_detour_skip_edge << " back one edge" << endl;
@@ -3464,10 +3473,10 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 						peer_detour_skip_edge = (peer_detour_skip_edge-1+num_component_edges[peer_component]- first_edge_on_component[peer_component])%num_component_edges[peer_component] + first_edge_on_component[peer_component];
 					}
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II: peer_detour_skip_edge = " << peer_detour_skip_edge << endl;
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II: evaluate start_virtual_polarity..." << endl;
 		
 					vector<int> start_virtual_polarity(num_start_virtual_crossings);			
@@ -3482,7 +3491,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 						*/
 						if (start_virtual_crossing_flag[term_crossing[edge]] == 1)
 						{	
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "remove_Reidemeister_II:   start detour edge " << edge << " terminates at crossing " << term_crossing[edge] << ", which is " << 
 	         (code_table[TYPE][term_crossing[edge]] == generic_code_data::TYPE1? "TYPE1" : "TYPE2") << endl;
@@ -3502,13 +3511,13 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 						}
 						else
 						{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II:   edge " << edge << " terminates at a virtual crossing that lies on the peer detour, so has been removed" << endl; 
 						}
 						
 					}
 	
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "remove_Reidemeister_II: start_virtual_polarity ";
 	for (int i=0; i< num_start_virtual_crossings; i++)
@@ -3516,7 +3525,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 	debug << endl;
 }
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II: evaluate transverse_skip_edge..." << endl;
 				
 					vector<int> transverse_skip_edge(num_start_virtual_crossings);
@@ -3537,7 +3546,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 							int transverse_peer = (edge%2? code_table[EPEER][(edge-1)/2]:code_table[OPEER][edge/2]);
 							int transverse_peer_component = (transverse_peer%2? code_table[COMPONENT][(transverse_peer-1)/2]:code_table[COMPONENT][(transverse_peer)/2]);
 	
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "remove_Reidemeister_II:   start detour edge " << edge << " has peer " << transverse_peer << " on component " << transverse_peer_component 
 	      << ", start_virtual_index = " << start_virtual_index << endl; 
@@ -3563,12 +3572,12 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 						}
 						else
 						{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II:   edge " << edge << " terminates at a virtual crossing that lies on the peer detour, so has been removed" << endl; 
 						}
 					}
 		
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "remove_Reidemeister_II: transverse_skip_edge ";
 	for (int i=0; i< num_start_virtual_crossings; i++)
@@ -3600,7 +3609,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 					
 					vector<int>::iterator peer_detour_skip_edge_ptr = find(transverse_skip_edge.begin(), transverse_skip_edge.end(), peer_detour_skip_edge);
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	if (peer_detour_skip_edge_ptr != transverse_skip_edge.end())
 		debug << "remove_Reidemeister_II: peer_detour_skip_edge found in transverse_skip_edge" << endl;				 
@@ -3611,16 +3620,16 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 					if (peer_detour_skip_edge_ptr != transverse_skip_edge.end() && peer_detour_skip_edge < peer_detour_entry_edge)
 					{
 						adjust_as_transverse_skip_first = true;
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II: peer_detour_skip_edge is encountered as a transverse skip edge before we reach the peer detour entry edge" << endl;				 
 					}
 					else
 					{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II: peer_detour_skip_edge either not a transverse skip edge or is encountered first on the component as the peer detour skip edge" << endl;				
 					}
 	
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II: adjust_as_transverse_skip_first = " << adjust_as_transverse_skip_first << endl;
 		
 					/* We are now ready to write the new_edge_labels, we start with those that have been retained from the original 
@@ -3658,7 +3667,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 					vector<int> new_transverse_peer_edge(num_start_virtual_crossings);
 					
 	
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II: renumbering immersion, new_edge initialized to " << new_edge << endl;				 
 							
 					int new_head_semi_arc = -1;
@@ -3669,7 +3678,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 						if (pure_knotoid_code_data && old_edge == head_semi_arc)
 						{
 							new_head_semi_arc = new_edge;
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II:   encountered head_semi_arc at old_edge " << old_edge << " , setting  new_head_semi_arc = " << new_head_semi_arc << endl;				 
 						}
 												
@@ -3700,17 +3709,17 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 								*/
 																
 								new_edge += num_start_virtual_crossings;
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "remove_Reidemeister_II:   reached end of component containing peer detour skip edge without adjusting for  num_start_virtual_crossings, new_edge incremented to " << new_edge << endl;				 
 }
 							}
 							
-if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
+if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
 	debug << "remove_Reidemeister_II:   reached end of component " << new_edge_component << endl;				 
 							new_last_component_edge[new_edge_component] = new_edge-1;
 							
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II: amalgamated_zig_zag_count = " << amalgamated_zig_zag_count << " at the end of component " << new_edge_component << endl;
 	
 							if (code_data.immersion != generic_code_data::character::CLOSED && new_edge_component == 0)
@@ -3719,15 +3728,15 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 								if (code_data.immersion == generic_code_data::character::PURE_KNOTOID)
 								{
 									code_data.head_zig_zag_count = amalgamated_zig_zag_count;
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II:   pure knotoid segment component, code_data.head_zig_zag_count set to " << code_data.head_zig_zag_count << endl;
 								}
 								else
 								{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II:   knot-type knotoid or long knot segment component, amalgamated with code_data.head_zig_zag_count " << code_data.head_zig_zag_count;
 										code_data.head_zig_zag_count = amalgamate_zig_zag_counts(amalgamated_zig_zag_count, code_data.head_zig_zag_count);
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << " to give " << code_data.head_zig_zag_count << endl;
 								}
 								
@@ -3749,7 +3758,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 									int crossing = code_data.term_crossing[edge];
 									int row = (edge%2 == 0?0:1);
 					
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II:   old edge " << edge << " terminates at crossing " << crossing << " row = " << row << endl;
 					
 									if (code_table[LABEL][crossing] != generic_code_data::VIRTUAL && !(pure_knotoid_code_data && shortcut_crossing[crossing]))
@@ -3757,14 +3766,14 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 										if (new_edge_labels[row][crossing] != -1)
 										{		
 											
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "remove_Reidemeister_II:   loop component, amalgamating with count " << initial_new_zig_zag_count[row][crossing] << " for old edge " 
 	      << edge << ": row = " << row << " crossing = " << crossing << endl;
 }
 											initial_new_zig_zag_count[row][crossing] = amalgamate_zig_zag_counts(amalgamated_zig_zag_count, initial_new_zig_zag_count[row][crossing]);
 										
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II:   count updated to " << initial_new_zig_zag_count[row][crossing] << endl;
 											
 											edge_found = true;
@@ -3775,7 +3784,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 								
 								if (!edge_found)
 								{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II:   loop component, no edge found, component being removed" << endl;
 								}					
 							}
@@ -3789,7 +3798,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 						{
 							if (adjust_as_transverse_skip_first)
 							{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II:   peer_detour_skip_edge " << old_edge << " is in transverse_skip_edge and is encountered as a transverse edge first" << endl;				 
 							}
 							else
@@ -3811,7 +3820,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 								}
 								
 								new_edge += num_start_virtual_crossings;
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "remove_Reidemeister_II:   old_edge " << old_edge << " is peer_detour_skip_edge, new_edge incremented to " << new_edge << endl;				 
 	if (incremented_new_head_semi_arc)
@@ -3842,7 +3851,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 								increment_new_edge_twice_after_assignment = true;
 							}
 																			
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "remove_Reidemeister_II:   old_edge " << old_edge << " is in transverse_incident_edge, at offset " << offset << endl;
 	debug << "remove_Reidemeister_II:   new_transverse_peer_edge = " << new_transverse_peer_edge[offset] 
@@ -3854,7 +3863,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 						{
 							first_new_peer_detour_edge = new_edge;
 							
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II:   first_new_peer_detour_edge = " << first_new_peer_detour_edge << endl;
 						}
 						
@@ -3864,12 +3873,12 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 							int crossing = term_crossing[old_edge];
 							int old_edge_zig_zag_count = (old_edge %2 == 1? code_data.zig_zag_count[1][crossing]:code_data.zig_zag_count[0][crossing]);
 			
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II: old_edge " << old_edge << " terminates at crossing " << crossing << ", old_edge_zig_zag_count = " << old_edge_zig_zag_count << endl;				 
 			
 							amalgamated_zig_zag_count = amalgamate_zig_zag_counts(amalgamated_zig_zag_count, old_edge_zig_zag_count);
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II: amalgamated_zig_zag_count adjusted to " << amalgamated_zig_zag_count << endl;				 
 						}
 						
@@ -3891,7 +3900,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 							}
 							
 	
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "remove_Reidemeister_II:   old_edge " << old_edge << " lies in position " << (row==ODD_TERMINATING? "ODD_TERMINATING" : "EVEN_TERMINATING") 
 	      << ", " << col << "; new_edge = " << new_edge << endl;				 
@@ -3909,7 +3918,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 							if (increment_new_edge_twice_after_assignment)
 							{
 								new_edge++;
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II:   new_edge incremented again after assignment to " << new_edge << endl;				 
 							}
 							
@@ -3921,19 +3930,19 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 								{					
 									initial_new_zig_zag_count[row][col] = amalgamated_zig_zag_count;
 									amalgamated_zig_zag_count = 0;				
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II:   new_edge " << new_edge << " initial_new_zig_zag_count[" << row << "][" << col << "] = " << initial_new_zig_zag_count[row][col] << endl;
 								}
 							}
 						}
 						else
 						{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II:   old_edge " << old_edge << " terminates at a Reidemeister detour, or peer virtual, crossing, new_edge remains " << new_edge << endl;
 						}	
 					}									
 					
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II: amalgamated_zig_zag_count = " << amalgamated_zig_zag_count << " at the end of component " << new_edge_component << endl;
 	
 					if (code_data.immersion != generic_code_data::character::CLOSED && new_edge_component == 0)
@@ -3942,15 +3951,15 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 						if (code_data.immersion == generic_code_data::character::PURE_KNOTOID)
 						{
 							code_data.head_zig_zag_count = amalgamated_zig_zag_count;
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II:   pure knotoid segment component, code_data.head_zig_zag_count set to " << code_data.head_zig_zag_count << endl;
 						}
 						else
 						{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II:   knot-type knotoid or long knot segment component, amalgamated with code_data.head_zig_zag_count " << code_data.head_zig_zag_count;
 								code_data.head_zig_zag_count = amalgamate_zig_zag_counts(amalgamated_zig_zag_count, code_data.head_zig_zag_count);
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << " to give " << code_data.head_zig_zag_count << endl;
 						}
 			
@@ -3972,21 +3981,21 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 							int crossing = code_data.term_crossing[edge];
 							int row = (edge%2 == 0?0:1);
 					
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II:   old edge " << edge << " terminates at crossing " << crossing << " row = " << row << endl;
 					
 							if (code_table[LABEL][crossing] != generic_code_data::VIRTUAL && !(pure_knotoid_code_data && shortcut_crossing[crossing]))
 							{
 								if (new_edge_labels[row][crossing] != -1)
 								{		
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "remove_Reidemeister_II:   loop component, amalgamating with count " << initial_new_zig_zag_count[row][crossing] << " for old edge " 
 	      << edge << ": row = " << row << " crossing = " << crossing << endl;
 }
 									initial_new_zig_zag_count[row][crossing] = amalgamate_zig_zag_counts(amalgamated_zig_zag_count, initial_new_zig_zag_count[row][crossing]);
 										
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II:   count updated to " << initial_new_zig_zag_count[row][crossing] << endl;
 	
 									edge_found = true;
@@ -3997,7 +4006,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 						
 						if (!edge_found)
 						{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II:   loop component, no edge found, component being removed" << endl;
 						}					
 					}
@@ -4020,11 +4029,11 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 					{
 						first_new_peer_detour_edge = new_first_component_edge[peer_component];
 						
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II: adjusted first_new_peer_detour_edge to " << first_new_peer_detour_edge << " to accommodate component edge label wrap " << endl;
 					}
 					
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "remove_Reidemeister_II: new_first_component_edge ";
 	for (int i=0; i< num_components; i++)
@@ -4040,12 +4049,12 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 
 					if (pure_knotoid_code_data)
 					{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II: knotoid: after assigning new edge labels new_head_semi_arc = " << new_head_semi_arc << endl;
 	
 						new_head_semi_arc %= (new_last_component_edge[0]+1); 
 						
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II: knotoid: reset new_head_semi_arc = " << new_head_semi_arc << endl;			
 					}
 						
@@ -4054,7 +4063,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 					   the columns represent the crossings in oder moving from the rendezvous crossing to the start crossing
 					*/
 					new_edge = first_new_peer_detour_edge;
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II: renumbering new crossings resulting from moving peer detour, first_new_peer_detour_edge = " << new_edge << endl;			
 					for (int i=0; i< num_start_virtual_crossings; i++)
 					{
@@ -4064,7 +4073,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 						else
 							transverse_virtual_crossing = num_start_virtual_crossings-1-i;
 	
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "remove_Reidemeister_II: new edge " << new_edge << ", transverse_virtual_crossing = " << transverse_virtual_crossing 
 	      << " peer edge " << new_transverse_peer_edge[transverse_virtual_crossing] << endl;				 
@@ -4083,7 +4092,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 						new_edge++;
 					}
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "remove_Reidemeister_II: old edge_labels" << "\nremove_Reidemeister_II: ";
 	for (int i=0; i< num_crossings; i++)
@@ -4172,12 +4181,12 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 							if (peer_detour_skip_edge == 0 && !edge_zero_a_transverse_skip_edge)
 							{
 								component_zero_shift = new_edge_labels[0][0];
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II: knotoid: old edge zero is the peer detour skip edge but not a transverse_skip_edge and is assigned new edge label = " << new_edge_labels[0][0] << endl;	
 							}
 							else
 							{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II: knotoid: old edge zero retained and assigned the correct new edge label " << new_edge_labels[0][0] << endl;	
 							}
 						}
@@ -4203,7 +4212,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 								
 								component_zero_shift = new_edge_labels[row][col];
 							
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "remove_Reidemeister_II: knotoid: edge zero not retained, peer_detour_skip_edge " << peer_detour_skip_edge << " found in code_table at row=" 
 	      << row << " col=" << col << endl;	
@@ -4211,24 +4220,24 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 							}
 							else if (start == 0)
 							{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II: knotoid: old edge zero removed but edge zero still identifies the knotoid leg" << endl;	
 							}							
 							else
 							{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II: knotoid: edge zero not retained, but new edge label 0 correctly assigned to new leg" << endl;	
 							}
 						}
 						
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II:   need to shift numbering of component zero by " << component_zero_shift << endl;	
 						
 						if (component_zero_shift)
 						{
 							int new_num_edges =new_last_component_edge[0]+1;
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II: knotoid: component zero new_num_edges = " << new_num_edges << endl;
 									
 							for (int j=0; j< num_new_edge_label_columns; j++)
@@ -4246,7 +4255,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 								first_new_peer_detour_edge = (first_new_peer_detour_edge - component_zero_shift + new_num_edges)%new_num_edges;
 							
 						
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "remove_Reidemeister_II: knotoid: after shifting component zero new_edge_labels: " << endl;
 	print(new_edge_labels, debug,3,"remove_Reidemeister_II: ");
@@ -4279,7 +4288,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 							break;
 					}
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "remove_Reidemeister_II: first_new_peer_detour_edge_row = " << first_new_peer_detour_edge_row 
 	      << " first_new_peer_detour_edge_col = " << first_new_peer_detour_edge_col << endl;
@@ -4295,7 +4304,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 					*/
 					align_label_numbers (new_edge_labels, num_components,new_first_component_edge,new_last_component_edge);
 		
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "remove_Reidemeister_II: final renumbered new_edge_labels: " << endl;
 	print(new_edge_labels, debug,3,"remove_Reidemeister_II: ");
@@ -4313,12 +4322,12 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 							int crossing = code_data.term_crossing[edge];
 							int row = (edge%2 == 0?0:1);
 							
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II: old edge " << edge << " terminates at crossing " << crossing << " row = " << row << endl;
 				
 							if (new_edge_labels[row][crossing] != -1)
 							{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II:   new edge label " << new_edge_labels[row][crossing] << endl;
 				
 								component_removed = false;
@@ -4330,7 +4339,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 						{
 							clear_component_flag(i,component_flags);
 							
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "remove_Reidemeister_II: removing edge flags disconnects component " << i << endl;
 	debug << "remove_Reidemeister_II:   component_flags updated to: ";
@@ -4341,7 +4350,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 						}
 						else
 						{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II:   removing edge flags retains component " << i << endl;
 						}
 					}
@@ -4362,11 +4371,11 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 						{
 							new_head_semi_arc = new_edge_labels[first_new_peer_detour_edge_row][first_new_peer_detour_edge_col];
 							
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II: knotoid: head semi_arc is in the peer path, setting head_semi_arc to new label on first_new_peer_detour_edge = " << first_new_peer_detour_edge << endl;
 						}
 						
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II: knotoid: new_head_semi_arc = " << new_head_semi_arc << endl;
 	
 						/* If we have a knotoid that ends up with new_head_semi_arc = 0, as in the case:
@@ -4382,7 +4391,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 							/* clear pure_knotoid_code_data so we assign labels correctly below, the head is set below */
 							pure_knotoid_code_data = false;
 							code_data.immersion = generic_code_data::character::KNOTOID;
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "remove_Reidemeister_II: new_head_semi_arc is zero, clearing knotoid status of code data" << endl;
 	debug << "remove_Reidemeister_II: set code_data.immersion = generic_code_data::character::KNOTOID to indicate knot-type knotoid" << endl;
@@ -4508,7 +4517,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 		               number of virtual crossings on the start detour (before any were removed as a result of also lying on
 		               the peer detour).
 					*/
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II: set TYPE and LABEL of virtual crossings introduced by moving the peer detour" << endl;
 	
 					int index = 0;
@@ -4532,7 +4541,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 								{
 									start_path_edge_in_shortcut = true;
 									
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II: knotoid: start path edge " << edge << " lies within the shortcut" << endl;
 								}
 							}
@@ -4550,7 +4559,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 							int start_new_even_edge = (row_zero_new_label %2? row_one_new_label: row_zero_new_label);
 							
 							int start_detour_crossing = start_new_even_edge/2;											
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "remove_Reidemeister_II:   start path old edge label " << edge << ", start_new_edge_label_column " << start_new_edge_label_column << endl;
 	debug << "remove_Reidemeister_II:   new_start_path_edge_label = " << new_start_path_edge_label << ", start_new_even_edge " << start_new_even_edge 
@@ -4570,7 +4579,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 								else
 									new_code_table[TYPE][peer_detour_crossing] = generic_code_data::TYPE1;
 	
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "remove_Reidemeister_II:   moving forwards from peer, peer_new_edge_label_column = " << peer_new_edge_label_column << ", peer_new_even_edge " << peer_new_even_edge 
 		  << ", peer_detour_crossing = " << peer_detour_crossing << endl;
@@ -4585,7 +4594,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 
 								new_code_table[TYPE][peer_detour_crossing] = new_code_table[TYPE][start_detour_crossing];
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "remove_Reidemeister_II:   moving backwards from peer, peer_new_edge_label_column = " << peer_new_edge_label_column << ", peer_new_even_edge " << peer_new_even_edge 
 		  << ", peer_detour_crossing = " << peer_detour_crossing << endl;
@@ -4605,7 +4614,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 							else
 								peer_path_terminating_edge = (new_edge_labels[0][peer_new_edge_label_column] % 2 ? new_edge_labels[0][peer_new_edge_label_column]: new_edge_labels[1][peer_new_edge_label_column]);								
 								
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II:   peer_path_terminating_edge = " << peer_path_terminating_edge << endl;
 								
 							if (pure_knotoid_code_data && peer_path_terminating_edge >= new_head_semi_arc)
@@ -4614,7 +4623,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 								{
 									peer_path_edge_in_shortcut = true;
 									
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II: knotoid: peer path edge " << peer_path_terminating_edge << " lies within the shortcut" << endl;
 								}
 							}
@@ -4640,7 +4649,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 						
 							index++;
 							
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "remove_Reidemeister_II:   peer_detour_crossing label is ";
 	switch(new_code_table[LABEL][peer_detour_crossing])
@@ -4655,13 +4664,13 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 						}
 						else
 						{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II:   edge " << edge << " terminates at a virtual crossing that lies on the peer detour, so has been removed" << endl; 
 						}
 						
 					}
 						
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "remove_Reidemeister_II: new_code_table" << endl;
 	debug << "remove_Reidemeister_II:  type: ";
@@ -4729,7 +4738,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 					ostringstream oss;
 					write_code_data (oss, code_data);
 				
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II: new peer code with head cleared = " << oss.str() << endl;
 					
 					/* read back the peer code into code_data */
@@ -4744,7 +4753,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 					{
 						if (new_head_semi_arc == 0)
 						{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II: new_head_semi_arc is zero, already cleared knotoid status of code data" << endl;
 						}
 						else if (new_head_semi_arc % 2)
@@ -4754,12 +4763,12 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 
 						code_data.immersion = generic_code_data::character::PURE_KNOTOID;
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II: new peer code head = " << code_data.head << endl;
 							
 					}
 				
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "remove_Reidemeister_II: new code_data: " << endl;
 	print_code_data (code_data, debug, "remove_Reidemeister_II:   ");
@@ -4769,7 +4778,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 		}
 		else
 		{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II: no Reidemister II detour found" << endl;
 		}
 	}
@@ -4804,7 +4813,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 			if (code_data.num_crossings > 1)
 			{
 			
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "remove_Reidemeister_II: after removing virtual Reidemeister_I moves peer code = ";
 	write_code_data(debug,code_data);
@@ -4813,7 +4822,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 }
 				num_components_removed += remove_Reidemeister_II(code_data,component_flags);
 				
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II:   removing Reidemeister II configurations updates num_components_removed to " << num_components_removed << endl;
 				
 			}
@@ -4824,17 +4833,17 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 			for (unsigned int i=0; i< component_flags.size(); i++)
 				component_flags[i] = 0;
 			
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II: no crossings remaining, clearing component_flags, num_components_removed = " << num_components_removed << endl;
 		}
 	}
 	else
 	{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II: no Reidemeister II moves detected." << endl;	
 	}
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II: returning num_components_removed = " << num_components_removed << endl;	
 	
 	return 	num_components_removed;	
@@ -4862,7 +4871,7 @@ void align_label_numbers (matrix<int>& edge_labels, int num_components,vector<in
 		start_component++;
 	}
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "align_label_numbers: first component with remaining crossings is " << start_component << endl;
 	debug << "align_label_numbers: aligned_labels: ";
@@ -4874,7 +4883,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 	do
 	{
 		
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "align_label_numbers: start_component = " << start_component << endl;
 	
 		aligned_labels[start_component] = 1;
@@ -4889,7 +4898,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 			int first = new_first_component_edge[component];
 			int last = new_last_component_edge[component];
 							
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "align_label_numbers:   component " << component << ", first edge = " << first << ", last edge = " << last << endl;
 	
 			for (int edge=first; edge<=last; edge++)
@@ -4923,19 +4932,19 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 				}
 
 			
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "align_label_numbers:     edge " << edge << ", peer = " << peer << " lies on component " << peer_component << endl;
 
 				if (edge%2 == peer%2)
 				{
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "align_label_numbers:     edge labels in column " << column << " has incompatible terminating edge labels " << endl;
 	
 					int peer_first_edge = new_first_component_edge[peer_component];				
 					int peer_last_edge = new_last_component_edge[peer_component];
 					int peer_num_edges = peer_last_edge - peer_first_edge + 1;
 															
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "align_label_numbers:       cycle the " << peer_num_edges << " edge labels on peer_component " << peer_component << ", peer_first_edge = " << peer_first_edge << " peer_last_edge = " << peer_last_edge << endl;
 	
 					for (int j=0; j< num_crossings; j++)
@@ -4947,7 +4956,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 							edge_labels[1][j] = (edge_labels[1][j] - peer_first_edge +1)%peer_num_edges + peer_first_edge;
 					}					
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "align_label_numbers:       renumbered new_edge_labels: " << endl;
 	print(edge_labels, debug,3,"align_label_numbers:       ");
@@ -4963,7 +4972,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 			tree_ptr++;
 		}
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "align_label_numbers: reached the end of the component_tree" << endl;
 	debug << "align_label_numbers: aligned_labels: ";
@@ -5001,5 +5010,515 @@ void clear_component_flag(int component, vector<int>& component_flags)
 				break;
 			}
 		}
+	}
+}
+
+/* Reidemeister_III_present is based on the very clever enumeration of the eight possible R3 configurations that 
+   appears in Jeremy Green's code.  Given a topmost arc of an R3 configuration going over consecutive crossings 
+   a and b in the Gauss code, we seek a crossing, c, adjacent in the Gauss code to the two under-crossing terms 
+   of a and b.  To reject situations where a virtual crossing prevents an R3 move from being performed, as in:
+
+				               | a                     | b
+				         -------------------------------------> 
+				               |                       |
+				         ------x----------             |
+				               |         | c           |
+				               ----------o--------------
+				                         |
+										 
+   we shall require that a term relating to crossing c is not adjacent to both the under-crossing terms of a and b.
+   
+   The enumeration of the eight cases allows us to verify the combination of signs amongst the three crossings
+   involved in the Reidemeister III move.
+   The indices of the under-crossings of a and b are identified as under-a_index and under_b_index.  The indices and crossings
+   to the left and right of these indices are identified as left_a_index, left_a_crossing, right_a_index, right_a_crossing and
+   similarly for b.
+   
+   In the following the control variables, k, m2 and m3 have been chosen to correspond to those used by Jeremy.
+   
+   We then check for the following conditions
+    - left_a_crossing = left_b_crossing    k=0  m2=1   case 1
+	- left_a_crossing = right_b_crossing   k=0  m2=1   case 2
+    - right_a_crossing = left_b_crossing   k=1  m2=-1  case 1
+	- right_a_crossing = right_b_crossing  k=1  m2=-1  case 2
+
+	k=0 m2=1, case1         k=0, m2=1, case 2       k=1, m2=-1, case 1      k=1, m2=-1, case 2
+	   ^     ^                 ^                             ^
+	  a|     |b               a|     |b               a|     |b               a|     |b
+	------------->          ------------->          ------------->          ------------->
+	 + |     | +             + |     | -             - |     | +             - |     | -
+	    \   /                   \   /                   \   /                   \   /
+        c / +                   c / -                   c / -                   c / +
+		/   \                   /   \                   /   \                   /   \
+	   |     |                 |     |                 |     |                 |     |
+	                           v                             v                 v     v
+							   
+	Note that in the above diagrams the strand through crossing_a at the left_a_crossing or right_crossing 
+	is on an under-arc.
+	
+	Note also that the sign of the crossings are as follows, when m3=1:
+	
+    case 1:  sign(a) = m3 * sign(c) and  sign(a) = m2 * sign(b)
+    case 2: -sign(a) = m3 * sign(c) and -sign(a) = m2 * sign(b)
+	   
+   Next, we reverse crossings a and b and repeat the above checks with m3=-1;  This gives rise to the following diagrams
+   
+	k=2 m2=1, case1         k=2, m2=1, case 2       k=3, m2=-1, case 1      k=3, m2=-1, case 2
+	   ^      ^                      ^                 ^      
+	  b|     |a               b|     |a               b|     |a               b|     |a
+	------------->          ------------->          ------------->          ------------->
+	 + |     | +             - |     | +             + |     | -             - |     | -
+	    \   /                   \   /                   \   /                   \   /
+        c \ -                   c \ +                   c \ +                   c \ -
+		/   \                   /   \                   /   \                   /   \
+	   |     |                 |     |                 |     |                 |     |
+	                                 v                 v                       v     v
+
+   Note that in the above diagrams we still have that the strand through crossing_a at the left_a_crossing 
+   or right_crossing is on an under-arc.
+   
+   The signs in these diagrams are then given by the same relations as above but with m3 = -1
+   
+   The fact that the strand through crossing_a is the under-arc at crossing_c is important, since non-Reidemeister III
+   configurations do not have this property, even if all other conditions are matched.  An example of this is given by
+   1 2 -1 3 -2 -3 / + + - , where the signs match for the over-arc at terms 1 and 2 checking for the right_a_index=3 
+   but the term at index 3 is th eover-arc not the under-arc.
+   
+   The function returns a set of indices to the first crossing on each of the thre arcs involved in the configuration,
+   consistent with the orientation determined by the code numbering.  We return indices to avoid ambiguities such as in the
+   case of -1 2 -3 4 1 3 -4 -2/+ - + +, where the over-arc 4 1 and crossing 3 form a Reidemeister III configuration but it
+   is not clear from the code which of the -2 or 2 crossing either side of the under crossing -1 is part of the same arc.
+   
+*/
+Reidemeister_III_return Reidemeister_III_present (generic_code_data code_data)
+{
+
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+{
+	debug << "Reidemeister_III_present: presented with code data ";
+	write_code_data(debug,code_data);	
+	debug << endl;
+}
+
+	Reidemeister_III_return _return;
+	
+	gauss_orientation_data gdata(code_data);
+	
+	
+	list<vector<int> > Reidemeister_III_list;
+	
+	int num_terms = gdata.num_terms;
+	int num_components = gdata.num_components;
+	
+	vector<int>& gauss_data = gdata.classical_gauss_data;
+	vector<int>& crossing_sign = gdata.classical_crossing_sign;
+	vector<int>& num_terms_in_component = gdata.num_terms_in_component;
+	vector<int>& start_of_component = gdata.start_of_component;
+	
+	for (int c=0; c < num_components; c++)
+	for (int i=0; i< num_terms_in_component[c]; i++)
+	{
+		int term = start_of_component[c]+i;
+		int successor = start_of_component[c] + (i+1)%num_terms_in_component[c];
+		
+if (debug_control::DEBUG >= debug_control::DETAIL)
+	debug << "Reidemeister_III_present: term = " << term << " successor = " << successor << endl;
+		
+		if (term != successor && gauss_data[term] > 0 && gauss_data[successor] > 0)
+		{
+if (debug_control::DEBUG >= debug_control::DETAIL)
+	debug << "Reidemeister_III_present:   consecutive over crossings found at terms " << term << " and " << successor << endl;
+
+			/* we have a pair of consecutive over-crossings, numbered from 1 */
+			int crossing_a = gauss_data[term];
+			int crossing_b = gauss_data[successor];
+			int crossing_a_index = term;
+			int crossing_b_index = successor;
+			
+if (debug_control::DEBUG >= debug_control::DETAIL)
+	debug << "Reidemeister_III_present:   crossing_a = " << crossing_a << " crossing_b = " << crossing_b << endl;
+			
+			/* find the under arcs of crossing_a and crossing_b */
+			int under_a_index;
+			int under_b_index;
+			for (int j=0; j < num_terms; j++)
+			{
+				if (gauss_data[j] == crossing_a * -1)
+					under_a_index = j;					
+				else if (gauss_data[j] == crossing_b * -1)
+					under_b_index = j;					
+			}
+			
+			int under_a_component=0;
+			for (int j=1; j< num_components; j++)
+			{
+				if (under_a_index >= start_of_component[j])
+					under_a_component++;
+				else
+					break;
+			}
+
+			int under_b_component=0;
+			for (int j=1; j< num_components; j++)
+			{
+				if (under_b_index >= start_of_component[j])
+					under_b_component++;
+				else
+					break;
+			}
+			
+if (debug_control::DEBUG >= debug_control::DETAIL)
+	debug << "Reidemeister_III_present:   under_a_component = " << under_a_component << " under_b_component = " << under_b_component << endl;
+			
+			
+			int left_a_index = (under_a_index-start_of_component[under_a_component]-1+num_terms_in_component[under_a_component])%num_terms_in_component[under_a_component] + start_of_component[under_a_component];
+			int right_a_index = (under_a_index-start_of_component[under_a_component]+1)%num_terms_in_component[under_a_component] + start_of_component[under_a_component];
+			int left_b_index = (under_b_index-start_of_component[under_b_component]-1+num_terms_in_component[under_b_component])%num_terms_in_component[under_b_component] + start_of_component[under_b_component];
+			int right_b_index = (under_b_index-start_of_component[under_b_component]+1)%num_terms_in_component[under_b_component] + start_of_component[under_b_component];
+			int left_a_crossing = abs(gauss_data[left_a_index]);
+			int right_a_crossing = abs(gauss_data[right_a_index]);
+			int left_b_crossing = abs(gauss_data[left_b_index]);
+			int right_b_crossing = abs(gauss_data[right_b_index]);
+
+if (debug_control::DEBUG >= debug_control::DETAIL)
+{
+	debug << "Reidemeister_III_present:   under_a_index = " << under_a_index << " under_b_index = " << under_b_index << endl;
+	debug << "Reidemeister_III_present:   left_a_index = " << left_a_index << " left_a_crossing = " << left_a_crossing << endl;
+	debug << "Reidemeister_III_present:   right_a_index = " << right_a_index << " right_a_crossing = " << right_a_crossing << endl;
+	debug << "Reidemeister_III_present:   left_b_index = " << left_b_index << " left_b_crossing = " << left_b_crossing << endl;
+	debug << "Reidemeister_III_present:   right_b_index = " << right_b_index << " right_b_crossing = " << right_b_crossing << endl;
+}
+			
+			/* Start the enumeration described above */
+			int m2 = 0;
+			int m3 = 1;
+			for (int k=0; k< 4; k++)
+			{
+				
+				if (k==2)
+				{
+					/* invert m3 and swap the a and b references */
+					m3 = -1;
+					swap(crossing_a,crossing_b);
+					swap(crossing_a_index,crossing_b_index);
+					swap(under_a_index,under_b_index);
+					swap(left_a_index,left_b_index);
+					swap(right_a_index,right_b_index);
+					swap(left_a_crossing,left_b_crossing);
+					swap(right_a_crossing,right_b_crossing);
+					
+if (debug_control::DEBUG >= debug_control::DETAIL)
+	debug << "Reidemeister_III_present:   swap crossings a and b " << endl;
+				}
+				
+				int index_c;
+				int crossing_c;
+				if (k%2 == 0) // check for crossing_c as the left_a_crossing
+				{
+					index_c = left_a_index;
+					crossing_c = left_a_crossing;
+					m2 = 1;
+				}
+				else // check for crossing_c as the right_a_crossing
+				{
+					index_c = right_a_index;
+					crossing_c = right_a_crossing;
+					m2 = -1;
+				}
+if (debug_control::DEBUG >= debug_control::DETAIL)
+{
+	debug << "Reidemeister_III_present:   k = " << k << (k%2 == 0? " left": " right") << "_a check, index_c = " << index_c << " crossing_c = " 
+	      << crossing_c << " m2 = " << m2 << " m3 = " << m3 << endl;
+}
+			
+				/* check whether the crossings left and right of the under_a_index can also be found either left or right of the under_b_index 
+				   We need to ensure there is more than one clasical crossing between under_a_index and under_b_index, since otherwise there would
+				   be a virtual crossing preventing a Reidemeister III move.
+				   
+				   The condition gauss_data[index_c] < 0 ensures that the strand through crossing_a is the under-arc at crossing_c
+				*/
+//			if (t >= 0 && t != jju && t != j && t != jj) 
+//			if (index_c != under_b_index && index_c != crossing_a_index && t != crossing_b_index)
+				if (crossing_c != crossing_a && crossing_c != crossing_b && gauss_data[index_c] < 0)
+				{					
+					/* case 1 check the left_b_index */
+					if (left_b_crossing == crossing_c && left_b_index != index_c && left_b_crossing != crossing_a && left_b_crossing != crossing_b)
+					{
+if (debug_control::DEBUG >= debug_control::DETAIL)
+	debug << "Reidemeister_III_present:     case 1: left_b_crossing " << left_b_crossing << " == crossing_c " << crossing_c << endl;
+						/* check the crossing signs: case 1:  sign(a) = m3 * sign(c) and  sign(a) = m2 * sign(b) */
+						if (crossing_sign[crossing_a-1] == m3 * crossing_sign[crossing_c-1] && crossing_sign[crossing_a-1] == m2 * crossing_sign[crossing_b-1])
+						{					
+if (debug_control::DEBUG >= debug_control::DETAIL)
+{
+	debug << "Reidemeister_III_present:     found Reidemeister III " << crossing_a << ' ' << crossing_b << ' '<< crossing_c << endl;
+	debug << "Reidemeister_III_present:     crossing_sign[crossing_a] = " << crossing_sign[crossing_a-1] << " m3 = " << m3 
+	      << " crossing_sign[crossing_c] = " << crossing_sign[crossing_c-1] << " m2 = " << m2 << " crossing_sign[crossing_b] = " << crossing_sign[crossing_b-1] << endl;
+}
+							vector<int> R3_indices(6);
+							switch(k)
+							{
+								case 0: R3_indices = {crossing_a_index,left_a_index,left_b_index, crossing_a, crossing_b, crossing_c};break;
+								case 1: R3_indices = {crossing_a_index,under_a_index,left_b_index, crossing_a, crossing_b, crossing_c};break;
+								case 2: R3_indices = {crossing_b_index,left_b_index,left_a_index, crossing_a, crossing_b, crossing_c};break;
+								case 3: R3_indices = {crossing_b_index,left_b_index,under_a_index, crossing_a, crossing_b, crossing_c};break;
+							}
+
+if (debug_control::DEBUG >= debug_control::DETAIL)
+{
+	debug << "Reidemeister_III_present:     Reidemeister III indices ";
+	for (int i=0; i< 6; i++)
+		debug << R3_indices[i] << ' ';
+	debug << endl;
+}
+
+							Reidemeister_III_list.push_back(R3_indices);
+							
+							_return.Reidemeister_III_found = true;
+						}
+						else
+						{
+if (debug_control::DEBUG >= debug_control::DETAIL)
+{
+	debug << "Reidemeister_III_present:     case 1 crossing signs do not match a == m3*c: " << (crossing_sign[crossing_a-1] == m3 * crossing_sign[crossing_c-1])
+	      << " a = m2 * b: " << (crossing_sign[crossing_a-1] == m2 * crossing_sign[crossing_b-1]) << endl;
+}
+						}
+					}
+
+					/* case 2 check the right_b_index */
+					if (right_b_crossing == crossing_c && right_b_index != index_c && right_b_crossing != crossing_a && right_b_crossing != crossing_b)
+					{
+if (debug_control::DEBUG >= debug_control::DETAIL)
+	debug << "Reidemeister_III_present:     case 2: right_b_crossing " << right_b_crossing << " == crossing_c " << crossing_c << endl;
+						/* check the crossing signs:  case 2: -sign(a) = m3 * sign(c) and -sign(a) = m2 * sign(b) */
+						if (crossing_sign[crossing_a-1] * -1 == m3 * crossing_sign[crossing_c-1] && crossing_sign[crossing_a-1] * -1 == m2 * crossing_sign[crossing_b-1])
+						{					
+if (debug_control::DEBUG >= debug_control::DETAIL)
+{
+	debug << "Reidemeister_III_present:     found Reidemeister III " << crossing_a << ' ' << crossing_b << ' '<< crossing_c << endl;
+	debug << "Reidemeister_III_present:     crossing_sign[crossing_a] = " << crossing_sign[crossing_a-1] << " m3 = " << m3 
+	      << " crossing_sign[crossing_c] = " << crossing_sign[crossing_c-1] << " m2 = " << m2 << " crossing_sign[crossing_b] = " << crossing_sign[crossing_b-1] << endl;
+}
+							vector<int> R3_indices(6);
+							switch(k)
+							{
+								case 0: R3_indices = {crossing_a_index,left_a_index,under_b_index, crossing_a, crossing_b, crossing_c};break;
+								case 1: R3_indices = {crossing_a_index,under_a_index,under_b_index, crossing_a, crossing_b, crossing_c};break;
+								case 2: R3_indices = {crossing_b_index,under_b_index,left_a_index, crossing_a, crossing_b, crossing_c};break;
+								case 3: R3_indices = {crossing_b_index,under_b_index,under_a_index, crossing_a, crossing_b, crossing_c};break;
+							}
+
+if (debug_control::DEBUG >= debug_control::DETAIL)
+{
+	debug << "Reidemeister_III_present:     Reidemeister III indices ";
+	for (int i=0; i< 6; i++)
+		debug << R3_indices[i] << ' ';
+	debug << endl;
+}
+							Reidemeister_III_list.push_back(R3_indices);
+							
+							_return.Reidemeister_III_found = true;
+						}
+						else
+						{
+if (debug_control::DEBUG >= debug_control::DETAIL)
+{
+	debug << "Reidemeister_III_present:     case 2 crossing signs do not match -a == m3*c: " << (crossing_sign[crossing_a-1] * -1 == m3 * crossing_sign[crossing_c-1])
+	      << " -a = m2 * b: " << (crossing_sign[crossing_a-1] * -1 == m2 * crossing_sign[crossing_b-1]) << endl;
+}
+						}
+					}
+				}			
+			}
+		}
+	}
+
+	if (_return.Reidemeister_III_found)
+	{
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+	debug << "Reidemeister_III_present: found " << Reidemeister_III_list.size() << " Reidemeister III configurations" << endl;
+		matrix<int> R3_configuration(Reidemeister_III_list.size(),6);
+		
+		list<vector<int> >::iterator lptr = Reidemeister_III_list.begin();
+		int index=0;
+		
+		while (lptr !=	Reidemeister_III_list.end())
+		{
+			R3_configuration[index][0] = (*lptr)[0];
+			R3_configuration[index][1] = (*lptr)[1];
+			R3_configuration[index][2] = (*lptr)[2];
+			R3_configuration[index][3] = (*lptr)[3];
+			R3_configuration[index][4] = (*lptr)[4];
+			R3_configuration[index][5] = (*lptr)[5];
+			index++;
+			lptr++;
+		}
+		_return.R3_configuration = R3_configuration;
+	}
+	
+	return _return;
+}
+
+/*  To perform the Reidemeister III move we number the two new crossings by interchanging the numbering of the 
+    two over-arc crossings, as shown below (i.e interchange a and b) so the signs of the new a and b crossings 
+    are the same as the signs of the old a and b.
+    
+
+	   ^     ^                 ^                             ^
+	  a|     |b               a|     |b               a|     |b               a|     |b
+	------------->          ------------->          ------------->          ------------->
+	 + |     | +             + |     | -             - |     | +             - |     | -
+	    \   /                   \   /                   \   /                   \   /
+        c / +                   c / -                   c / -                   c / +
+		/   \                   /   \                   /   \                   /   \
+	   |     |                 |     |                 |     |                 |     |
+	                           v                             v                 v     v
+
+	   ^     ^                 ^                             ^
+	   |     |                 |     |                 |     |                 |     | 
+	    \   /                   \   /                   \   /                   \   /
+        c / +                   c / -                   c / -                   c / +
+		/   \                   /   \                   /   \                   /   \
+	  b|     |a               b|     |a               b|     |a               b|     |a
+	------------->          ------------->          ------------->          ------------->
+	 + |     | +             - |     | +             + |     | -             - |     | -
+	                           v                             v                 v     v
+	                           
+	we then interchage the under-arc terms of the old a annd b with the adjacent term corresponding to crossing c
+	
+	The over_index indicates the first term involved in the over-arc, the a_index the first term on the under_arc 
+	through a and the b_index the first term on the under-arc through b.
+*/
+generic_code_data Reidemeister_III_move (generic_code_data code_data, int over_index, int a_index, int b_index)
+{
+	gauss_orientation_data gdata(code_data);
+
+	int num_terms = gdata.num_terms;
+	int num_components = gdata.num_components;
+	
+	vector<int>& gauss_data = gdata.classical_gauss_data;
+	vector<int>& crossing_sign = gdata.classical_crossing_sign;
+	vector<int>& num_terms_in_component = gdata.num_terms_in_component;
+	vector<int>& start_of_component = gdata.start_of_component;
+
+	int over_index_component=0;
+	for (int j=1; j< num_components; j++)
+	{
+		if (over_index >= start_of_component[j])
+			over_index_component++;
+		else
+			break;
+	}
+
+	int under_a_component=0;
+	for (int j=1; j< num_components; j++)
+	{
+		if (a_index >= start_of_component[j])
+			under_a_component++;
+		else
+			break;
+	}
+
+	int under_b_component=0;
+	for (int j=1; j< num_components; j++)
+	{
+		if (b_index >= start_of_component[j])
+			under_b_component++;
+		else
+			break;
+	}
+
+	int over_index_successor = (over_index-start_of_component[over_index_component]+1)%num_terms_in_component[over_index_component] + start_of_component[over_index_component];
+	int a_index_successor = (a_index-start_of_component[under_a_component]+1)%num_terms_in_component[under_a_component] + start_of_component[under_a_component];
+	int b_index_successor = (b_index-start_of_component[under_b_component]+1)%num_terms_in_component[under_b_component] + start_of_component[under_b_component];
+	
+if (debug_control::DEBUG >= debug_control::DETAIL)
+{
+	debug << "Reidemeister_III_move: performing move at indices " << over_index << ' ' << a_index << ' ' << b_index << endl;
+	debug << "Reidemeister_III_move: components " << over_index_component << ' ' << under_a_component << " and " << under_b_component << endl;
+	debug << "Reidemeister_III_move: arcs " << gauss_data[over_index] << ' ' << gauss_data[over_index_successor] << ", " 
+	                                       << gauss_data[a_index] << ' ' << gauss_data[a_index_successor] << ", " 
+	                                       << gauss_data[b_index] << ' ' << gauss_data[b_index_successor] << endl;
+	debug << "Reidemeister_III_move: initial gauss_data: ";
+	for (int i=0; i< num_terms; i++)
+		debug << gauss_data[i] << ' ';
+	debug << endl;
+}
+
+	vector<int> new_gauss_data = gauss_data;
+	
+	new_gauss_data[over_index] = gauss_data[over_index_successor];
+	new_gauss_data[over_index_successor] = gauss_data[over_index];
+	new_gauss_data[a_index] = gauss_data[a_index_successor];
+	new_gauss_data[a_index_successor] = gauss_data[a_index];
+	new_gauss_data[b_index] = gauss_data[b_index_successor];
+	new_gauss_data[b_index_successor] = gauss_data[b_index];
+	
+if (debug_control::DEBUG >= debug_control::DETAIL)
+{
+	debug << "Reidemeister_III_move:     new gauss_data: ";
+	for (int i=0; i< num_terms; i++)
+		debug << new_gauss_data[i] << ' ';
+	debug << endl;
+}
+
+	ostringstream oss;
+	int index = 0;
+	
+	for (int i=0; i< num_components; i++)
+	{
+		for (int j=0; j<num_terms_in_component[i]; j++)
+		{
+			oss << new_gauss_data[index++];
+			if (j < num_terms_in_component[i] -1)
+				oss << ' ';
+		}
+		
+		if (i < num_components-1)
+			oss << ',';
+	}
+	
+	oss << '/';
+	
+	for (int i=0; i< num_terms/2; i++)
+	{
+		if (crossing_sign[i] > 0)
+			oss << "+ ";
+		else
+			oss << "- ";
+	}	
+		
+if (debug_control::DEBUG >= debug_control::DETAIL)
+	debug << "Reidemeister_III_move: oss.str() =  " << oss.str() << endl;
+
+	generic_code_data updated_gauss_code_data;
+	read_gauss_code(updated_gauss_code_data,oss.str());
+	
+	if (code_data.type == generic_code_data::peer_code)
+	{
+		generic_code_data updated_peer_code_data;
+		gauss_to_peer_code(updated_gauss_code_data, updated_peer_code_data);
+
+if (debug_control::DEBUG >= debug_control::DETAIL)
+{
+	debug << "Reidemeister_III_move: returning updated_peer_code_data: ";
+	write_code_data(debug, updated_peer_code_data);
+	debug << endl;
+	print_code_data(updated_peer_code_data,debug,"Reidemeister_III_move: ");
+}	
+
+		return updated_peer_code_data;
+	}
+	else
+	{
+if (debug_control::DEBUG >= debug_control::DETAIL)
+{
+	debug << "Reidemeister_III_move: returning updated_gauss_code_data: ";
+	write_code_data(debug, updated_gauss_code_data);
+	debug << endl;
+	print_code_data(updated_gauss_code_data,debug,"Reidemeister_III_move: ");
+}	
+		return updated_gauss_code_data;
 	}
 }

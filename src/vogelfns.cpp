@@ -31,11 +31,12 @@ extern ofstream     debug;
 #include <util.h>
 #include <matrix.h>
 #include <braid-control.h>
+#include <braid-util.h>
+#include <debug-control.h>
 #include <hash-defs.h>
 #include <generic-code.h>
 
 /********************* Function prototypes ***********************/
-bool valid_braid_input (string input_string, int& num_terms, int& num_strings);
 void parse_braid(string word, int num_terms, vector<int>& braid_num, vector<int>& type);
 void set_component_record (int action, vector<int>& braid_num, vector<int>& type, vector<int>& component_record,
                            int base_crossing=0, int basepoint=0, int datum=0);
@@ -44,9 +45,6 @@ int num_braid_terms(string word);
 string braid_reduce (string word);
 void braid_reduce (vector<int>& braid_num, vector<int>& type, int& basepoint, vector<int>& component_record);
 void write_braid (ostream& s, vector<int>& braid_num, vector<int>& type);
-void write_peer_code(ostream& s, const generic_code_data& code_data, bool zig_zags=false, bool labelled=true);
-void print_code_data(generic_code_data& code_data, ostream& s, string prefix="");
-
 
 void vogel_error (string errstring)
 {
@@ -132,7 +130,7 @@ void reset_basepoint (int& base_strand, int& base_crossing, vector<int>& braid_n
 {
 	int original_base_crossing = base_crossing;
 
-if (braid_control::DEBUG >= braid_control::DETAIL) 
+if (debug_control::DEBUG >= debug_control::DETAIL) 
 {
 	debug << "reset_basepoint: braid_num: ";
 	for (int i=0; i< num_terms; i++)
@@ -156,7 +154,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 	while (true) // we break out of this loop
 	{
 		/* look for a crossing on strand component_record[i] */
-if (braid_control::DEBUG >= braid_control::DETAIL) 
+if (debug_control::DEBUG >= debug_control::DETAIL) 
 	debug << "reset_basepoint: looking for basepoint on strand " << base_strand << endl;
 
 
@@ -171,7 +169,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 				base_crossing = k;
 				found = true;
 
-if (braid_control::DEBUG >= braid_control::DETAIL) 
+if (debug_control::DEBUG >= debug_control::DETAIL) 
 	debug << "reset_basepoint: found strand " << base_strand << " at crossing " << k+1 << endl;
 				break;
 			}
@@ -192,7 +190,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 				rotate(type.begin(), type.begin()+base_crossing, type.end());
 				base_crossing = 0;
 
-if (braid_control::DEBUG >= braid_control::DETAIL) 
+if (debug_control::DEBUG >= debug_control::DETAIL) 
 {
 debug << "reset_basepoint: base_crossing has moved, rotated braid to make base_crossing zero" << endl;
 debug << "reset_basepoint: braid_num = ";
@@ -246,12 +244,12 @@ debug << endl;
 string braid_reduce (string word)
 {
 
-if (braid_control::DEBUG >= braid_control::DETAIL) 
+if (debug_control::DEBUG >= debug_control::DETAIL) 
 	debug << "braid_reduce: presented with " << word << endl;
 
 	int num_terms = num_braid_terms(word);
 		
-if (braid_control::DEBUG >= braid_control::DETAIL) 
+if (debug_control::DEBUG >= debug_control::DETAIL) 
 	debug << "braid_reduce: num_terms = " << num_terms << endl;
 
 	/* determine the crossing numbers, types and the number of strings in the initial braid */
@@ -271,7 +269,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 	/* adjust num_terms to reflect the number of terms after reduction */
 	num_terms = braid_num.size();
 
-if (braid_control::DEBUG >= braid_control::DETAIL) 
+if (debug_control::DEBUG >= debug_control::DETAIL) 
 	debug << "braid_reduce: adjusted num_terms after reduction = " << num_terms << endl;
 			
 	/* now write out the resulting braid starting at the basepoint and return it. */
@@ -289,7 +287,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 				upper_crossing = braid_num[i];
 		}
 		
-if (braid_control::DEBUG >= braid_control::DETAIL) 
+if (debug_control::DEBUG >= debug_control::DETAIL) 
 	debug << "braid_reduce: upper_crossing = " << upper_crossing << endl;
 
 		int max_strand = 0;
@@ -299,7 +297,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 				max_strand = component_record[i];
 		}
 		
-if (braid_control::DEBUG >= braid_control::DETAIL) 
+if (debug_control::DEBUG >= debug_control::DETAIL) 
 	debug << "braid_reduce: max_strand = " << max_strand << endl;
 
 //		if (max_strand > upper_crossing) changed 28/2/11
@@ -352,7 +350,7 @@ void braid_reduce (vector<int>& braid_num, vector<int>& type, int& basepoint, ve
 	
 	base_strand = basepoint;	
 		
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE) 
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE) 
 {
 	debug << "braid_reduce: initial base_crossing = " << base_crossing + 1 << ", base_strand = " << base_strand << endl;
 	debug << "braid_reduce: component record = ";
@@ -366,7 +364,7 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 	*/		
 	reset_basepoint(base_strand, base_crossing, braid_num, type, num_terms, component_record);
 
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE) 
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE) 
 {
 	debug << "braid_reduce: adjusted base_crossing = " << base_crossing + 1 << ", base_strand = " << base_strand << endl;
 	debug << "braid_reduce: braid_num: ";
@@ -380,7 +378,7 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 
 	int num_initial_components = component_record.size();
 
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE) 
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE) 
 	debug << "braid_reduce: num_initial_components = " << num_initial_components << endl;
 
 	int passes_remaining = 2; // we want to go around the following loop at least twice because we'll cycle the braid
@@ -392,7 +390,7 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 			break;
 		}
 
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE) 
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE) 
 	debug << "braid_reduce: scanning crossings, passes_remaining = " << passes_remaining << endl;
 	
 		passes_remaining--; 
@@ -404,7 +402,7 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 		{		
 			/* compare the ith and i+1st crossing */
 
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE) 
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE) 
 	debug << "braid_reduce: i = " << i << ", comparing braid_num entries " << braid_num[i] << " and " << braid_num[i+1] 
 	      << ", with types " << type[i] << " and " << type[i+1] << endl;
 
@@ -416,7 +414,7 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 			   )
 			{
 
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE) 
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE) 
 	debug << "braid_reduce: inverse pair found at braid_num value " << braid_num[i] <<endl;
 
 				/* we've got an inverse pair, first adjust the basepoint and copmponent_record if necessary.  
@@ -451,7 +449,7 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 				num_terms -= 2;
 				reduced = true;		
 
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE) 
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE) 
 {
 	debug << "braid_reduce: reduced braid to: " << endl;
 	debug << "braid_reduce: braid_num: ";
@@ -471,21 +469,21 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 					{
 						base_crossing -= 2;
 
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE) 
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE) 
 	debug << "braid_reduce: base_crossing reduced by 2 to " << base_crossing << endl;
 					}
 					else if (base_crossing > i)
 					{
 						base_crossing--;
 
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE) 
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE) 
 	debug << "braid_reduce: base_crossing decremented to " << base_crossing << endl;
 					}
 	
 					reset_basepoint(base_strand, base_crossing, braid_num, type, num_terms, component_record);
 				}
 										
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE) 
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE) 
 	debug << "braid_reduce: base_crossing = " << base_crossing + 1 << ", base_strand = " << base_strand << endl;
 
 				/* step i backwards ready for the next loop */
@@ -511,7 +509,7 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 				upper_count++;
 		}
 		
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE) 
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE) 
 	debug << "braid_reduce: upper_crossing = " << upper_crossing << ", upper_count = " << upper_count << endl;
 
 		lower_crossing = upper_crossing;
@@ -528,7 +526,7 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 				lower_count++;
 		}
 
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE) 
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE) 
 	debug << "braid_reduce: lower_crossing = " << lower_crossing << ", lower_count = " << lower_count << endl;
 
 		/* remove any single upper or lower crossing */
@@ -549,7 +547,7 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 
 					}
 
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE) 
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE) 
 {
 	debug << "braid_reduce: removing upper_crossing with number = " << braid_num[i] << ", type = " << type[i] << endl;
 	debug << "braid_reduce: base_crossing = " << base_crossing + 1 << ", base_strand = " << base_strand << endl;
@@ -564,7 +562,7 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 							component_record[j]--;
 					}
 
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE) 
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE) 
 {
 	debug << "braid_reduce: component record adjusted to: ";
 	for ( unsigned int i=0; i< component_record.size(); i++)
@@ -585,7 +583,7 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 						{
 							base_crossing--;
 
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE) 
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE) 
 	debug << "braid_reduce: base_crossing decremented to " << base_crossing << endl;
 						}
 							
@@ -616,7 +614,7 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 					if (!(i == base_crossing && lower_crossing == base_strand))
 							base_strand--;		
 
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE) 
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE) 
 {
 	debug << "braid_reduce: removing lower_crossing with number = " << braid_num[i] << ", type = " << type[i] << endl;
 	debug << "braid_reduce: base_crossing = " << base_crossing + 1 << ", base_strand = " << base_strand << endl;
@@ -647,7 +645,7 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 						{
 							base_crossing--;
 
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE) 
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE) 
 	debug << "braid_reduce: base_crossing decremented to " << base_crossing << endl;
 
 						}
@@ -674,7 +672,7 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 			if (num_terms != 0)
 				base_crossing = (base_crossing + num_terms - 1) % num_terms;
 
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE) 
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE) 
 {
 	debug << "braid_reduce: after cycling, braid becomes: " << endl;
 	debug << "braid_reduce: braid_num: ";
@@ -690,7 +688,7 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 	} while (passes_remaining);
 
 
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE) 
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE) 
 	debug << "braid_reduce: final num_terms = " << num_terms << endl;
 
 	/* write the base strand back to the basepoint parameter */
@@ -700,7 +698,7 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 	rotate(braid_num.begin(), braid_num.begin()+base_crossing, braid_num.end());
 	rotate(type.begin(), type.begin()+base_crossing, type.end());
 	
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE) 
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE) 
 {
 	debug << "braid_reduce: returning braid: ";
 	write_braid(debug,braid_num,type);
@@ -766,585 +764,5 @@ void standard_rep (string& braid_word)
 	
 	delete[] word;
 	delete[] local;
-}
-
-/* calculate_turning_cycles looks for left and right turning cycles in the given code_data and returns
-   false if it is unable to calculate a set of cycles that may be realized.  From Eulers formula a
-   realizable diagram cannot have more than num_crossings+2 turning cycles.  If the search therefore 
-   exceeds this number of cycles the code_data cannot be realizable and the function returns false.
-   If the search completes without reaching this limit the function returns true but this does not indicate
-   that the code_data is necessarily realizable.  Note that the num_crossings+2 limit can only be breached
-   when looking for right turning cycles, given that we look for left turning cycles first.
-*/
-bool calculate_turning_cycles(generic_code_data& code_data, matrix<int>& cycle, int& num_left_cycles, int& num_cycles)
-{
-
-if (braid_control::VOGEL_DEBUG)
-{
-	debug << "calculate_turning_cycles: code data: ";
-	write_peer_code (debug, code_data);
-	debug << endl;
-	print_code_data(code_data,debug,"calculate_turning_cycles: ");	
-}
-
-	matrix<int>& code_table = code_data.code_table;
-	vector<int> term_crossing = code_data.term_crossing;
-	vector<int> orig_crossing = code_data.orig_crossing;
-	
-	int num_crossings = code_data.num_crossings;
-	int num_edges = 2*num_crossings;
-
-	num_cycles = 0;
-	
-	/* First look for left turning cycles */
-	for (int i=0; i<2*num_crossings; i++)
-	{
-		
-if (braid_control::VOGEL_DEBUG)
-    debug << "calculate_turning_cycles: edge = " << i;
-
-    	/* does edge i already appear in a cycle ? */
-		bool found = false;
-		for (int j=0; j<num_cycles; j++)
-		{
-			for (int k=1; k<= cycle[j][0]; k++)
-			{
-//				if (abs(cycle[j][k]) == i)
-				if (cycle[j][k] == i)
-				{
-
-if (braid_control::VOGEL_DEBUG)
-    debug << " found in left turning cycle " << j << endl;
-
-					found = true;
-					break;
-				}
-			}
-		}
-
-		if (!found)
-		{
-
-if (braid_control::VOGEL_DEBUG)
-    debug << " not found in current left turning cycles "<< endl;
-
-			/* start a new cycle */
-			int column = 1;
-
-			/* we always traverse odd edges backwards */
-//			int edge = (i%2? -i: i);
-			int edge = i;
-			cycle [num_cycles][column++] = edge;
-			bool complete = false;
-
-			/* a cycle cannot be longer than num_edges so we check that we do indeed
-			   cycle within that limit.  This is used to check that the component map
-			   within the code_table is valid, since an unrealizable component map can
-			   result in infinite loops being calculated in the terminating and 
-			   originating edges of the crossings where we never return to the start
-			   of a cycle.
-			*/
-			for (int j=0; !complete && j< num_edges; j++)
-			{
-				/* determine which vertex the current edge takes us to and 
-	   			the next edge we turn onto */
-				if (edge % 2) // edge is odd (and negative)
-				{
-//					int vertex = orig_crossing[-edge];
-					int vertex = orig_crossing[edge];
-					if (code_table[TYPE][vertex] == generic_code_data::TYPE1)
-		    			edge = code_table[EVEN_ORIGINATING][vertex];
-					else
-//						edge = -code_table[ODD_TERMINATING][vertex];
-						edge = code_table[ODD_TERMINATING][vertex];
-
-if (braid_control::VOGEL_DEBUG)
-    debug << "calculate_turning_cycles:   takes us to crossing " << vertex << " next edge = " << edge << endl;
-
-				}
-				else // edge is even (and positive)
-				{
-					int vertex = term_crossing[edge];
-					if (code_table[TYPE][vertex] == generic_code_data::TYPE1)
-//						edge = -code_table[ODD_TERMINATING][vertex];
-						edge = code_table[ODD_TERMINATING][vertex];
-					else
-		    			edge = code_table[EVEN_ORIGINATING][vertex];
-
-if (braid_control::VOGEL_DEBUG)
-    debug << "calculate_turning_cycles:   takes us to crossing " << vertex << " next edge = " << edge << endl;
-				}
-
-    
-				if (edge == cycle[num_cycles][1])
-				{
-					complete = true;
-					cycle[num_cycles][0] = column-1;
-					num_cycles++;
-				}
-				else
-				{
-					cycle[num_cycles][column++] = edge;
-				}				
-			}
-			
-			if (!complete)
-			{
-				/* we've encounterd an infinte loop */
-if (braid_control::VOGEL_DEBUG)
-    debug << "calculate_turning_cycles: exceeded the maximum possible length of a turning cycle in a realizable code" << endl;
-				return false;
-			}
-		}
-	}	
-
-	/* record the number of left cycles */
-	num_left_cycles = num_cycles;
-		
-if (braid_control::VOGEL_DEBUG)
-{
-    debug << "calculate_turning_cycles: number of left turning cycles = " << num_left_cycles;
-	for (int i=0; i<num_left_cycles; i++)
-	{
-		debug << "\ncalculate_turning_cycles: cycle " << i << " length = " << cycle[i][0] << ": ";
-		for (int j=1; j<=cycle[i][0]; j++)
-			debug << cycle[i][j] << " ";
-	}
-	debug << endl;
-}
-		
-	/* Now look for right turning cycles */
-
-	for (int i=0; i<2*num_crossings; i++)
-	{
-
-if (braid_control::VOGEL_DEBUG)
-    debug << "calculate_turning_cycles: edge = " << i;
-
-		/* does edge i already appear in a right cycle ? */
-		bool found = false;
-		for (int j=num_left_cycles; j<num_cycles; j++)
-		{
-			for (int k=1; k<= cycle[j][0]; k++)
-			{
-//				if (abs(cycle[j][k]) == i)
-				if (cycle[j][k] == i)
-				{
-					
-if (braid_control::VOGEL_DEBUG)
-    debug << " found in right turning cycle " << j << endl;
-    
-    					found = true;
-					break;
-				}
-			}
-		}
-
-		if (!found)
-		{
-
-if (braid_control::VOGEL_DEBUG)
-    debug << " not found in current right turning cycles "<< endl;
-
-			/* check we've not exceeded the maximum number of turning cycles */
-			if (num_cycles == num_crossings+2)
-			{
-if (braid_control::VOGEL_DEBUG)
-    debug << "calculate_turning_cycles: exceeded the maximum possible number of turning cycles in a realizable code" << endl;
-				return false;
-			}
-			
-			/* start a new cycle */
-			int column = 1;
-			
-			/* we always traverse odd edges backwards */
-//			int edge = (i%2? -i: i);
-			int edge = i;
-			cycle [num_cycles][column++] = edge;
-			bool complete = false;
-
-			do
-			{
-				/* determine which vertex the current edge takes us to and 
-	   			the next edge we turn onto */
-				if (edge % 2) // edge is odd (and negative)
-				{
-//					int vertex = orig_crossing[-edge];
-					int vertex = orig_crossing[edge];
-					if (code_table[TYPE][vertex] == generic_code_data::TYPE1)
-//						edge = -code_table[ODD_TERMINATING][vertex];
-						edge = code_table[ODD_TERMINATING][vertex];
-					else
-		    			edge = code_table[EVEN_ORIGINATING][vertex];
-
-if (braid_control::VOGEL_DEBUG)
-    debug << "calculate_turning_cycles:   takes us to crossing " << vertex << " next edge = " << edge << endl;
-
-				}
-				else // edge is even (and positive)
-				{
-					int vertex = term_crossing[edge];
-					if (code_table[TYPE][vertex] == generic_code_data::TYPE1)
-		    			edge = code_table[EVEN_ORIGINATING][vertex];
-					else
-//						edge = -code_table[ODD_TERMINATING][vertex];
-						edge = code_table[ODD_TERMINATING][vertex];
-
-if (braid_control::VOGEL_DEBUG)
-    debug << "calculate_turning_cycles:   takes us to crossing " << vertex << " next edge = " << edge << endl;
-
-				}
-
-				if (edge == cycle[num_cycles][1])
-				{
-					complete = true;
-					cycle[num_cycles][0] = column-1;
-					num_cycles++;
-				}
-				else
-				{
-					cycle[num_cycles][column++] = edge;
-				}				
-			} while(!complete);			
-		}
-	}
-
-if (braid_control::VOGEL_DEBUG)
-{
-    debug << "calculate_turning_cycles: number of right turning cycles = " << num_cycles - num_left_cycles;
-	for (int i=num_left_cycles; i<num_cycles; i++)
-	{
-		debug << "\ncalculate_turning_cycles: cycle " << i << " length = " << cycle[i][0] << ": ";
-		for (int j=1; j<=cycle[i][0]; j++)
-			debug << cycle[i][j] << " "	;
-	}
-	debug << endl;
-}
-	return true;
-}
-
-/* The function vertex_span counts the number of vertices that can be reached from the 
-   initial crossing in the given generic code data.  This can be used to determine whether the
-   generic code data can be realized by a connected immersion.  Optionally, the exclude vector
-   may specify a number of edges to exclude from the search, this may be use to determine whether 
-   the complement of the excluded edges is connected.
-*/
-list<int> vertex_span (generic_code_data& code_data, int initial_crossing, vector<int>* exclude=0)
-{
-	matrix<int>& code_table = code_data.code_table;
-	int num_crossings = code_data.num_crossings;
-	list<int> vertex_list;
-	vertex_list.push_back(initial_crossing);
-	list<int>::iterator lptr = vertex_list.begin();
-	vector<int> crossing_flag(num_crossings,0);
-	crossing_flag[initial_crossing] = 1;
-	vector<int> edge_flag(2*num_crossings,0);
-	vector<int>& orig_crossing = code_data.orig_crossing;
-	vector<int>& term_crossing = code_data.term_crossing;
-	
-if (braid_control::VOGEL_DEBUG)
-{
-    debug << "vertex_span: checking code ";
-	write_peer_code (debug, code_data);
-	debug << "\nvertex_span: starting from crossing " << initial_crossing;
-}
-
-	if (exclude != 0 && exclude->size())
-	{
-if (braid_control::VOGEL_DEBUG)
-{
-    debug << " but excluding edges ";
-    for (unsigned int i=0; i< exclude->size(); i++)
-		debug << (*exclude)[i] << ' ';
-    debug << endl;
-}
-		for (unsigned int i=0; i< exclude->size(); i++)
-			edge_flag[(*exclude)[i]] = 1;
-	}
-	else
-	{
-if (braid_control::VOGEL_DEBUG)
-    debug << " with no excluded edges " << endl;
-	}
-	
-	while (lptr != vertex_list.end())
-	{
-		/* Look along any edges not already considered to see if we can extend the list of vertices.  
-		   We look back along terminating edges and forwards along originating edges.  If
-		   edge_flag[i] is 1 then we have either looked along this edge already or have excluded it 
-		   from the search; crossing_flag[i] indicates whether we already have crossing i on the list.
-	    */
-if (braid_control::VOGEL_DEBUG)
-    debug << "vertex_span:   from crossing " << *lptr << endl;
-
-		int edge = code_table[EVEN_TERMINATING][*lptr];
-		int crossing;
-		
-		if (edge_flag[edge] == 0)
-		{
-			crossing = orig_crossing[edge];
-
-if (braid_control::VOGEL_DEBUG)
-    debug << "vertex_span:     going back along " << edge << " takes us to " << crossing;
-
-		    if(crossing_flag[crossing] == 0)
-		    {
-				vertex_list.push_back(crossing);
-				crossing_flag[crossing] = 1;
-
-if (braid_control::VOGEL_DEBUG)
-    debug << ", adding " << crossing << " to vertex_list" << endl;
-			}
-			else
-			{
-if (braid_control::VOGEL_DEBUG)
-    debug << ", which is already on the list " << endl;
-			}
-			edge_flag[edge] = 1;
-		}
-		else
-		{
-if (braid_control::VOGEL_DEBUG)
-    debug << "vertex_span:     don't need to consider edge " << edge << endl;
-		}
-		
-		edge = code_table[ODD_TERMINATING][*lptr];
-		
-		if (edge_flag[edge] == 0)
-		{
-			crossing = orig_crossing[edge];
-
-if (braid_control::VOGEL_DEBUG)
-    debug << "vertex_span:     going back along " << code_table[ODD_TERMINATING][*lptr] << " takes us to " << crossing;
-
-		    if(crossing_flag[crossing] == 0)
-		    {
-				vertex_list.push_back(crossing);
-				crossing_flag[crossing] = 1;
-
-if (braid_control::VOGEL_DEBUG)
-    debug << ", adding " << crossing << " to vertex_list" << endl;
-			}
-			else
-			{
-if (braid_control::VOGEL_DEBUG)
-    debug << ", which is already on the list " << endl;
-			}
-			edge_flag[edge] = 1;
-		}
-		else
-		{
-if (braid_control::VOGEL_DEBUG)
-    debug << "vertex_span:     don't need to consider edge " << edge << endl;
-		}
-		
-		edge = code_table[EVEN_ORIGINATING][*lptr];
-
-		if (edge_flag[edge] == 0)
-		{
-			crossing = term_crossing[edge];
-
-if (braid_control::VOGEL_DEBUG)
-    debug << "vertex_span:     going forwards along " << code_table[EVEN_ORIGINATING][*lptr] << " takes us to " << crossing;
-
-		    if(crossing_flag[crossing] == 0)
-		    {
-				vertex_list.push_back(crossing);
-				crossing_flag[crossing] = 1;
-
-if (braid_control::VOGEL_DEBUG)
-    debug << ", adding " << crossing << " to vertex_list" << endl;
-			}
-			else
-			{
-if (braid_control::VOGEL_DEBUG)
-    debug << ", which is already on the list " << endl;
-			}
-			edge_flag[edge] = 1;
-		}
-		else
-		{
-if (braid_control::VOGEL_DEBUG)
-    debug << "vertex_span:     don't need to consider edge " << edge << endl;
-		}
-		
-		edge = code_table[ODD_ORIGINATING][*lptr];
-		if (edge_flag[edge] == 0)
-		{
-			crossing = term_crossing[edge];
-
-if (braid_control::VOGEL_DEBUG)
-    debug << "vertex_span:     going forwards along " << code_table[ODD_ORIGINATING][*lptr] << " takes us to " << crossing;
-
-		    if(crossing_flag[crossing] == 0)
-		    {
-				vertex_list.push_back(crossing);
-				crossing_flag[crossing] = 1;
-
-if (braid_control::VOGEL_DEBUG)
-    debug << ", adding " << crossing << " to vertex_list" << endl;
-			}
-			else
-			{
-if (braid_control::VOGEL_DEBUG)
-    debug << ", which is already on the list " << endl;
-			}
-			edge_flag[edge] = 1;
-		}
-		else
-		{
-if (braid_control::VOGEL_DEBUG)
-    debug << "vertex_span:     don't need to consider edge " << edge << endl;
-		}
-		
-		lptr++;
-	}
-	return vertex_list;
-}
-
-/* in the case of links it is possible that the code data we have been given is disconnected, as in 
-   [-3 -5 -1, -9 -11 7]/# # # # # #, therefore we first check that the code is connected, then check
-   the Euler characteristic.  In the process of this check we return a set of turning cycles to the call.
-*/
-bool realizable_code_data(generic_code_data& code_data, matrix<int>& cycle, int& num_left_cycles, int& num_cycles)
-{
-	int num_crossings = code_data.num_crossings;
-	int num_edges = 2* num_crossings;
-	
-	/* first check that the code is connected by calling vertex_span starting at crossing 0 
-	   and not excluding any edges.  If we cannot reach every crossing, the code cannot be
-	   realized by a connected immersion.
-	*/
-	int crossing_span = vertex_span(code_data,0).size();
-	if (crossing_span != num_crossings)
-	{		
-if (braid_control::VOGEL_DEBUG)
-{
-    debug << "realizable_code_data: vertex span is only " << crossing_span
-         << " crossings, code cannot be realized by a connected immersion" << endl;
-}   
-		return false;
-	}
-	else
-	{
-if (braid_control::VOGEL_DEBUG)
-    debug << "realizable_code_data: vertex span includes all the crossings, code can be realized by a connected immersion" << endl;
-	}
-	
-	/* now calculate the turning cycles, this includes additional checks on the realizable nature of the code */	
-	if (!calculate_turning_cycles(code_data, cycle, num_left_cycles, num_cycles))
-		return false;
-
-	/* next check each edge appears once in a left handed
-	   and once in a right handed cycle */
-	   
-if (braid_control::VOGEL_DEBUG)
-    debug << "realizable_code_data: check edges appear exactly once in left and right turning cycles" << endl;
-
-	bool realizable = true;
-	for (int i=0; i<num_edges; i++)
-	{
-if (braid_control::VOGEL_DEBUG)
-    debug << "realizable_code_data:   edge " << i;
-    
-		int count = 0;
-		for (int j=0; j<num_left_cycles; j++)
-		{
-			for (int k=1; k<= cycle[j][0]; k++)
-			{
-				if (abs(cycle[j][k]) == i)
-				{
-					if (++count == 2)
-					{
-if (braid_control::VOGEL_DEBUG)
-    debug << " appears twice in left turning cycle " << j << endl;
-						realizable = false;
-						break;
-					}
-				}
-			}
-			if (!realizable)
-				break;
-		}
-		
-		if (!count)
-		{
-if (braid_control::VOGEL_DEBUG)
-    debug << " does not appear at all in left turning cycles";
-			realizable = false;
-		}
-
-		if (!realizable)
-		{
-			break;
-		}
-		else
-		{
-if (braid_control::VOGEL_DEBUG)
-    debug << " appears exactly once in left turning cycles";
-		}
-
-		/* we're only still here if count = 1, so now check the right
-		   turning cycles */
-
-		count = 0;
-		for (int j=num_left_cycles; j<num_cycles; j++)
-		{
-			for (int k=1; k<= cycle[j][0]; k++)
-			{
-				if (abs(cycle[j][k]) == i)
-				{
-					if (++count == 2)
-					{
-if (braid_control::VOGEL_DEBUG)
-    debug << " but twice in right turning cycle " << j << endl;
-						realizable = false;
-						break;
-					}
-				}
-			}
-			if (!realizable)
-				break;
-		}
-		
-		if (!count)
-		{
-if (braid_control::VOGEL_DEBUG)
-    debug << " but not at all in right turning cycles";
-			realizable = false;
-		}
-
-		if (!realizable)
-		{
-			break;
-		}
-		else
-		{
-if (braid_control::VOGEL_DEBUG)
-    debug << " and in right turning cycles" << endl;
-		}
-	}
-
-	/* Now check that the number of cycles is equal to num_crossings+2 */
-	if (num_cycles != num_crossings+2)
-	{
-		realizable = false;
-
-if (braid_control::VOGEL_DEBUG)
-    debug << "realizable_code_data: number of cycles != num_crossings+2" << endl;
-	}
-	
-	if (realizable)
-	{
-if (braid_control::VOGEL_DEBUG)
-    debug << "realizable_code_data: code is able to be realized by a connected immersion" << endl;
-	}
-	else
-	{
-if (braid_control::VOGEL_DEBUG)
-    debug << "realizable_code_data: code cannot be realized by a connected immersion" << endl;
-	}
-	
-	return realizable;
 }
 

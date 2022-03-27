@@ -34,8 +34,7 @@ extern ifstream     input;
 #include <matrix.h>
 #include <braid.h>
 #include <gauss-orientation.h>
-
-void write_peer_code(ostream& s, const generic_code_data& code_data, bool zig_zags=false, bool labelled=true);
+#include <reidemeister.h>
 
 class bracket_variable
 {
@@ -144,15 +143,15 @@ void print_bracket_variable(const bracket_variable bv, ostream& os, string prefi
 
 
 vector<int> gauss_parity(generic_code_data& code_data);
-bool valid_knotoid_input(generic_code_data& code_data);
+//bool valid_knotoid_input(generic_code_data& code_data);
 int remove_virtual_Reidemeister_I(generic_code_data& code_data,vector<int>& component_flags);
-int remove_Reidemeister_II(generic_code_data& code_data,vector<int>& component_flags);
+//int remove_Reidemeister_II(generic_code_data& code_data,vector<int>& component_flags);
 matrix<int> create_incidence_matrix (gauss_orientation_data& gauss_data);
-void write_code_data(ostream& s, generic_code_data& code_data);
-void read_peer_code (generic_code_data& code_data, string input_string);
-void print_code_data(generic_code_data& code_data, ostream& s, string prefix);
+//void write_code_data(ostream& s, generic_code_data& code_data);
+//void read_peer_code (generic_code_data& code_data, string input_string);
+//void print_code_data(generic_code_data& code_data, ostream& s, string prefix);
 int remove_virtual_components(generic_code_data& code_data,vector<int>& component_flags);
-int amalgamate_zig_zag_counts(int a, int b);
+//int amalgamate_zig_zag_counts(int a, int b);
 generic_code_data partition_peer_code(generic_code_data& code_data, vector<int>& component_flags);
 
 /* The function bracket_polynomial evaluates various forms of bracket polynomial depending on the 
@@ -234,7 +233,7 @@ void bracket_polynomial(generic_code_data& code_data, int variant)
 	vector<int>& first_edge_on_component = code_data.first_edge_on_component;
 	vector<int>& num_component_edges = code_data.num_component_edges;
 	
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 {
 	debug << "bracket_polynomial: provided with code data: ";
 	write_code_data(debug, code_data);
@@ -285,7 +284,7 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 				output << '\n';
 		}
 
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 	debug << "bracket_polynomial: bracket_polynomial variant provided with a Gauss code rather than a peer code, doing nothing" << endl;
 
 		return;
@@ -305,7 +304,7 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 				output << '\n';
 		}
 
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 	debug << "bracket_polynomial: bracket_polynomial provided with multiple components, doing nothing" << endl;
 
 		return;
@@ -336,7 +335,7 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 			
 			vector<int>& shortcut_crossing = code_data.shortcut_crossing;
 			
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 {
 	debug << "bracket_polynomial: shortcut_crossings: ";
 	for (int i=0; i< num_crossings; i++)
@@ -347,13 +346,13 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 			for (int i=0; i< num_crossings; i++)
 				num_non_shortcut_crossings -= abs(shortcut_crossing[i]);
 
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 	debug << "bracket_polynomial: num_non_shortcut_crossings = " << num_non_shortcut_crossings << endl;
 	
 			if (num_non_shortcut_crossings == 0)
 			{
 
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "bracket_polynomial: no knotoid crossings, normalized bracket polynomial set to 1";
 
 				if (!braid_control::SILENT_OPERATION)
@@ -385,14 +384,14 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 					output << '\n';
 			}
 
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 	debug << "bracket_polynomial: invalid knotoid input" << endl;
 
 			return;
 		}
 	}
 	
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 	debug << "bracket_polynomial: pure_knotoid_code_data = " << pure_knotoid_code_data << endl;
 	
 	/* parity bracket variables, crossing_parity records the ODD or EVEN parity of non-virtual, 
@@ -415,7 +414,7 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 				num_odd_crossings++;
 		}
 		
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 {
 	debug << "bracket_polynomial: crossing_parity: ";
 	for (int i=0; i< num_crossings; i++)
@@ -479,7 +478,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 		}
 	}
 	
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 {
 	debug << "bracket_polynomial: non-shortcut crossing sign (positive = 1, negative = -1, virtual = 0, flat = 2, none = 9): ";
 	for (int i=0; i< num_crossings; i++)
@@ -507,7 +506,7 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 		}
 	}
 
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "bracket_polynomial: " << ((variant == PARITY_VARIANT || variant == PARITY_ARROW_VARIANT) && braid_control::EVEN_WRITHE? "even writhe = ": "(full) writhe = ") << writhe << endl;
 	
 	ostringstream oss;
@@ -533,7 +532,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 		for (int i=0; i<num_crossings; i++)
 			algebraic_crossing_number += shortcut_crossing[i];
 
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 {
 	debug << "bracket_polynomial: algebraic number of intersections of knotoid and shortcut = " 
 	      << algebraic_crossing_number << endl;
@@ -544,7 +543,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 
 	polynomial<int,bracket_variable> normalizing_factor(oss.str());
 	
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "bracket_polynomial: normalizing factor = " << normalizing_factor << endl;
 		
 	int head_semi_arc;
@@ -562,7 +561,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 		head_semi_arc = num_edges;  //head_semi_arc is used for loop control below so needs to be set correctly in all cases.
 	}
 
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 	debug << "bracket_polynomial: head_semi_arc = " << head_semi_arc << endl;
 
 	/* determine the number of classical non-shortcut crossings that we want to smooth and a mapping between the 
@@ -595,9 +594,9 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 		}
 	}
 	
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 	debug << "bracket_polynomial: num_classical_non_shortcut_crossings = " << num_classical_non_shortcut_crossings << endl;
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "bracket_polynomial: num_state_smoothed_crossings = " << num_state_smoothed_crossings << endl;
 
 	
@@ -631,7 +630,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 			   of the segment component with the shortcut.			   
 			*/
 	
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 {
 	debug << "bracket_polynomial: state ";
 	for (int i=0; i< num_state_smoothed_crossings; i++)
@@ -682,7 +681,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 				}
 			}
 	
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 {
 	debug << "bracket_polynomial: crossing_record (SEIFERT_SMOOTHED = 1, NON_SEIFERT_SMOOTHED = -1, VIRTUAL = 2, SHORTCUT_CROSSING = 3, ODD = 4)" << endl;
 	debug << "bracket_polynomial: crossing_record ";
@@ -712,14 +711,14 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 				else
 				{
 					/* shouldn't get here as valid_knotoid_input checks the first shortcut crossing cannot be virtual */
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 	debug << "bracket_polynomial: head " << 0 << " indicates first shortcut crosing is virtual" << endl;
 				}
 			
 				for (int i = semi_arc; i< code_data.num_component_edges[0]; i++)
 					component_flag[i] = -1;
 	
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 {
 	debug << "bracket_polynomial:   initial component_flag with shortcut edges: ";
 	for (int i=0; i< num_edges; i++)
@@ -801,10 +800,10 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 						num_unicursal_components++;
 						start = i;
 	
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 	debug << "bracket_polynomial: new component found starting at edge " << start << endl;
 
-if (variant == ARROW_VARIANT && braid_control::DEBUG >= braid_control::INTERMEDIATE)
+if (variant == ARROW_VARIANT && debug_control::DEBUG >= debug_control::INTERMEDIATE)
 	debug << "bracket_polynomial: arrow_factor currently " << arrow_factor << endl;
 	
 						break;
@@ -829,7 +828,7 @@ if (variant == ARROW_VARIANT && braid_control::DEBUG >= braid_control::INTERMEDI
 					do
 					{
 	
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 	debug << "bracket_polynomial:   edge " << edge;
 						
 						/* mark the flag with the current component number, counted from 1 (to aid debugging) */
@@ -847,7 +846,7 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 						}
 						component_index++;
 
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 	debug << ", next crossing = " << next_crossing << endl;
 													
 						/* Identify the next edge after this crossing. In the case of immersion or peer
@@ -874,7 +873,7 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 								odd_visit = (edge%2);
 						}
 						
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 {
 	debug << "bracket_polynomial:     edge " << edge << " is an " << (odd_visit? "odd" : "even") 
 		  << " visit to crossing " << next_crossing << " with crossing_record = " << crossing_record[next_crossing] << endl;
@@ -894,7 +893,7 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 								component = code_table[COMPONENT][(edge-1)/2];
 							else
 								component = code_table[COMPONENT][edge/2];
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 	debug << "bracket_polynomial:     virtual crossing, edge " << edge << " lies on component " << component <<  endl;
 
 							if (forwards)
@@ -903,7 +902,7 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 								edge = (edge + num_component_edges[component] - 1 - first_edge_on_component[component])%
 								num_component_edges[component] + first_edge_on_component[component];		   
 								
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 	debug << "bracket_polynomial:     virtual crossing, move onto edge " << edge << (forwards? " forwards" : " backwards") << endl;
 						}
 						else if ((variant == PARITY_VARIANT || variant == PARITY_ARROW_VARIANT) && crossing_parity[next_crossing] == gauss_orientation_data::parity::ODD)
@@ -918,7 +917,7 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 							else
 								component = code_table[COMPONENT][edge/2];
 								
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 	debug << "bracket_polynomial:     odd crossing, edge " << edge << " lies on component " << component <<  endl;
 
 							if (forwards)
@@ -927,7 +926,7 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 								edge = (edge + num_component_edges[component] - 1 - first_edge_on_component[component])%
 								num_component_edges[component] + first_edge_on_component[component];		   
 																
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 	debug << "bracket_polynomial:     odd crossing, move onto edge " << edge << (forwards? " forwards" : " backwards") << endl;	
 				
 							/* for the parity arrow polynomial variant, reset the last non-Seifert turn records 
@@ -937,7 +936,7 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 							odd_immersion_crossing[next_odd_crossing_term] = next_crossing;
 							next_odd_crossing_term++;														
 							
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 	debug << "bracket_polynomial:     next_odd_crossing_term updated to " << next_odd_crossing_term << endl;	
 						}
 						else if (crossing_record[next_crossing] == SEIFERT_SMOOTHED)
@@ -962,7 +961,7 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 
 							}
 
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 	debug << "bracket_polynomial:     Seifert smoothed, move onto edge " << edge << (forwards? " forwards" : " backwards") << endl;
 						}
 						else if (crossing_record[next_crossing] == NON_SEIFERT_SMOOTHED)
@@ -1003,7 +1002,7 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 								
 								forwards = true;
 							}
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 {
 	debug << "bracket_polynomial:     non-Seifert smoothed, move onto edge " << edge << (forwards? " forwards" : " backwards") << endl;
 	debug << "bracket_polynomial:     non-seifert_turn = " << (non_seifert_turn == generic_code_data::LEFT? "LEFT" : "RIGHT") << endl;
@@ -1034,7 +1033,7 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 									arrow_state_last_non_seifert_turn = non_seifert_turn;
 								}
 
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE) 
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE) 
 {
 	debug << "bracket_polynomial:     arrow_state_zig_zag_count = " << arrow_state_zig_zag_count << endl;
 	debug << "bracket_polynomial:     arrow_state_last_non_seifert_turn = ";
@@ -1084,7 +1083,7 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 									parity_arrow_last_non_seifert_turn = non_seifert_turn;
 								}
 
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE) 
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE) 
 {
 	debug << "bracket_polynomial:     parity_arrow_gauss_zig_zags[" << next_odd_crossing_term << "] = " << parity_arrow_gauss_zig_zags[next_odd_crossing_term] << endl;
 	debug << "bracket_polynomial:     parity_arrow_gauss_zig_zags: ";
@@ -1104,7 +1103,7 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 						}
 						else // shortcut crossing
 						{
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 	debug << "bracket_polynomial:     shortcut crossing" <<  endl;
 
 							/* In this case we must have pure_knotoid_code_data and we've arrived at a shortcut 
@@ -1146,25 +1145,25 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 								if (edge == head_semi_arc)  // for links head_semi_arc is set to num_edges, so we'll never reach here
 								{
 									component_traced = true;
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 	debug << "bracket_polynomial:     head semi-arc reached, stop tracing segment component" << endl;
 									break;
 								}
 								else if (start == 0)
 								{
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 	debug << "bracket_polynomial:     on segment component, evaluate contribution to algebraic_crossing_number" << endl;
 									if (odd_visit)
 									{	
 										if (code_table[TYPE][next_crossing] == generic_code_data::TYPE1)				
 										{
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 	debug << "bracket_polynomial:     segment crosses shortcut from the right" << endl;
 											algebraic_crossing_number += 1;
 										}
 										else									
 										{
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 	debug << "bracket_polynomial:     segment crosses shortcut from the left" << endl;
 											algebraic_crossing_number -= 1;
 										}
@@ -1173,13 +1172,13 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 									{
 										if (code_table[TYPE][next_crossing] == generic_code_data::TYPE1)				
 										{
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 	debug << "bracket_polynomial:     segment crosses shortcut from the left" << endl;
 											algebraic_crossing_number -= 1;
 										}
 										else									
 										{
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 	debug << "bracket_polynomial:     segment crosses shortcut from the right" << endl;
 											algebraic_crossing_number += 1;
 										}
@@ -1187,7 +1186,7 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 								}
 								else
 								{
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 	debug << "bracket_polynomial:     not on segment component, do nothing" << endl;
 								}
 							}	
@@ -1203,7 +1202,7 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 								component = code_table[COMPONENT][(edge-1)/2];
 							else
 								component = code_table[COMPONENT][edge/2];
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 	debug << "bracket_polynomial:     shortcut crossing, edge " << edge << " lies on component " << component <<  endl;
 
 							if (forwards)
@@ -1212,7 +1211,7 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 								edge = (edge + num_component_edges[component] - 1 - first_edge_on_component[component])%
 						num_component_edges[component] + first_edge_on_component[component];		   
 								
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 	debug << "bracket_polynomial:     move onto edge " << edge << (forwards? " forwards" : " backwards") << endl;
 						}
 				
@@ -1220,12 +1219,12 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 						{
 							unicursal_component[num_unicursal_components-1][0] = component_index-1;
 							component_traced = true;							
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 	debug << "bracket_polynomial:     finished tracing the component" << endl;
 						}
 						else
 						{
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 	debug << "bracket_polynomial:     edge = " << edge << " start = " << start << " continuing" << endl;
 						}
 					} while (!component_traced);
@@ -1242,7 +1241,7 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 						   first and the last non-Seifert turns having the same parity, since we have removed consecutive pairs of like turns
 						   and so are left with an even number of turns of alternating parity.
 						*/				
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE) 
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE) 
 	debug << "bracket_polynomial:     arrow_state_zig_zag_count = " << arrow_state_zig_zag_count << endl;
 //						if ((pure_knotoid_code_data || code_data.immersion == generic_code_data::character::LONG_KNOT || code_data.immersion == generic_code_data::character::KNOT_TYPE_KNOTOID) && start == 0)
 						if (code_data.immersion != generic_code_data::character::CLOSED && start == 0)
@@ -1297,7 +1296,7 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 								*/
 								knotoid_head_zig_zag_count = parity_arrow_gauss_zig_zags[next_odd_crossing_term];
 								
-if (braid_control::DEBUG >= braid_control::BASIC) 
+if (debug_control::DEBUG >= debug_control::BASIC) 
 	debug << "bracket_polynomial:     knotoid_head_zig_zag_count = " << knotoid_head_zig_zag_count << endl;
 							}
 							else
@@ -1305,17 +1304,17 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 								/* amalgamate the current zig-zag count for the next_odd_crossing_term with that for the first_odd_crossing_term,
 								   clear the zig-zag count for next_odd_crossing_term ready and update first_odd_crossing_term, for any subsequent component
 								*/
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE) 
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE) 
 	debug << "bracket_polynomial:   amalgamate parity arrow zig-zag counts " << next_odd_crossing_term << " and " << first_odd_crossing_term << endl;
 	
 								int amalgamated_first_zig_zag_count = amalgamate_zig_zag_counts(parity_arrow_gauss_zig_zags[next_odd_crossing_term],parity_arrow_gauss_zig_zags[first_odd_crossing_term]);
 								
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE) 
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE) 
 	debug << "bracket_polynomial:   amalgamated_first_zig_zag_count =  " << amalgamated_first_zig_zag_count << endl;
 										
 								parity_arrow_gauss_zig_zags[first_odd_crossing_term] = amalgamated_first_zig_zag_count;
 								
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE) 
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE) 
 	debug << "bracket_polynomial:   parity_arrow_gauss_zig_zags[" << first_odd_crossing_term << "] updated to " << parity_arrow_gauss_zig_zags[first_odd_crossing_term] << endl;						
 							}
 							
@@ -1356,14 +1355,14 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 								}
 							}
 							
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE) 
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE) 
 	debug << "bracket_polynomial:   no odd crossings in component, evaluate arrow_factor based on arrow_state_zig_zag_count = " << arrow_state_zig_zag_count << endl;						
 						}
 						
 						/* we have to reset the next_odd_crossing_term counter whether or not there was an odd crossing on the last component */
 						parity_arrow_gauss_zig_zags[next_odd_crossing_term] = 0;
 
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE) 
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE) 
 {
 	debug << "bracket_polynomial:   parity_arrow_gauss_zig_zags: ";
 	for (int i=0; i< 2*num_odd_crossings+1; i++)
@@ -1375,7 +1374,7 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 			} while (!components_complete);
 			
 	
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 {
 	debug << "bracket_polynomial: component_flag: ";
 	for (int i=0; i< num_edges; i++)
@@ -1428,7 +1427,7 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 						parity_arrow_state_zig_zags[0][odd_immersion_crossing[i]] = parity_arrow_gauss_zig_zags[i];
 					}
 				}
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 {
 	debug << "bracket_polynomial: parity_arrow_state_zig_zags (first visit row 1, second visit row 0):" << endl;
     print(parity_arrow_state_zig_zags, debug, 3, "bracket_polynomial:   ");
@@ -1470,7 +1469,7 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 				}
 			}
 			
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 	debug << "bracket_polynomial: sigma = " << sigma << endl;
 
 			int num_non_graphical_u_cpts = 0;
@@ -1480,7 +1479,7 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 			
 			if (variant == PARITY_VARIANT || variant == PARITY_ARROW_VARIANT)
 			{
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 {
 	for (int i=0; i< num_unicursal_components; i++)
 	{
@@ -1526,7 +1525,7 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 						{							
 							num_unicursal_component_g_crossings++;
 
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 {
 	debug << "bracket_polynomial: edge " << edge << ", crossing " << crossing 
 	      << " is ODD, num_unicursal_component_g_crossings = " << num_unicursal_component_g_crossings << endl;
@@ -1555,7 +1554,7 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 									break;
 							}
 							
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 	debug << "bracket_polynomial:   peer edge to " << edge << " is " << peer << ", peer_unicursal_component = " << peer_unicursal_component << endl;
 							
 							if (unicursal_cpt_to_g_component_map[i] == -1)
@@ -1571,14 +1570,14 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 									unicursal_cpt_to_g_component_map[i] = unicursal_cpt_to_g_component_map[peer_unicursal_component];
 								}
 
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 	debug << "bracket_polynomial:   unicursal component " << i << " is part of graphical component " << unicursal_cpt_to_g_component_map[i] << endl;
 							}
 							
 							if (unicursal_cpt_to_g_component_map[peer_unicursal_component] == -1)
 							{
 								unicursal_cpt_to_g_component_map[peer_unicursal_component] = unicursal_cpt_to_g_component_map[i];
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 	debug << "bracket_polynomial:   unicursal component " << peer_unicursal_component << " is part of graphical component " << unicursal_cpt_to_g_component_map[peer_unicursal_component] << endl;
 							}
 							
@@ -1587,7 +1586,7 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 						{
 							num_unicursal_component_g_crossings++;
 							
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 {
 	debug << "bracket_polynomial: edge " << edge << ", crossing " << crossing 
 	      << " is VIRTUAL, num_unicursal_component_g_crossings = " << num_unicursal_component_g_crossings << endl;
@@ -1597,7 +1596,7 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 						{
 							num_unicursal_component_g_crossings++;
 							
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 {
 	debug << "bracket_polynomial: edge " << edge << ", crossing " << crossing 
 	      << " is a shortcut crossing, num_unicursal_component_g_crossings = " << num_unicursal_component_g_crossings << endl;
@@ -1605,7 +1604,7 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 						}
 						else
 						{
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 {
 	debug << "bracket_polynomial: edge " << edge << ", crossing " << crossing 
 	      << " is an even crossing, num_unicursal_component_g_crossings = " << num_unicursal_component_g_crossings << endl;
@@ -1631,7 +1630,7 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 				for (int i=0; i< num_graphical_components; i++)
 					num_non_graphical_u_cpts -= graphical_cpt_u_component_count[i];
 				
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 {
 	debug << "bracket_polynomial: num_unicursal_cpt_g_crossings: ";
 	for (int i=0; i< num_unicursal_components; i++)
@@ -1696,7 +1695,7 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 					}
 				}
 					
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 {
 	debug << "bracket_polynomial: num_graphical_cpt_crossings: ";
 	for (int i=0; i< num_graphical_components; i++)
@@ -1718,7 +1717,7 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 				*/
 				for (int i=0; i< num_graphical_components; i++)
 				{
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 	debug << "bracket_polynomial: graphical component " << i << endl;
 	
 					/* We start by writing the terminating edges into a component_code_table matrix indexed by the order in which we 
@@ -1729,7 +1728,7 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 					*/
 					map<int, int> marker_crossing_map;
 					
-if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
+if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
 	debug << "bracket_polynomial:   calculating marker_crossing_map" << endl;
 					int index=0;					
 					for (int j=0; j< num_unicursal_components; j++)
@@ -1737,7 +1736,7 @@ if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
 						if (unicursal_cpt_to_g_component_map[j] != i)
 							continue;
 							
-if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
+if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
 	debug << "bracket_polynomial:     unicursal component " << j << endl;
 
 							
@@ -1745,7 +1744,7 @@ if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
 						{
 							if (immersion_crossing_map[j][k] >= 0 && marker_crossing_map.find(immersion_crossing_map[j][k]) == marker_crossing_map.end())
 							{
-if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
+if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
 	debug << "bracket_polynomial:       add crossing " << immersion_crossing_map[j][k] << " with index " << index << endl;
 								marker_crossing_map[immersion_crossing_map[j][k]] = index;
 								index++;
@@ -1753,7 +1752,7 @@ if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
 						}						
 					}
 					
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 {
 	debug << "bracket_polynomial:   marker_crossing_map: ";
 	map<int, int>::iterator mptr = marker_crossing_map.begin();
@@ -1787,7 +1786,7 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 					{
 						if (unicursal_cpt_to_g_component_map[j] != i)
 						{
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 	debug << "bracket_polynomial:   unicursal component " << j << " not part of grahical component " << i << endl;
 							continue;
 						}
@@ -1798,7 +1797,7 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 						if (j==0)  // we have not continued, so unicursal component zero is part of this graphical component
 							component_includes_unicursal_cpt_zero = true;
 							
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 	debug << "bracket_polynomial:   unicursal component " << j << " forms component " << component << " of grahical component " << i << endl;
 
 						/* write the unicursal state component's graphical crossings into the component_code_table */
@@ -1821,7 +1820,7 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 									if (component_head_semi_arc == -1) // not set yet
 										component_head_semi_arc = edge;
 										
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 {
 	debug << "bracket_polynomial:     knotoid: shortcut edge " << abs(unicursal_component[j][k]) << " is component_head_semi_arc = " 
 	      << component_head_semi_arc << endl;
@@ -1834,7 +1833,7 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 								int graphical_cpt_crossing = marker_crossing_map[immersion_crossing_map[j][k]];
 								if (component_code_table[ODD_TERMINATING][graphical_cpt_crossing] < 0)
 								{
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 	debug << "bracket_polynomial:     first visit to graphical component crossing " << graphical_cpt_crossing << " on component edge " << edge << endl;
 	
 									component_code_table[ODD_TERMINATING][graphical_cpt_crossing] = edge++;
@@ -1844,7 +1843,7 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 								}
 								else
 								{
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 	debug << "bracket_polynomial:     second visit to graphical component crossing " << graphical_cpt_crossing << " on component edge " << edge << endl;
 	
 									component_code_table[EVEN_TERMINATING][graphical_cpt_crossing] = edge++;
@@ -1856,7 +1855,7 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 						}						
 					}
 
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 {	
 	debug << "bracket_polynomial:   first_edge_on_g_component: ";
 	for (int l=0; l < graphical_cpt_u_component_count[i]; l++)
@@ -1879,7 +1878,7 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 					   mis-aligned, we cycle the edge labels on the peer component, and push that component number onto the back of the 
 					   component tree.  In this manner we conduct a depth-first search of the component tree.
 					*/
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 	debug << "bracket_polynomial:   aligning component numbering"<< endl;
 					vector<int> aligned_labels(graphical_cpt_u_component_count[i]);
 					list<int> component_tree;
@@ -1896,7 +1895,7 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 						else
 							last = first_edge_on_g_component[component+1]-1;
 							
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 	debug << "bracket_polynomial:     component " << component << ", first edge = " << first << ", last edge = " << last << endl;
 	
 						for (int edge=first; edge<=last; edge++)
@@ -1927,12 +1926,12 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 								else
 									break;
 							}
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 	debug << "bracket_polynomial:       edge " << edge << ", peer = " << peer << " lies on component " << peer_component << endl;
 
 							if (edge%2 == peer%2)
 							{
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 	debug << "bracket_polynomial:       graphical component crossing " << crossing << " has incompatible terminating edge labels " << endl;
 	
 								int peer_first = first_edge_on_g_component[peer_component];
@@ -1944,7 +1943,7 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 								
 								int num_peer_component_edges = peer_last-peer_first+1;
 								
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 	debug << "bracket_polynomial:       cycle the " << num_peer_component_edges << " edge labels on peer_component " << peer_component << ", peer_first = " << peer_first << " peer_last = " << peer_last << endl;
 	
 								for (int k=0; k< num_cpt_crossings; k++)
@@ -1959,7 +1958,7 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 										component_code_table[EVEN_TERMINATING][k] = (component_code_table[EVEN_TERMINATING][k]-peer_first+1)%num_peer_component_edges+peer_first;
 									}
 								}
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 {	
 	debug << "bracket_polynomial:   cycled first visit to graphical component crossings: ";
 	for (int l=0; l < num_cpt_crossings; l++)
@@ -1984,7 +1983,7 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 					}
 
 					
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 {
 	debug << "bracket_polynomial:   first visit to graphical component crossings: ";
 	for (int l=0; l < num_cpt_crossings; l++)
@@ -2009,7 +2008,7 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 						/* identify the marker crossing in immersion_crossing_map for graphical component crossing j */
 						int marker = find_value(marker_crossing_map,j)->first;
 							
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 	debug << "bracket_polynomial:     graphical component crossing " << j << " immersion crossing marker = " << marker << endl;
 
 						/* isolate the graphical component peers at the odd (first) and even (second) visits and 
@@ -2020,7 +2019,7 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 						int odd_c_zig_zag_count = initial_component_zig_zag_count[1][j];  
 						int even_c_zig_zag_count = initial_component_zig_zag_count[0][j];
 
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 {
 	debug << "bracket_polynomial:     found odd_c_peer = " << odd_c_peer << " even_c_peer = " << even_c_peer << endl;
 	debug << "bracket_polynomial:     odd_c_zig_zag_count = " << odd_c_zig_zag_count << " even_c_zig_zag_count = " << even_c_zig_zag_count << endl;
@@ -2036,29 +2035,29 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 						int odd_i_peer;  
 						int even_i_peer;
 							
-//if (braid_control::DEBUG >= braid_control::BASIC)
+//if (debug_control::DEBUG >= debug_control::BASIC)
 //	debug << "bracket_polynomial:       look for marker " << marker << endl;
 							
 						for (int l=0; l < num_unicursal_components; l++)
 						{
-//if (braid_control::DEBUG >= braid_control::BASIC)
+//if (debug_control::DEBUG >= debug_control::BASIC)
 //	debug << "bracket_polynomial:         unicursal component " << l << endl;
 							for (int m=1; m <= unicursal_component[l][0]; m++)
 							{
-//if (braid_control::DEBUG >= braid_control::BASIC)
+//if (debug_control::DEBUG >= debug_control::BASIC)
 //	debug << "bracket_polynomial:           crossing " << immersion_crossing_map[l][m];
 								if (immersion_crossing_map[l][m] == marker)
 								{
 									if (!odd_assigned)
 									{
-//if (braid_control::DEBUG >= braid_control::BASIC)
+//if (debug_control::DEBUG >= debug_control::BASIC)
 //	debug << " assigning odd ocurrence" << endl;
 										odd_i_peer = unicursal_component[l][m];
 										odd_assigned = true;
 									}
 									else
 									{
-//if (braid_control::DEBUG >= braid_control::BASIC)
+//if (debug_control::DEBUG >= debug_control::BASIC)
 //	debug << " assigning even ocurrence" << endl;
 										even_i_peer = unicursal_component[l][m];
 										done = true;
@@ -2067,7 +2066,7 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 								}
 								else
 								{
-//if (braid_control::DEBUG >= braid_control::BASIC)
+//if (debug_control::DEBUG >= debug_control::BASIC)
 //	debug << " no match" << endl;
 								}
 							}
@@ -2177,7 +2176,7 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 								component_code_table[TYPE][even_c_peer/2] = generic_code_data::TYPE2;
 						}
 						
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 {
 	debug << "bracket_polynomial:       odd_c_peer = " << odd_c_peer << ", even_c_peer = " << even_c_peer 
 	      << ", odd_i_peer = " << odd_i_peer << ", even_i_peer = " << even_i_peer << endl;
@@ -2188,7 +2187,7 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 }							
 					}
 				
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 	debug << "bracket_polynomial:   write LABEL: " << endl;				
 	
 					/* now we have the components assigned, we can set the label*/
@@ -2201,7 +2200,7 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 						if (even_c_peer%2)
 							swap(odd_c_peer,even_c_peer);
 							
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 	debug << "bracket_polynomial:     graphical component crossing " << even_c_peer/2 << " immersion crossing marker = " << marker << endl;
 						if (code_table[LABEL][marker] == generic_code_data::VIRTUAL)
 						{
@@ -2220,7 +2219,7 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 						{
 							component_code_table[LABEL][even_c_peer/2] = generic_code_data::FLAT;
 						}
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 {
 	debug << "bracket_polynomial:       odd_c_peer = " << odd_c_peer << ", even_c_peer = " << even_c_peer << endl;
 	debug << "bracket_polynomial:       LABEL = " << component_code_table[LABEL][even_c_peer/2] << endl;
@@ -2235,7 +2234,7 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 					component_peer_code.code_table = component_code_table;
 
 					
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 {
 	debug << "bracket_polynomial:   graphical component " << i << " initial code_table" << endl;
     print(component_code_table, debug, 4, "bracket_polynomial:   ");
@@ -2270,13 +2269,13 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 						{
 							component_peer_code.immersion = generic_code_data::character::KNOTOID;
 							
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 	debug << "bracket_polynomial:   knotoid: graphical component 0 is a knot-type knotoid not a pure knotoid" << endl;
 						}
 						else
 						{
 							component_peer_code.immersion = code_data.immersion; // needed for knot-type knotoids and long knot
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 	debug << "bracket_polynomial:   knotoid: graphical component 0 has the same immersion character as original code data" << endl;
 						}
 					}
@@ -2289,14 +2288,14 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 						if (knotoid_head_zig_zag_count != 0)
 						{
 							component_peer_code.head_zig_zag_count = knotoid_head_zig_zag_count;
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 	debug << "bracket_polynomial:   set component_peer_code.head_zig_zag_count = " << component_peer_code.head_zig_zag_count << endl;
 							
 							if (component_peer_code.immersion == generic_code_data::character::PURE_KNOTOID)
 							{
 								component_zig_zag_count[(component_head_semi_arc %2?1:0)][component_peer_code.head] = knotoid_head_zig_zag_count;
 
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 {
 	debug << "bracket_polynomial:   set " << (component_head_semi_arc %2?"odd":"even") << " terminating zig-zag count for component_head_semi_arc "
           << component_head_semi_arc << " at crossing " << component_peer_code.head << " to " << knotoid_head_zig_zag_count << endl;
@@ -2320,7 +2319,7 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 						}					
 					}
 					
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 {
 	debug << "bracket_polynomial:   graphical component " << i << " component_code_data" << endl;
     print_code_data(component_peer_code, debug, "bracket_polynomial:   ");
@@ -2344,7 +2343,7 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 							unicursal_component_flags[j] = 0;
 					}
 
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 {
 	debug << "bracket_polynomial:   initial unicursal_component_flags: ";
 	for (int j=0; j< num_unicursal_components; j++)
@@ -2353,7 +2352,7 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 }											
 					num_non_graphical_u_cpts += remove_virtual_Reidemeister_I(component_peer_code, unicursal_component_flags);
 
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 {
 	debug << "bracket_polynomial:   removing virtual Reidemeister I configurations updates num_non_graphical_u_cpts to " << num_non_graphical_u_cpts << endl;
 	debug << "bracket_polynomial:   unicursal_component_flags: ";
@@ -2366,7 +2365,7 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 					{
 						num_non_graphical_u_cpts += remove_Reidemeister_II(component_peer_code, unicursal_component_flags);
 						
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 {
 	debug << "bracket_polynomial:   removing Reidemeister II configurations updates num_non_graphical_u_cpts to " << num_non_graphical_u_cpts << endl;
 	debug << "bracket_polynomial:   unicursal_component_flags: ";
@@ -2380,7 +2379,7 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 					{
 						num_non_graphical_u_cpts +=  remove_virtual_components(component_peer_code, unicursal_component_flags);
 						
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 {
 	debug << "bracket_polynomial:   removing floating virtual components updates num_non_graphical_u_cpts to " << num_non_graphical_u_cpts << endl;
 	debug << "bracket_polynomial:   unicursal_component_flags: ";
@@ -2390,7 +2389,7 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 }						
 					}
 
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 {
 	debug << "bracket_polynomial:   final unicursal_component_flags: ";
 	for (int j=0; j< num_unicursal_components; j++)
@@ -2412,7 +2411,7 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 								/* the jth unicursal component originally belonged to the ith graphical component but has been removed */								
 								int zig_zag_count = unicursal_component_zig_zag_count[j];
 								
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 	debug << "bracket_polynomial:   removed component " << j << ", zig-zag count = " << zig_zag_count << endl;
 	
 								if (component_peer_code.immersion != generic_code_data::character::CLOSED && j == 0)
@@ -2442,14 +2441,14 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 									}
 								}		
 		
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 	debug << "bracket_polynomial:   arrow_factor updated to " << arrow_factor << endl;
 								
 							}
 						}
 					}
 					
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 	debug << "bracket_polynomial:   num_zig_zag_components updated to " << num_zig_zag_components << endl;
 	
 					if (component_peer_code.num_crossings > 0)
@@ -2473,7 +2472,7 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 							vector<int> partition_component_flags = unicursal_component_flags;
 							generic_code_data subsequent_code_data = partition_peer_code(component_peer_code,partition_component_flags);
 								
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 {
 	debug << "bracket_polynomial: create bracket_variable from component_peer_code ";
 	write_peer_code(debug,component_peer_code);
@@ -2491,7 +2490,7 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 								/* clear the component_peer_code zig-zag counts and head_zig_zag_count and add the relaxed
 								   unicursal component variables to parity_factor
 								*/
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 {
 	debug << "bracket_polynomial:   evaluating relaxed parity arrow polynomial: unicursal_component_zig_zag_count: ";
 	for (int i=0; i< num_unicursal_components; i++)
@@ -2507,7 +2506,7 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 									{
 										int zig_zag_count = unicursal_component_zig_zag_count[j];
 								
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 	debug << "bracket_polynomial:    unicursal component " << j << " is part of component_peer_code, zig-zag count = " << zig_zag_count << endl;
 	
 										if (component_peer_code.immersion != generic_code_data::character::CLOSED && j == 0)
@@ -2537,7 +2536,7 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 											relaxed_parity_factor *= polynomial<int,bracket_variable>(string(1,z));
 										}		
 				
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 	debug << "bracket_polynomial:    relaxed_parity_factor updated to " << relaxed_parity_factor << endl;
 								
 									}
@@ -2547,13 +2546,13 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 							/* add the reduced graphical component as a mapped polynomial variable to the parity_factor for this state */
 							bracket_variable component_graph(component_peer_code);
 													
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 {
 	debug << "bracket_polynomial:   component_graph " << endl;
 	print_bracket_variable(component_graph,debug,"bracket_polynomial:     ");	
 }
 
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 {
 	debug << "bracket_polynomial:     component_graph code_data" << endl;
 	print_code_data(component_graph.code_data,debug,"bracket_polynomial:       ");	
@@ -2562,12 +2561,12 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 							polynomial<int,bracket_variable> component_poly("a");
 							component_poly.set_varmap('a',component_graph);
 														
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 	debug << "bracket_polynomial:   component_poly " << component_poly << endl;
 							
 							parity_factor *= component_poly;
 
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 	debug << "bracket_polynomial:   parity_factor updated to " << parity_factor <<endl;
 								
 							if (subsequent_code_data.num_crossings != 0)
@@ -2583,7 +2582,7 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 									if (partition_component_flags[j] == 1)
 										unicursal_component_flags[j] = 0;
 								}
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 {
 	debug << "bracket_polynomial:   more connected irreducible graphical components to consider, component_peer_code set to ";
 	write_peer_code(debug,component_peer_code);
@@ -2614,7 +2613,7 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 			polynomial<int,bracket_variable> term(oss.str());			
 			
 			
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "bracket_polynomial:   term initially set to " << term << endl;
 						
 			if (variant == PARITY_VARIANT || variant == PARITY_ARROW_VARIANT)
@@ -2624,7 +2623,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 				if (variant == PARITY_ARROW_VARIANT && !braid_control::ZIG_ZAG_DELTA) // the default
 					num_delta_terms -= num_zig_zag_components;
 					
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "bracket_polynomial:   num_delta_terms = " << num_delta_terms << endl;
 				
 				for (int i=0; i< num_delta_terms; i++)
@@ -2634,9 +2633,9 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 					else
 						term *= polynomial<int,bracket_variable>("D");	
 				}
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "bracket_polynomial:   term = " << term << endl;
-if (braid_control::DEBUG >= braid_control::BASIC)
+if (debug_control::DEBUG >= debug_control::BASIC)
 {
 	debug << "bracket_polynomial:   num_non_graphical_u_cpts = " << num_non_graphical_u_cpts << endl;
 	debug << "bracket_polynomial:   num_virtual_components = " << num_virtual_components << endl;
@@ -2655,7 +2654,7 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 				if (variant == ARROW_VARIANT && !braid_control::ZIG_ZAG_DELTA) // the default
 					num_delta_terms -= num_zig_zag_components-1;
 					
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "bracket_polynomial:   num_delta_terms = " << num_delta_terms << endl;
 				
 				for (int i=0; i< num_delta_terms; i++)
@@ -2665,18 +2664,18 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 					else
 						term *= polynomial<int, bracket_variable>("D");	
 				}
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "bracket_polynomial:   term = " << term << endl;
 			}
 	
 			if (variant == ARROW_VARIANT)
 			{
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "bracket_polynomial:   term before arrow factor = " << term;
 	
 				term *= arrow_factor;			
 
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 {
 	bool map_variables = polynomial_control::SUBSTITUTE_MAPPED_VARIABLES;
 	polynomial_control::SUBSTITUTE_MAPPED_VARIABLES = true;			
@@ -2687,7 +2686,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 			}
 			else if (variant == PARITY_VARIANT || variant == PARITY_ARROW_VARIANT)
 			{
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "bracket_polynomial:   term before arrow_factor and parity_factor = " << term << endl;
 				for (int i=0; i< arrow_factor.numvars(); i++)
 				{
@@ -2727,7 +2726,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 						relaxed_parity_factor.set_varmap(ch,bv);
 					}
 				}
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 {
 	bool map_variables = polynomial_control::SUBSTITUTE_MAPPED_VARIABLES;
 	polynomial_control::SUBSTITUTE_MAPPED_VARIABLES = true;			
@@ -2738,7 +2737,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 				
 				term *= relaxed_parity_factor; // == 1 unless we're doing the relaxed version of PARITY_ARROW
 
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 {
 	bool map_variables = polynomial_control::SUBSTITUTE_MAPPED_VARIABLES;
 	polynomial_control::SUBSTITUTE_MAPPED_VARIABLES = false;			
@@ -2749,7 +2748,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 
 			bracket_poly += term;
 			
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 {
 	debug << "bracket_polynomial:   updated bracket_poly = ";
 	bool map_variables = polynomial_control::SUBSTITUTE_MAPPED_VARIABLES;
@@ -2805,7 +2804,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 			
 		} while (!finished);
 		
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 {
 	debug << "bracket_polynomial: bracket_poly  before normalizing = " ;
 	bool map_variables = polynomial_control::SUBSTITUTE_MAPPED_VARIABLES;
@@ -2818,7 +2817,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 	}
 	else
 	{		
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 	debug << "bracket_polynomial:  no classical non-shortcut crossings in code data to smooth, setting bracket_poly to 1" << endl;
 		
 		bracket_poly = polynomial<int,bracket_variable>(1);
@@ -2827,7 +2826,7 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 	if (braid_control::JONES_POLYNOMIAL)
 	{
 
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 	debug << "bracket_polynomial:  substituting A = t^{-1/4} in " << bracket_poly << endl;
 
 		ostringstream oss;
@@ -2854,7 +2853,7 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 						jss << "^-1/4";
 				}
 				
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 	debug << "bracket_polynomial:  incremented p to " << p << " kstring[p] = " << kstring[p] << endl;
 			}
 			else if (kstring[p] == '^')
@@ -2891,7 +2890,7 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 				while (isdigit(kstring[p]))
 					p++;
 
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 	debug << "bracket_polynomial:  idntified exp = " << exp << ", incremented p to " << p << " kstring[p] = " << kstring[p] << endl;
 
 			}
@@ -2900,14 +2899,14 @@ if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
 				jss << kstring[p];
 				p++;
 
-if (braid_control::DEBUG >= braid_control::INTERMEDIATE)
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 	debug << "bracket_polynomial:  incremented p to " << p << " kstring[p] = " << kstring[p] << endl;
 			}
 
 		}
 
 
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "bracket_polynomial: Jones polynomial = " << jss.str() << endl;
 
 		if (!braid_control::SILENT_OPERATION)
@@ -2946,7 +2945,7 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 			}
 		}
 
-if (braid_control::DEBUG >= braid_control::SUMMARY)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 {
 	if (variant == PARITY_VARIANT || variant == PARITY_ARROW_VARIANT)
 	{
@@ -3029,82 +3028,6 @@ if (braid_control::DEBUG >= braid_control::SUMMARY)
 	}	
 }
 
-int amalgamate_zig_zag_counts(int a, int b)
-{
-	if (a == 0)
-		return b;
-	
-	if (b == 0)
-		return a;
-		
-	int result;
-	int a_first_parity;
-	int b_first_parity;
-	int a_last_parity;
-	int b_last_parity;
-	
-	if (a<0)
-	{ 
-		a_first_parity = generic_code_data::label::LEFT;
-		a = abs(a);
-		a_last_parity = (a%2 == 1? generic_code_data::label::LEFT : generic_code_data::label::RIGHT);
-	}
-	else
-	{
-		a_first_parity = generic_code_data::label::RIGHT;
-		a_last_parity = (a%2 == 1? generic_code_data::label::RIGHT : generic_code_data::label::LEFT);
-	}
-
-	if (b<0)
-	{ 
-		b_first_parity = generic_code_data::label::LEFT;
-		b = abs(b);
-		b_last_parity = (b%2 == 1? generic_code_data::label::LEFT : generic_code_data::label::RIGHT);
-	}
-	else
-	{
-		b_first_parity = generic_code_data::label::RIGHT;
-		b_last_parity = (b%2 == 1? generic_code_data::label::RIGHT : generic_code_data::label::LEFT);
-	}
-
-//cout << "a_first_parity = " << (a_first_parity == generic_code_data::label::LEFT? "LEFT":"RIGHT") << endl;
-//cout << "a_last_parity = " << (a_last_parity == generic_code_data::label::LEFT? "LEFT":"RIGHT") << endl;
-//cout << "b_first_parity = " << (b_first_parity == generic_code_data::label::LEFT? "LEFT":"RIGHT") << endl;
-//cout << "b_last_parity = " << (b_last_parity == generic_code_data::label::LEFT? "LEFT":"RIGHT") << endl;
-
-	if (a_last_parity == b_first_parity)
-	{
-		result = a-b;
-//cout << "cancelling parity, difference = " << result << endl;
-		if (result < 0)
-		{
-			if ((result % 2 == 0 && b_last_parity == generic_code_data::label::LEFT) ||
-			    (result % 2 != 0 && b_last_parity == generic_code_data::label::RIGHT))
-			{
-//cout << "reverse negative result, result%2=" << result%2 << endl;
-				result *=-1; // working backwards, so first parity is now right
-			}
-		}
-		else
-		{
-			if (a_first_parity == generic_code_data::label::LEFT)
-			{
-				result *=-1;
-//cout << "reverse positive result" << endl;
-			}
-		}
-	}
-	else
-	{
-		result = a+b;
-//cout << "additive parity, sum = " << result << endl;
-		if (a_first_parity == generic_code_data::label::LEFT)
-			result *=-1;
-	}
-	
-	return result;
-}
-
 /* add_zig_zag_polynomial_factor takes a vector indicating the unicursal components removed by remove_virtual_Reidemeister_I, remove_Reidemeister_II or
    remove_virtual_component and checks zig_zag_counts to see if there are any irreducible cusps associated with those components.  If there
    are, it updates the polynomial "factor" with additional multiplicative terms related to those components and returns the number of components
@@ -3121,7 +3044,7 @@ int add_zig_zag_polynomial_factor(polynomial<int,bracket_variable>& factor, bool
 		int component = removed_components[i];
 		int zig_zag_count = zig_zag_counts[component];
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "add_zig_zag_polynomial_factor: removed component " << component << ", zig-zag count = " << zig_zag_count << endl;
 	
 		if (!closed_immersion && component == 0)
@@ -3152,7 +3075,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 			}
 		}		
 		
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "add_zig_zag_polynomial_factor: factor updated to " << factor << endl;
 	
 	}

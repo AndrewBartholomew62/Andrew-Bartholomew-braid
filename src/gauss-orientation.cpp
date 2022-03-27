@@ -1,12 +1,5 @@
 /************************************************************************
 
-This version of gauss-orientation.cpp is intended for the braid programme.  It differs from that used by the
-vlist programme in that it does not include the functions
-
-gauss_orientation_data::gauss_orientation_data (k_dets& k)
-
-and it does includes braid.h rather than vlist.h.  
-
 Gauss orientation data records the orientation of non-virtual crossings in a diagram in the manner used
 used by Gauss codes of doodles or flat knots or links (e.g "L1 L2 R1 R2 L3 L4 R3 R4 / # # # #").  The Gauss 
 orientation data of a knotoid is determined by ignoring shortcut crossings as well as virtual crossings.
@@ -42,6 +35,7 @@ using namespace std;
 #include <iomanip>
 #include <algorithm>
 
+
 /********************* External variables ************************/
 extern ofstream     debug;
 
@@ -50,10 +44,9 @@ extern ofstream     debug;
 #include <quaternion-scalar.h>
 #include <polynomial.h>
 #include <matrix.h>
-#include <braid.h>
+#include <generic-code.h>
+#include <debug-control.h>
 #include <gauss-orientation.h>
-
-void print_code_data(generic_code_data& code_data, ostream& s, string prefix);
 
 bool operator < (const matrix<int>& a, const matrix<int>& b)
 {
@@ -79,10 +72,10 @@ bool operator < (const matrix<int>& a, const matrix<int>& b)
 gauss_orientation_data::gauss_orientation_data (generic_code_data& code_data, bool extended)
 {
 	
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "gauss_orientation_data::constructor(generic_code_data): code_data: " << endl;
-	print_code_data(code_data,debug,"gauss_orientation_data::constructor(generic_code_data): ");
+	print_code_data(code_data,debug,"gauss_orientation_data::constructor(generic_code_data):   ");
 }
 	vector<int>& term_crossing = code_data.term_crossing;
 
@@ -105,6 +98,8 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 			immersion_crossing[i] = i;
 
 		orientation_matrix = matrix<int>(2,num_terms);
+		classical_gauss_data = vector<int>(num_terms);
+		classical_crossing_sign = vector<int>(code_data.num_crossings);
 		
 		matrix<int>& code_table = code_data.code_table;
 
@@ -113,7 +108,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 		for (int i=0; i <  num_components; i++)
 		{
 			int start = code_data.first_edge_on_component[i];
-if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "gauss_orientation_data::constructor(generic_code_data): start_of_component = " << start << endl;
 
 			int edge=start;
@@ -121,29 +116,35 @@ if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
 			/*	trace this component */
 			do
 			{		
-if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "gauss_orientation_data::constructor(generic_code_data): edge = " << edge;
 
 				int next_crossing = term_crossing[edge];
 
-if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << ", next_crossing = " << next_crossing;
 
 				bool first_visit = (code_table[OPEER][next_crossing] == edge? true: false);
-				int next_crossing_polarity;
+				int next_crossing_orientation_polarity;
 				
 	
 				if ((first_visit && code_table[TYPE][next_crossing] == generic_code_data::TYPE1) ||
 					(!first_visit && code_table[TYPE][next_crossing] == generic_code_data::TYPE2))						
-					next_crossing_polarity = gauss_orientation_data::RIGHT;
+					next_crossing_orientation_polarity = gauss_orientation_data::RIGHT;
 				else
-					next_crossing_polarity = gauss_orientation_data::LEFT;	
+					next_crossing_orientation_polarity = gauss_orientation_data::LEFT;	
 					
-if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
-	debug << ", polarity = " << (next_crossing_polarity == gauss_orientation_data::LEFT? "LEFT" : "RIGHT") << endl;
+if (debug_control::DEBUG >= debug_control::DETAIL)
+	debug << ", polarity = " << (next_crossing_orientation_polarity == gauss_orientation_data::LEFT? "LEFT" : "RIGHT") << endl;
 				
-				orientation_matrix[0][index] = next_crossing_polarity;
+				orientation_matrix[0][index] = next_crossing_orientation_polarity;
 				orientation_matrix[1][index] = next_crossing+1;
+
+				if ((first_visit && code_table[LABEL][next_crossing] == generic_code_data::POSITIVE) ||
+					(!first_visit && code_table[LABEL][next_crossing] == generic_code_data::NEGATIVE))						
+					classical_gauss_data[index] = (next_crossing+1)*-1;
+				else
+					classical_gauss_data[index] = next_crossing+1;	
 															
 				index++;
 
@@ -152,7 +153,20 @@ if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
 				else
 					edge = code_table[ODD_ORIGINATING][next_crossing];
 			} while (edge != start);				
+		}
+		
+		for (int i=0; i< code_data.num_crossings; i++)
+		{
+			if ( (code_table[LABEL][i] == generic_code_data::POSITIVE && code_table[TYPE][i] == generic_code_data::TYPE2) ||
+				 (code_table[LABEL][i] == generic_code_data::NEGATIVE && code_table[TYPE][i] == generic_code_data::TYPE1)
+			   )
+				classical_crossing_sign[i] = 1;
+			else if ( (code_table[LABEL][i] == generic_code_data::POSITIVE && code_table[TYPE][i] == generic_code_data::TYPE1) ||
+					  (code_table[LABEL][i] == generic_code_data::NEGATIVE && code_table[TYPE][i] == generic_code_data::TYPE2)
+					)
+				classical_crossing_sign[i] = -1;
 		}	
+			
 	}
 	else
 	{
@@ -178,15 +192,15 @@ if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
 		   If we are creating an extended version of Gauss orientation data, we consider all crossings to be "classical".
 		*/
 		int num_classical_crossings = code_data.num_crossings;
-		bool ignore_shortcut = false;
+		bool pure_knotoid_code_data = false;
 		vector<int>& shortcut_crossing = code_data.shortcut_crossing;
 		
 		if (extended_version)
 		{
 			if (code_data.immersion == generic_code_data::character::PURE_KNOTOID && code_data.head != -1 && shortcut_crossing.size())
-				ignore_shortcut = true;
+				pure_knotoid_code_data = true;
 		
-if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "gauss_orientation_data::constructor(generic_code_data): extended version: num_classical_crossings = " << num_classical_crossings << endl;
 		}
 		else
@@ -196,24 +210,24 @@ if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
 				if (code_table[LABEL][i] == generic_code_data::VIRTUAL)
 					num_classical_crossings--;
 			}
-if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "gauss_orientation_data::constructor(generic_code_data): num_classical_crossings = " << num_classical_crossings << endl;
 		
 			if (code_data.immersion == generic_code_data::character::PURE_KNOTOID && code_data.head != -1 && shortcut_crossing.size())
 			{
-				ignore_shortcut = true;
+				pure_knotoid_code_data = true;
 				for (unsigned int i=0; i< shortcut_crossing.size(); i++)
 				{
 					if (shortcut_crossing[i] != 0)
 						num_classical_crossings--;
 				}
-if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "gauss_orientation_data::constructor(generic_code_data): knotoid: num_classical_crossings = " << num_classical_crossings << endl;
 			}
 		}
 	
-if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
-	debug << "gauss_orientation_data::constructor(generic_code_data): ignore_shortcut = " << ignore_shortcut << endl;
+if (debug_control::DEBUG >= debug_control::DETAIL)
+	debug << "gauss_orientation_data::constructor(generic_code_data): pure_knotoid_code_data = " << pure_knotoid_code_data << endl;
 
 		/* create the orientation matrix and write the number of crossings */
 		num_components = code_data.num_components;
@@ -222,6 +236,8 @@ if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
 		num_terms = 2*num_classical_crossings;
 		immersion_crossing = vector<int>(num_classical_crossings);
 		orientation_matrix = matrix<int>(2,num_terms);
+		classical_gauss_data = vector<int>(num_terms);
+		classical_crossing_sign = vector<int>(num_classical_crossings);
 		
 		if (track_zig_zag_counts)
 			zig_zag_count = matrix<int>(2,num_classical_crossings);
@@ -248,7 +264,7 @@ if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
 		
 		do 
 		{
-if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "gauss_orientation_data::constructor(generic_code_data): start_of_component = " << start << endl;
 	
 			/* set the offset for the start of this component */
@@ -266,44 +282,50 @@ if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
 			do
 			{	
 	
-if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "gauss_orientation_data::constructor(generic_code_data): edge = " << edge;
 				edge_flag[edge] = 1;
 				int next_crossing = term_crossing[edge];
 
-if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << ", next_crossing = " << next_crossing;
 
-				int next_crossing_polarity;
+				int next_crossing_orientation_polarity;
+				int next_crossing_gauss_polarity;
 				
 				if (!extended_version && code_table[LABEL][next_crossing] == generic_code_data::VIRTUAL)
 				{
-if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << ", is virtual" << endl;
 				}
-				else if (!extended_version && ignore_shortcut && shortcut_crossing[next_crossing])
+				else if (!extended_version && pure_knotoid_code_data && shortcut_crossing[next_crossing])
 				{
-if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << ", is a shortcut crossing" << endl;
 				}
 				else 
 				{
 					component_terms++;
-if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << ", is a Gauss crossing" << endl;
 	
 				    if ((edge%2 == 0 && code_table[TYPE][next_crossing] == generic_code_data::TYPE1) ||
 				        (edge%2 != 0 && code_table[TYPE][next_crossing] == generic_code_data::TYPE2))						
-						next_crossing_polarity = gauss_orientation_data::LEFT;
+						next_crossing_orientation_polarity = gauss_orientation_data::LEFT;
 					else
-						next_crossing_polarity = gauss_orientation_data::RIGHT;
-	
+						next_crossing_orientation_polarity = gauss_orientation_data::RIGHT;
+
+					if ((edge%2 == 1 && code_table[LABEL][next_crossing] == generic_code_data::POSITIVE) ||
+						(edge%2 == 0 && code_table[LABEL][next_crossing] == generic_code_data::NEGATIVE))						
+						next_crossing_gauss_polarity = generic_code_data::UNDER;
+					else
+						next_crossing_gauss_polarity = generic_code_data::OVER;	
 				}
 				
-				if (!extended_version && (code_table[LABEL][next_crossing] == generic_code_data::VIRTUAL || (ignore_shortcut && shortcut_crossing[next_crossing])))
+				if (!extended_version && (code_table[LABEL][next_crossing] == generic_code_data::VIRTUAL || (pure_knotoid_code_data && shortcut_crossing[next_crossing])))
 				{
 					
-if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "gauss_orientation_data::constructor(generic_code_data):   doing nothing" << endl;
 					
 					/* just move on around the component */				
@@ -321,11 +343,14 @@ if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
 						{
 							if (classical_crossing[i] == next_crossing)
 							{
-								orientation_matrix[0][index] = next_crossing_polarity;
+								orientation_matrix[0][index] = next_crossing_orientation_polarity;
 								orientation_matrix[1][index] = i+1;
 								
-								if (code_table[LABEL][next_crossing] == generic_code_data::VIRTUAL || (ignore_shortcut && shortcut_crossing[next_crossing]))
+								if (code_table[LABEL][next_crossing] == generic_code_data::VIRTUAL || (pure_knotoid_code_data && shortcut_crossing[next_crossing]))
 									orientation_matrix[1][index] *= -1;
+
+								classical_gauss_data[index] = (i+1)*next_crossing_gauss_polarity;	
+
 
 								if (track_zig_zag_counts)
 								{
@@ -334,7 +359,7 @@ if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
 								
 								index++;
 
-if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "gauss_orientation_data::constructor(generic_code_data):   second visit to Gauss crossing " << i << endl;
 								break;
 							}
@@ -346,11 +371,13 @@ if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
 						classical_crossing[num_classical_crossings_visited] = next_crossing;
 						crossing_visited[next_crossing] = 1;
 						
-						orientation_matrix[0][index] = next_crossing_polarity;
+						orientation_matrix[0][index] = next_crossing_orientation_polarity;
 						orientation_matrix[1][index] = num_classical_crossings_visited+1;
 	
-						if (code_table[LABEL][next_crossing] == generic_code_data::VIRTUAL || (ignore_shortcut && shortcut_crossing[next_crossing]))
+						if (code_table[LABEL][next_crossing] == generic_code_data::VIRTUAL || (pure_knotoid_code_data && shortcut_crossing[next_crossing]))
 							orientation_matrix[1][index] *= -1;
+
+						classical_gauss_data[index] = (num_classical_crossings_visited+1)*next_crossing_gauss_polarity;	
 	
 						if (track_zig_zag_counts)
 						{
@@ -361,7 +388,7 @@ if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
 	
 						immersion_crossing[num_classical_crossings_visited] = next_crossing;
 					
-if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "gauss_orientation_data::constructor(generic_code_data):   first visit, becomes Gauss crossing " << num_classical_crossings_visited << endl;
 
 						num_classical_crossings_visited++;
@@ -390,18 +417,33 @@ if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
 				}
 			}					
 		} while (!complete);
+
+		for (int i=0; i< num_classical_crossings; i++)
+		{
+			int crossing = classical_crossing[i];
+			
+			if (code_table[LABEL][crossing] != generic_code_data::VIRTUAL && !(pure_knotoid_code_data && shortcut_crossing[crossing])) // it should never be!
+			{
+				if ((code_table[TYPE][crossing] == generic_code_data::TYPE1 && code_table[LABEL][crossing] == generic_code_data::NEGATIVE) ||
+				    (code_table[TYPE][crossing] == generic_code_data::TYPE2 && code_table[LABEL][crossing] == generic_code_data::POSITIVE))
+					classical_crossing_sign[i] = 1;
+				else
+					classical_crossing_sign[i] = -1;
+			}
+		}
+
 	}
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "gauss_orientation_data::constructor(generic_code_data): generic_orientation_data" << endl;
-	print_gauss_data(*this,debug,"gauss_orientation_data::constructor(generic_code_data): ");
+	print_gauss_data(*this,debug,"gauss_orientation_data::constructor(generic_code_data):   ");
 }
 }
 
 void gauss_orientation_data::reverse_all()
 {
-if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
+if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
 	print_gauss_data(*this, debug, "gauss_orientation_data::reverse_all: forward ");	
 
 		
@@ -414,7 +456,7 @@ if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
 	}
 	
 	orientation_matrix = rev_m;
-if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
+if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
 	print_gauss_data(*this, debug, "gauss_orientation_data::reverse_all: reversed ");	
 }
 
@@ -422,7 +464,7 @@ if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
 void gauss_orientation_data::reverse_components( vector<bool>& reverse_flag)
 {
 	
-if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
+if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
 {
 	debug << "gauss_orientation_data::reverse_components: reverse_flag ";	
 	for (int i=0; i< num_components; i++)
@@ -437,20 +479,20 @@ if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
 		if (reverse_flag[i] == false)
 			continue;
 			
-if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
+if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
 	debug << "gauss_orientation_data::reverse_components: reversing component" << i << endl;	
 			
 		int first = start_of_component[i];
 		int last = start_of_component[i]+num_terms_in_component[i]-1;
 
-if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
+if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
 	debug << "gauss_orientation_data::reverse_components:   first component offset = " << first << " last component offset = " << last << endl;	
 		
 		for (int j=0; j< num_terms_in_component[i]; j++)
 		{
 			new_orientation_matrix[1][first+j] = orientation_matrix[1][last-j];
 			
-if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
+if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
 	debug << "gauss_orientation_data::reverse_components:   term " << j << " new crossing " << new_orientation_matrix[1][first+j] << endl;	
 			
 			/* look in orientation matrix for the other place of this crossing, since we are still in the middle of re-writing 
@@ -465,7 +507,7 @@ if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
 				if (k != last-j && orientation_matrix[1][k] == orientation_matrix[1][last-j])
 				{
 					place = k;
-if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
+if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
 	debug << "gauss_orientation_data::reverse_components:   found crossing at place " << place << " in component " << component << endl;	
 					break;
 				}
@@ -479,7 +521,7 @@ if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
 			else
 				new_orientation_matrix[0][first+j] = orientation_matrix[0][last-j]; 
 				
-if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
+if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
 {
 	debug << "gauss_orientation_data::reverse_components:   polarity of crossing at offset " << place
 	      << (new_orientation_matrix[0][place] == gauss_orientation_data::LEFT? " LEFT": " RIGHT") << endl;	
@@ -497,11 +539,11 @@ void print_gauss_data(gauss_orientation_data g, ostream& os, string prefix)
 	os << prefix << "number of terms = " << g.num_terms << endl;
 	os << prefix << "number of components = " << g.num_components << endl;
 	os << prefix << "extended_version = " << (g.extended_version? "true":"false") << endl;
-	os << prefix << "number of terms per component: ";
+	os << prefix << "number of terms in component: ";
 	for (int i=0; i< g.num_components; i++)
 		os << g.num_terms_in_component[i] << ' ';
 	os << endl;
-	os << prefix << "start of components: ";
+	os << prefix << "start of component: ";
 	for (int i=0; i< g.num_components; i++)
 		os << g.start_of_component[i] << ' ';
 	os << endl;
@@ -517,6 +559,15 @@ void print_gauss_data(gauss_orientation_data g, ostream& os, string prefix)
 	for (int i=0; i< g.num_terms; i++)
 		os << setw(3) << g.orientation_matrix[1][i];
 	os << endl;
+	os << prefix << "classical_gauss_data: ";	
+	for (unsigned int i=0; i< g.classical_gauss_data.size(); i++)
+		os << g.classical_gauss_data[i] << ' ';
+	os << endl;
+	os << prefix << "classical_crossing_sign: ";
+	for (unsigned int i=0; i< g.classical_crossing_sign.size(); i++)
+		os << g.classical_crossing_sign[i] << ' ';
+	os << endl;
+	
 	
 	if (g.zig_zag_count.numrows() != 0)
 	{
@@ -590,7 +641,7 @@ void write_gauss_data(gauss_orientation_data g, ostream& os, bool zig_zags, int 
    To evaluate the left preferred representation we consider every possible re-numbering of the crossings and (optionally) all 
    possible orientations of the diagram's unicursal components.   If the diagram is that of a knotoid or a long knot, the function
    assumes that the first component of the parameter gauss_data is the segment component, always considers that component first, 
-   and always considers that component by starting at the crosing relating to the first term of gauss_data.
+   and always considers that component by starting at the crossing relating to the first term of gauss_data.
    
    If the diagram is not that of a knotoid or a long knot, the function considers all permutations of the order of the components 
    of the diagram and, for each component order, cycles each component so we start considering that component by starting at each 
@@ -609,7 +660,7 @@ void write_gauss_data(gauss_orientation_data g, ostream& os, bool zig_zags, int 
 gauss_orientation_data left_preferred(const gauss_orientation_data& gauss_data, bool unoriented, int immersion_character)
 {
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "left_preferred: initial Gauss data ";	
 	write_gauss_data(gauss_data,debug);
@@ -633,14 +684,14 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 	else
 		track_zig_zag_counts = false;
 
-if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
+if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
 	debug << "left_preferred: track_zig_zag_counts = " << track_zig_zag_counts << endl;			
 	
 	int num_components = gauss_data.num_components;
 	int num_terms=gauss_data.num_terms;
 	int min_component = (immersion_character == generic_code_data::character::CLOSED? 0: 1);
 
-if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
+if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
 	debug << "left_preferred: min_component = " << min_component << endl;			
 	
 	vector<bool> r_flag(num_components); // initializes to false
@@ -652,7 +703,7 @@ if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
 	{
 		/* consider the orientation determined by the r_flags */
 		
-if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
+if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
 {
 	debug << "left_preferred: reverse flags: ";
 	for (int i=0; i< num_components; i++)
@@ -674,7 +725,7 @@ if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
 	
 		do
 		{
-if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
+if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
 {
 	debug << "left_preferred:   component_perm = ";	
 	for (int i=0; i< g.num_components; i++)
@@ -691,7 +742,7 @@ if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
 			bool complete = false;		
 			do
 			{
-if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
+if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
 {
 	debug << "left_preferred:     component_cycle = ";	
 	for (int i=0; i< g.num_components; i++)
@@ -705,7 +756,7 @@ if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
 				for (int i=0; i< g.num_components; i++)
 					component_start[i]=g.start_of_component[i]+component_cycle[i];
 				
-if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
+if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
 {
 	debug << "left_preferred:       component_start: ";
 	for (int k=0; k< g.num_components; k++)
@@ -724,7 +775,7 @@ if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
 					int first_term = g.start_of_component[component];
 					int offset = component_start[component]-first_term;
 
-if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
+if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
 {
 	debug << "left_preferred:       component = " << component << ", offset " << setw(2) << offset << ", num_component_terms = " 
 		  << num_component_terms << ", first_term = "  << first_term << endl;
@@ -733,18 +784,18 @@ if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
 					for (int i=0; i < num_component_terms; i++)
 					{
 						int index = first_term+(offset+i)%num_component_terms;
-if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
+if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
 	debug << "  " << index;
 						if (m[0][index] == gauss_orientation_data::LEFT)
 						{
 							perm[abs(m[1][index])-1] = new_crossing++;
 						}
 					}
-if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
+if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
 	debug << endl;			
 				}
 
-if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
+if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
 {
 	debug << "left_preferred:       perm = ";	
 	for (int i=0; i< num_terms/2; i++)
@@ -771,7 +822,7 @@ if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
 					}
 				}
 	
-if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
+if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
 {
 	debug << "left_preferred:       perm_weight = ";
 	for (int i=0; i< num_terms; i++)
@@ -798,13 +849,13 @@ if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
 					   cusps encountered before the crossing when going in the reverse direction is the number of cusps encountered after the
 					   crossing when going in the original direction.
 					*/
-if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
+if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
 	debug << "left_preferred: adjusting gauss_data.zig_zag_count" << endl;
 	
 					matrix<int> initial_new_zig_zag_count(2,num_terms/2);
 					for (int i = 0; i< num_terms/2; i++)
 					{
-if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
+if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
 	debug << "left_preferred: crossing " << i+1 << endl;
 
 						/* look for the component and places of the two occurrences of crossing i+1 in the original gauss_data */
@@ -835,7 +886,7 @@ if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
 							}
 						}
 
-if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
+if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
 {
 	debug << "left_preferred:   first_component = " << first_component << " second_component = " << second_component << endl;
 	debug << "left_preferred:   first_place = " << first_place << " second_place = " << second_place << endl;
@@ -880,7 +931,7 @@ if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
 							}
 						}
 
-if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
+if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
 {
 	debug << "left_preferred:   first_subsequent_place = " << first_subsequent_place << " second_subsequent_place = " << second_subsequent_place << endl;
 	debug << "left_preferred:   first_subsequent_term = " << first_subsequent_term << " second_subsequent_term = " << second_subsequent_term << endl;
@@ -920,12 +971,12 @@ if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
 								)
 							{
 								 reversed_occurrences = true;
-if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
+if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
 	debug << "left_preferred:   same component, offset = " << offset << " reversed occurrences" << endl;
 							}
 							else
 							{
-if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
+if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
 	debug << "left_preferred:   same component, offset = " << offset << " not reversed" << endl;
 							}
 							
@@ -940,7 +991,7 @@ if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
 									initial_new_zig_zag_count[0][i] = zig_zag_count[(first_subsequent_occurrence?1:0)][first_subsequent_term-1];
 									initial_new_zig_zag_count[1][i] = zig_zag_count[(second_subsequent_occurrence?1:0)][second_subsequent_term-1];
 
-if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
+if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
 {
 	debug << "left_preferred:     component reversed, new first count for crossing " << i+1 << " is old " 
 	      << (second_subsequent_occurrence? "first": "second") << " count for crossing " << second_subsequent_term << endl;
@@ -954,7 +1005,7 @@ if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
 									initial_new_zig_zag_count[0][i] = zig_zag_count[1][i];
 									initial_new_zig_zag_count[1][i] = zig_zag_count[0][i];
 
-if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
+if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
 	debug << "left_preferred:     component not reversed, new first(second) count for crossing " << i+1 << " is old second(first) count for crossing " << i+1 << endl; 
 
 								}
@@ -970,7 +1021,7 @@ if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
 									initial_new_zig_zag_count[1][i] = zig_zag_count[(first_subsequent_occurrence?1:0)][first_subsequent_term-1];
 									initial_new_zig_zag_count[0][i] = zig_zag_count[(second_subsequent_occurrence?1:0)][second_subsequent_term-1];
 									
-if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
+if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
 {
 	debug << "left_preferred:     component reversed, new first count for crossing " << i+1 << " is old " 
 	      << (first_subsequent_occurrence? "first": "second") << " count for crossing " << first_subsequent_term << endl;
@@ -983,7 +1034,7 @@ if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
 									initial_new_zig_zag_count[0][i] = zig_zag_count[0][i];
 									initial_new_zig_zag_count[1][i] = zig_zag_count[1][i];
 
-if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
+if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
 	debug << "left_preferred:     component not reversed, new first(second) count for crossing " << i+1 << " is old first(second) count for crossing " << i+1 << endl; 
 								}				
 							}				
@@ -997,14 +1048,14 @@ if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
 								if (component_perm[j] == first_component)
 								{
 									reversed_occurrences = false;
-if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
+if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
 	debug << "left_preferred:   different components, not reversed" << endl;
 									break;
 								}
 								else if (component_perm[j] == second_component)
 								{
 									reversed_occurrences = true;
-if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
+if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
 	debug << "left_preferred:   different components, reversed occurrences" << endl;
 									break;
 								}
@@ -1017,7 +1068,7 @@ if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
 								{
 									initial_new_zig_zag_count[1][i] = zig_zag_count[(second_subsequent_occurrence?1:0)][second_subsequent_term-1];
 									
-if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
+if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
 {
 	debug << "left_preferred:     second component reversed, new first count for crossing " << i+1 << " is old " 
 	      << (second_subsequent_occurrence? "first": "second") << " count for crossing " << second_subsequent_term << endl;
@@ -1027,7 +1078,7 @@ if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
 								{
 									initial_new_zig_zag_count[1][i] = zig_zag_count[0][i];
 									
-if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
+if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
 	debug << "left_preferred:     second component not reversed, new first count for crossing " << i+1 << " is old second count for crossing " << i+1 << endl; 
 									
 								}
@@ -1036,7 +1087,7 @@ if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
 								{
 									initial_new_zig_zag_count[0][i] = zig_zag_count[(first_subsequent_occurrence?1:0)][first_subsequent_term-1];
 									
-if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
+if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
 {
 	debug << "left_preferred:     first component reversed, new second count for crossing " << i+1 << " is old " 
 	      << (first_subsequent_occurrence? "first": "second") << " count for crossing " << first_subsequent_term << endl;
@@ -1046,7 +1097,7 @@ if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
 								{
 									initial_new_zig_zag_count[0][i] = zig_zag_count[1][i];
 									
-if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
+if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
 	debug << "left_preferred:     first component not reversed, new second count for crossing " << i+1 << " is old first count for crossing " << i+1 << endl; 
 									
 								}
@@ -1060,7 +1111,7 @@ if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
 								{
 									initial_new_zig_zag_count[1][i] = zig_zag_count[(first_subsequent_occurrence?1:0)][first_subsequent_term-1];
 									
-if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
+if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
 {
 	debug << "left_preferred:     first component reversed, new first count for crossing " << i+1 << " is old " 
 	      << (first_subsequent_occurrence? "first": "second") << " count for crossing " << first_subsequent_term << endl;
@@ -1070,7 +1121,7 @@ if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
 								{
 									initial_new_zig_zag_count[1][i] = zig_zag_count[1][i];
 
-if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
+if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
 	debug << "left_preferred:     first component not reversed, new first count for crossing " << i+1 << " is old first count for crossing " << i+1 << endl; 
 									
 								}
@@ -1079,7 +1130,7 @@ if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
 								{
 									initial_new_zig_zag_count[0][i] = zig_zag_count[(second_subsequent_occurrence?1:0)][second_subsequent_term-1];
 									
-if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
+if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
 {
 	debug << "left_preferred:     second component reversed, new second count for crossing " << i+1 << " is old " 
 	      << (second_subsequent_occurrence? "first": "second") << " count for crossing " << second_subsequent_term << endl;
@@ -1089,7 +1140,7 @@ if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
 								{
 									initial_new_zig_zag_count[0][i] = zig_zag_count[0][i];
 									
-if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
+if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
 	debug << "left_preferred:     second component not reversed, new second count for crossing " << i+1 << " is old second count for crossing " << i+1 << endl; 
 									
 								}
@@ -1104,7 +1155,7 @@ if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
 						new_zig_zag_count[1][perm[i]] = initial_new_zig_zag_count[1][i];
 					}
 		
-if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
+if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
 {
 	debug << "left_preferred: adjusted initial_new_zig_zag_count by perm:" << endl;
 	print(new_zig_zag_count, debug,3,"left_preferred: ");
@@ -1189,7 +1240,7 @@ if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
 			
 			if (!finished)
 			{
-if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
+if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
 {
 	debug << "left_preferred: advanced r_flag to: ";
 	for (int i=0; i< num_components; i++)
@@ -1199,7 +1250,7 @@ if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
 				g = gauss_data;
 				g.reverse_components(r_flag);
 
-if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
+if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
 {
 	debug << "left_preferred: updated Gauss data ";	
 	write_gauss_data(g,debug);
@@ -1214,7 +1265,7 @@ if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
 		
 	} while (!finished);
 	
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "left_preferred: min_r_flag = ";
 	for (int i=0; i< num_components; i++)
@@ -1291,7 +1342,7 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 	for (int i=0; i< num_terms/2; i++)
 		new_immersion_crossing[min_perm[i]] = gauss_data.immersion_crossing[i];
 	
-if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
+if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
 {
 	debug << "left_preferred: new_m" << endl;	
 	debug << "left_preferred:   ";	
@@ -1313,7 +1364,7 @@ if (braid_control::DEBUG >= braid_control::EXHAUSTIVE)
 		g.zig_zag_count = min_zig_zag_count;
 
 
-if (braid_control::DEBUG >= braid_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "left_preferred: returning gauss data: " << endl;	
 	print_gauss_data(g, debug, "left_preferred: ");
@@ -1332,8 +1383,8 @@ if (braid_control::DEBUG >= braid_control::DETAIL)
 bool gauss_orientation_data::operator == (gauss_orientation_data& b) const
 {
 
-//if (braid_control::DEBUG >= braid_control::DETAIL)
-if (braid_control::DEBUG >= braid_control::BASIC)
+//if (debug_control::DEBUG >= debug_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::BASIC)
 {
 	print_gauss_data(*this, debug, "gauss_orientation_data::operator == : a: ");	
 	print_gauss_data(b, debug, "gauss_orientation_data::operator == : b: ");	
@@ -1343,18 +1394,18 @@ if (braid_control::DEBUG >= braid_control::BASIC)
 	ostringstream asstr;
 	write_gauss_data(a_left_preferred,asstr);
 	ostringstream bsstr;
-	write_gauss_data(b_left_preferred,asstr);
+	write_gauss_data(b_left_preferred,bsstr);
 
-//if (braid_control::DEBUG >= braid_control::DETAIL)
-if (braid_control::DEBUG >= braid_control::BASIC)
+//if (debug_control::DEBUG >= debug_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::BASIC)
 {
 	debug << "gauss_orientation_data::operator == : left_preferred a: " << asstr.str() << endl;	
 	debug << "gauss_orientation_data::operator == : left_preferred b: " << bsstr.str() << endl;	
 }
 	bool equal = (asstr.str() == bsstr.str());
 
-//if (braid_control::DEBUG >= braid_control::DETAIL)
-if (braid_control::DEBUG >= braid_control::BASIC)
+//if (debug_control::DEBUG >= debug_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::BASIC)
 		debug << "gauss_orientation_data::operator == : equal = " << equal << endl;	
 
 	return equal;	
