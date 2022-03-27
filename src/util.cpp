@@ -116,3 +116,50 @@ char next_variable (string variables)
 		exit(0);
 	}
 }
+
+namespace util {
+string itos (long n)
+{
+	unsigned int negative = 0;
+    if (n<0)
+    {
+		negative++;
+		n *= -1;
+    }
+
+	/* count the digits in n */
+	int num_digits = 0;
+	long nn = n;
+	do
+	{
+		num_digits++;
+		nn /= 10;
+	} while (nn != 0);
+
+	/* size of the string is num_digits + negative, the use of the '-'
+	   character removes the requirement to set it explicitly.
+    */
+	string res(num_digits+negative,'-');
+	string::reverse_iterator ptr = res.rbegin();
+	
+    do
+    {
+		switch (n%10)
+		{
+	    	case 0: *ptr++ = '0'; break;
+	    	case 1: *ptr++ = '1'; break;
+	     	case 2: *ptr++ = '2'; break;
+	     	case 3: *ptr++ = '3'; break;
+	     	case 4: *ptr++ = '4'; break;
+	     	case 5: *ptr++ = '5'; break;
+	     	case 6: *ptr++ = '6'; break;
+	     	case 7: *ptr++ = '7'; break;
+	     	case 8: *ptr++ = '8'; break;
+	     	case 9: *ptr++ = '9'; break;
+		}
+		n /= 10;
+    } while(n != 0);
+	
+	return res;
+}
+}
