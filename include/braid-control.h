@@ -52,9 +52,12 @@ struct braid_control
 	static bool     NORMALIZING_Q_POLYNOMIALS;
 	static bool		NORMALIZE_BRACKET;
 	static bool		NUMERATOR_GCD;
+	static bool		OPGC;
+	static bool     OU_FORMAT;
 	static bool     OUTPUT_AS_INPUT;
 	static bool		PARITY_ARROW;
 	static bool		PARITY_BRACKET;
+	static bool    	PD_FORMAT;
 	static bool    	PEER_CODE;
 	static bool    	PRIME_WEYL;
 	static bool    	QUANTUM_WEYL;
@@ -78,6 +81,7 @@ struct braid_control
 	static bool    	TRUNCATED_WEYL;
 	static bool		T_VARIABLE;
 	static bool		ULPGD;
+	static bool		UOPGC;
 	static bool		VERIFY_DELTA_0;
 	static bool		VOGEL_ALGORITHM;
 	static bool		VOGEL_HEIGHT_ONLY;
@@ -102,8 +106,6 @@ struct braid_control
 	/* SATELLITE acts as a flag and indicates the number of strands to be added, if the default of 2 is not required */
 	static int		SATELLITE;
 
-	enum level {OFF, SUMMARY, BASIC, INTERMEDIATE, DETAIL, EXHAUSTIVE};
-	static int DEBUG;
 	static bool VOGEL_DEBUG;
 	
 	static int wait_threshold;
@@ -112,12 +114,5 @@ struct braid_control
 	
 };
 
-/* braid_crossing_type provides an enumeration of the braid crossing types */
-class braid_crossing_type 
-{ 
-	public:
-	enum {NEGATIVE = -1, VIRTUAL = 0, POSITIVE = 1, FLAT = 2, NONE=9};
-};
-	
 /* ST_pair_type is an enumeration of the type of pairs of finite switches S and T */
 enum class ST_pair_type {FLAT_ESSENTIAL_VIRTUAL, ESSENTIAL_VIRTUAL, ESSENTIAL_WELDED, ESSENTIAL_DOODLE};
