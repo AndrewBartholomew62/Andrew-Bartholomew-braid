@@ -7,13 +7,11 @@
 
 <body LANG="en-GB">
 
-<p ALIGN=CENTER><a NAME="_top"></a><FONT SIZE=6><B> Braid v23.0  User Documentation </B></FONT></p>
+<p ALIGN=CENTER><a NAME="_top"></a><FONT SIZE=6><B> Braid v25.0  User Documentation </B></FONT></p>
 
 <br>
 
 <h2>1. Introduction</h2>
-
-<! p style="color:red"   >
 
 <p>This document provides user instructions for A. Bartholomew's braid programme; the web-page for the 
 programme is <a href="http://www.layer8.co.uk/maths/braids">http://www.layer8.co.uk/maths/braids</a></p>
@@ -29,7 +27,8 @@ programme is <a href="http://www.layer8.co.uk/maths/braids">http://www.layer8.co
   	 <p style="margin-left: 2cm"><a href="#Labelled Peer Code">Labelled Peer Code</a></p></li>
   	 <p style="margin-left: 2cm"><a href="#Labelled Immersion Code">Labelled Immersion Code</a></p></li>
     <p style="margin-left: 2cm"><a href="#Gauss Codes">Gauss Codes</a></p>
-    <p style="margin-left: 2cm"><a href="#Special Label Code Cases">Special Label Code Cases</a></p>
+    <p style="margin-left: 2cm"><a href="#Planar Diagrams">Planar Diagrams</a></p>
+    <p style="margin-left: 2cm"><a href="#Long knot input codes">Input codes for long knots</a></p>
 
 
 <li><p><a href="#Polynomial Invariants">Polynomial Invariants</a></p>
@@ -63,6 +62,7 @@ programme is <a href="http://www.layer8.co.uk/maths/braids">http://www.layer8.co
     <p style="margin-left: 1cm"><a href="#Braid-Definitions">Braid Definitions</a></p>
     <p style="margin-left: 1cm"><a href="#Switch-Definitions">Switch Definitions</a></p>
     <p style="margin-left: 1cm"><a href="#Gauss-Code-Definitions">Gauss Code Definitions</a></p>
+    <p style="margin-left: 1cm"><a href="#Planar-Diagram-Definitions">Planar Diagram Definitions</a></p>
     <p style="margin-left: 1cm"><a href="#Labelled-Peer-Code-Definitions">Labelled Peer Code Definitions</a></p>
     <p style="margin-left: 1cm"><a href="#Labelled-Immersion-Code-Definitions">Labelled Immersion Code Definitions</a></p>
     <p style="margin-left: 1cm"><a href="#Long-Knot-Definitions">Long Knot Definitions</a></p>
@@ -106,11 +106,13 @@ but that do not involve a braid representation.  However, in the absence of anyt
 <li>The labelled immersion code for a braid word</li>
 <li>The labelled peer code for a braid word or a labelled immersion code</li>
 <li>The labelled peer code for the Gauss code of a classical, virtual or flat link</li>
+<li>The labelled peer code for the planar diagram description (PD code) of a classical or virtual link</li>
 <li>The labelled peer code for the r-parallel cable satellite of a knot's peer code</li>
 </ol>
 
 <p>
    <a href="#_top">back to top</a>
+
 </p>
 
 <h3><a NAME="Starting-the-programme"></a>Starting the programme</h3>
@@ -135,6 +137,7 @@ help information.  After displaying the help information, the programme terminat
 <p>
    <a href="#Overall-Description">back to overall description</a>
    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;   <a href="#_top">back to top</a>
+
 </p>
 
 <h3><a NAME="Braid-convention"></a>Braid convention</h3>
@@ -241,6 +244,16 @@ containing the head of K.</p>
 [-7 13 -11 -1 3 -5 9^]/+ + - + + - -
 </kbd></p>
 
+<p>For a knot-type knotoid, where the shortcut does not pass under any part of the diagram, K_ has the form of a knot with a section of the interior of edge zero replaced 
+by a shortcut, so we indicate that the corresponding labelled peer code should be considered as a knotoid by prefixing it with 'K:'.  Thus the labelled peer code</p> 
+
+<p style="margin-left: 1cm"><kbd>
+K:[3 5 1]/+++  
+</kbd></p>
+
+</p>describes the knot-type knotoid obtained from the trefoil by removing a section of the interior edge zero.</p>
+
+
 <p>Labelled peer codes may be appended with additional information to the braid programme, as described in the section on 
 <a href="#Labelled-Peer-Code-Qualifiers">labelled peer code qualifiers</a>.</p>
 
@@ -258,11 +271,6 @@ case.</p>
 <p>The first part of a labelled immersion code comprises the permutation p, written as a product of cycles, with the integers written as negative if the corresponding crossing is Type-1.  The second part of a labelled immersion code provides label information in the same manner as <a href="#Labelled Peer Code">labelled peer codes</a>, writen after the signed permutation separated by a <kbd>/</kbd> character.  They are written in the order corresponding to the crossings shown in the permutation.  The following is an example of a labelled immersion code for the Kishino knot K3</p>
 
 <p style="margin-left: 1cm"><kbd>(-0 -2 -1 -3 -5 -4) / - + * + - *</kbd></p>
-
-<p>
-   <a href="#Input codes">back to input codes</a>
-   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;   <a href="#_top">back to top</a>
-</p>
 
 <h4><a NAME="Gauss Codes"></a>Gauss Codes</h4>
 
@@ -306,17 +314,59 @@ component from an arbitrary staring point.  Since in these cases there are no ov
 
 <p style="margin-left: 1cm"><kbd>L1 R2, L3, R1 L2 R3 / # # #</kbd></p>
 
+<h5><a NAME="Knotoid-Gauss-codes"></a>Gauss codes for knotoids</h5>
 
-<h3><a NAME="Special Label Code Cases"></a>Special Label Code Cases</h3>
+<p>To indicate that a Gauss code represents a knotoid rather than a virtual knot, the code is prefixed by "K:".  When representing a knotoid with a Gauss code
+it is required that the segment component of the knotoid is the first component of the code and that the code starts at the leg of the knotoid.  There are no
+requirements placed on the choice of numbering for the crossings.</p>
 
-<p>For a knot-type knotoid, where the shortcut does not pass under any part of the diagram, K_ has the form of a knot with a section of the interior of edge zero replaced 
-by a shortcut, so we indicate that the corresponding labelled peer code should be considered as a knotoid by prefixing it with 'K:'.  Thus the labelled peer code K:[3 5 1]/+++ describes 
-the knot-type knotoid obtained from the trefoil by removing a section of the interior edge zero.
-Similarly, a knot type knotoid may be specified using a Gauss code or a labelled immersion code using the 'K:' prefix to indicate that it should be considered as a
-knotoid.</p>
+<p>Thus, an example of a valid knotoid Gauss code is:</p>
+
+<p style="margin-left: 1cm"><kbd>K:5 6 -4 3 -2 -1 2 1, -3 -6 4 -5/ - - - - - -</kbd></p>
+
+<h4><a NAME="Planar Diagrams"></a>Planar Diagrams</h4>
+
+<p>The programme supports planar diagram descriptions of knots, links, knotoids and multi-knotoids.  Currently planar diagrams are assumed to describe diagrams involving
+classical crossings only, there is no support for flat crossings and therefore no support for doodles.  Virtual knots and links are supported, as the programme treats planar 
+diagram descriptions as an alternative description of a Gauss code.  When a planar diagram is read as input it is converted to a Gauss code automatically, so any task that may be performed on Gauss codes may be performed on planar diagrams.<p>
+
+<p>Currently, only Gauss codes may be written to the programme output as planar diagrams, other code types must be converted to Gauss codes separately if a corresponding planar diagram is required.</p>
+
+<p>To produce a planar diagram description of a knot, link or knotoid, the arcs between classical crossings (or the leg and head of a knotoid) are labelled sequentially from 1 as we trace each unicursal component.  For virtual knots and links, the components may be considered in any order and with any chosen orientation and any arc may be chosen as the starting point for each component.  There are additional requirements for knotoids, described below. </p>
+
+<p> Having numbered a diagram, each crossing is described by the set of labels that appear at the crossing, using the standard convention of starting at the ingress under-arc and working anticlockwise around the crossing.  The programme uses standard syntax to describe these labels; an example of the planar diagram
+description supported by the programme is: </p>
+
+<p style="margin-left: 1cm"><kbd>X[3,1,4,2] X[4,2,5,3] X[7,6,8,5] X[6,1,7,8]</kbd></p>
+
+<p>Spaces are permitted within the description and longer planar diagram descriptions may be broken across multiple lines of an input file using the escape character <kbd>\</kbd> 
+thus: </p>
+
+<p style="margin-left: 1cm"><kbd>
+X[3,1,4,2] X[4,2,5,3] X[7,6,8,5] X[6,1,7,8]\<br>
+X[3,7,4,6] X[15,5,16,4]\<br>
+X[5,17,6,16], X[7,14,8,15] X[8,18,9,17] X[11,18,12,19] X[19,12,20,13], X[13,20,14,1]
+</kbd></p>
+
+<h5><a NAME="Knotoid-planar-diagrams"></a>Planar diagram description of knotoids</h5>
+
+<p>Knotoids may be described by planar diagrams by preceding the description with "K:", as in the case of Gauss codes.  For knotoids and multi-knotoids, it is required that the numbering start at the leg of the segment component of the knotoid, so that the arc containing the leg is numbered 1.  It is also required that the
+description of the crossing involving the leg of the knotoid appear first in the list of crossings.  The following is an example of a knotoid described by a planar
+diagram:</p>
+
+<p style="margin-left: 1cm"><kbd>K:X[4,1,5,2] X[2,6,3,7] X[7,3,8,4] X[5,8,6,9] X[9,11,10,12] X[10,12,11,1]</kbd></p>
+
+<h4><a NAME="Long knot input codes"></a>Input codes for long knots</h4>
 
 <p>Long knots also require special handling by some programme tasks, the prefix 'L:' being added to a labelled peer code, Gauss code or labelled immersion code to signify that
 it should be considered as a long knot.</p> 
+
+
+<p>
+   <a href="#Input codes">back to input codes</a>
+   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;   <a href="#_top">back to top</a>
+
+</p>
 
 <h2><a NAME="Polynomial Invariants"></a>4. Polynomial Invariants</h2>
 
@@ -365,6 +415,7 @@ The user may type <kbd> exit</kbd> at this prompt to leave the programme.</p>
 
 <p>
    <a href="#_top">back to top</a>
+
 </p>
 
 <h3><a NAME="Active-Switch"></a>The Active Switch</h3>
@@ -493,16 +544,17 @@ where <kbd>T</kbd> is the "twist matrix"</p>
 <p>The switch polynomial invariants calculated for long knots are two of the co-dimension zero mu-determinants described in [7].  The
 programme calculates both p<sup>(0)</sup> and op<sup>(0)</sup> (the determinant of the presentation matrix for the invariant module having generator x<sub>0</sub> set to zero).  The third invariant described in [7] is that of the closure of the long knot.  This is not calculated explicitly by the programme since it already handles closed knots: two separate inputs are therefore required to calculate all three, one for the two long-knot specific invariants and one for its closure.</p>
 
-<p>Given our view of long knots as closed knots on S<sup>2</sup>, we may use <a href="#Labelled Immersion Code">labelled immersion codes</a> for long knots provided we have a mechanism for indicating the semi-arc containing the point at infinity.  We use the convention that edge zero contains the point at infinity by default, and introduce a mechanism to 'move' the point at infinity to another semi-arc if required.</p>
-  
-<p>The use of a <a href="#Labelled Immersion Code">labelled immersion code</a> for a long knot is specified by prefixing the code with an <kbd>L</kbd> charcater, details of which are given in section <a href="#Long-Knot-Definitions">Long Knot Definitions</a>. As noted above two inputs are required to calculate the full set of invariants described in [7], this may be achieved by using the same <a href="#Labelled Immersion Code">labelled immersion code</a> prefixed once with the long-knot specifier <kbd>L</kbd> and once without.</p>
+<p>Given our view of long knots as closed knots on S<sup>2</sup>, we may describe them using <a href="#Labelled Peer Code">labelled peer codes</a> or <a href="#Gauss Codes">Gauss 
+codes</a> by adopting the convention that the code starts at the semi-arc that contains the point at infinity.  This is consistent with the usual definition of a Gauss code 
+for a long knot.</p>
+ 
+<p>To specify that a <a href="#Labelled Peer Code">labelled peer code</a>, a <a href="#Gauss Codes">Gauss code</a> or a <a href="#Planar Diagrams">planar diagram</a> represents a long knot rather than a closed knot, the code is prefixed with <kbd>L:</kbd>, the detailed semantics for which are given in section <a href="#Long-Knot-Definitions">Long Knot Definitions</a>. As noted above,  to calculate the full set of invariants described in [7] two input codes are required, this may be achieved by using the same <a href="#Labelled Peer Code">labelled peer code</a> prefixed one with the long-knot specifier <kbd>L:</kbd> and one without.</p>
 
-<p>Moving the point at infinity is required since different invariants are calculated for long knots dependent on the choice of infinity.  The syntax for long knots given in section <a href="#Long-Knot-Definitions">Long Knot Definitions</a> allows the point at infinity to be moved forwards or backwards by <kbd>k</kbd> semi-arcs with respect to the orientation determined by the <a href="#Labelled Immersion Code">labelled immersion code</a>.
-
-<p>When using a <a href="#Labelled Immersion Code">labelled immersion code</a> for a long knot, the edge and vertex numbering for the immersion is essentially the same as that for a closed knot, except that edge zero is now non-compact.  Similarly, the final edge is non-compact and distinct from edge zero, hence is edge <kbd>2n</kbd>, when the immersed long-knot contains <kbd>n</kbd> crossings.  The permutation established for closed knots carries over to long knots since only incoming edges are used to determine the permutation, so the presence of edge <kbd>2n</kbd> is irrelevant.  It's presence merely produces a presentation matrix for the long knot with one more generator than relation, as described in [7].</p>
+<p>If a long knot is specified using a <a href="#Labelled Peer Code">labelled peer code</a>, the programme supports moving the point at infinity so that it is considered to belong to any semi-arc, not just the one labelled zero by the given code.  Moving the point at infinity can be useful, since different invariants are calculated for long knots dependent on the choice of infinity.  The syntax for long knots given in section <a href="#Long-Knot-Definitions">Long Knot Definitions</a> allows the point at infinity to be moved forwards or backwards by a number of semi-arcs with respect to the orientation determined by the <a href="#Labelled Peer Code">labelled peer code</a>.
 
 <p><a href="#Polynomial Invariants">back to matrix representations</a>
    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;   <a href="#_top">back to top</a>
+
 </p>
 
 <h3><a NAME="Doodle-Alexander"></a>Alexander type invariant for doodles</h3>
@@ -528,6 +580,7 @@ programme calculates both p<sup>(0)</sup> and op<sup>(0)</sup> (the determinant 
 
 <p>
    <a href="#_top">back to top</a>
+
 </p>
 
 
@@ -535,7 +588,7 @@ programme calculates both p<sup>(0)</sup> and op<sup>(0)</sup> (the determinant 
 
 <p>Although there are many implementations of the Kauffman bracket polynomial, as defined in [8], the one here arose from the code required to calculate <a href="#Knotoid Bracket Polynomial">Turaev's extended bracket polynomial for knotoids</a>, so it seemed natural to include the original bracket polynomial as well.</p>
 
-<p>This implementation takes as input either a labelled peer code or a Gauss code and supports classical and virtual knots, links or (multi-)knotoids.</p>
+<p>This implementation takes as input either a labelled peer code a Gauss code or a planar diagram and supports classical and virtual knots, links or (multi-)knotoids.</p>
 
 <p>By default, the normalized version of the bracket polynomial is calculated but, if required, adding the <kbd>no-normalize-bracket</kbd> option as a <a href="#Command-Line-Options">command line option</a> or as an <a href="#Options-In-Input-Files">input file option</a> produces the non-normalized version.</p>
 
@@ -545,16 +598,18 @@ programme calculates both p<sup>(0)</sup> and op<sup>(0)</sup> (the determinant 
 
 <p>
    <a href="#_top">back to top</a>
+
 </p>
 
 <h3><a NAME="Jones Polynomial"></a>The Jones Polynomial for Classical and Virtual Links</h3>
 
-<p>The Jones polynomial is determined from the <a href="#Kauffman Bracket Polynomial">Kauffman bracket polynomial</a>, so it's inclusion was an immediate consequence of Kauffman polynomial.  It takes the same labelled peer code or Gauss code input as the Kauffman bracket polynomial calculation.</p>
+<p>The Jones polynomial is determined from the <a href="#Kauffman Bracket Polynomial">Kauffman bracket polynomial</a>, so it's inclusion was an immediate consequence of Kauffman polynomial.  It takes the same labelled peer code, Gauss code or planar diagram input as the Kauffman bracket polynomial calculation.</p>
 
 <p>Details of the programme's calculation of the Jones polynomial may be obtained by using the <kbd>#</kbd> <a href="#Debug-Option">summary debug option</a>.</p>
 
 <p>
    <a href="#_top">back to top</a>
+
 </p>
 
 <h3><a NAME="Knotoid Bracket Polynomial"></a>Turaev's Extended Bracket Polynomial for Knotoids</h3>
@@ -562,9 +617,11 @@ programme calculates both p<sup>(0)</sup> and op<sup>(0)</sup> (the determinant 
 <p>Turaev's extended bracket polynomial is defined in [9] for classical and virtual (multi-)knotoids, which are represented diagramatically as the immersion of the interval [0,1] together with zero or more copies of the 1-sphere into the interior of
 a surface whose only singularities are double points endowed with over/under-crossing data.</p>
 
-<p>The extended bracket polynomial implementation requires a labelled peer code or immersion code as input, since it requires us to track shortcut
-crossings that are not described by Gauss codes.  Knotoids are specified as described in the section 
-<a href="#Labelled Peer Codes for Knotoids">Labelled Peer Codes for Knotoids.</a></p>
+<p>The extended bracket polynomial implementation accepts labelled peer codes, Gauss codes or planar diagram input.  Gauss codes and planar diagrams are converted to
+labelled peer codes by the implementation, since it requires to track shortcut crossings that are not described by Gauss codes or planar diagrams.  Knotoids are 
+specified as described in the sections <a href="#Labelled Peer Codes for Knotoids">Labelled Peer Codes for Knotoids</a>, 
+<a href="#Knotoid-planar-diagrams">Planar diagram description of knotoids</a> and <a href="#Knotoid-Gauss-codes">Gauss codes for knotoids</a>.</p>
+
 
 <p>By default, the normalized version of the extended bracket polynomial is calculated but, if required, adding the <kbd>no-normalize-bracket</kbd> option as a <a href="#Command-Line-Options">command line option</a> or as an <a href="#Options-In-Input-Files">input file option</a> produces the non-normalized version.</p>
 
@@ -574,12 +631,13 @@ crossings that are not described by Gauss codes.  Knotoids are specified as desc
 
 <p>
    <a href="#_top">back to top</a>
+
 </p>
 
 <h3><a NAME="Arrow Polynomial"></a>Arrow Polynomial for Classical and Virtual Knots, Links, Long Knots and Long Virtual Knots, 
 Knotoids and Multi-knotoids</h3>
 
-<p>The arrow polynomial, as defined for a variety of knots in [15], [16] [17] and [18], is supported for labelled peer codes or Gauss codes. 
+<p>The arrow polynomial, as defined for a variety of knots in [15], [16] [17] and [18], is supported for labelled peer codes, Gauss codes or planar diagrams. 
 The sections on <a href="#Long-Knot-Definitions">long knots</a> and <a href="#Labelled Peer Codes for Knotoids">knotoids</a> describe the appropriate syntax definitions for
 those categories of knots. </p>
 
@@ -597,6 +655,7 @@ adding the <kbd>zig-zag-delta</kbd> option as a <a href="#Command-Line-Options">
 
 <p>
    <a href="#_top">back to top</a>
+
 </p>
 
 <h3><a NAME="Parity Bracket Polynomial"></a>The Parity Bracket Polynomial for Classical and Virtual Knots and Knotoids</h3>
@@ -604,11 +663,12 @@ adding the <kbd>zig-zag-delta</kbd> option as a <a href="#Command-Line-Options">
 <p>Manturov's parity bracket polynomial ([20],[16],[18]) is supported for classical or virtual knots and knotoids.  Irreducible graphical components resulting from the bracket states may be considered as minimal virtual doodles, possibly containing Reidemeister I monogons.  This allows them to be
 represented and compared by evaluating their <a href="#Gauss-Code">unoriented left-preferred Gauss data</a>, which is invariant under isotopy of S<sup>2</sup>.</p>
 
-<p>Internally, the implementation maintains and manipulates irreducible graphical components as labelled per codes, which allows the handling of virtual crossings 
+<p>Internally, the implementation maintains and manipulates irreducible graphical components as labelled peer codes, which allows the handling of virtual crossings 
 and knotoid shortcuts.  Unoriented left preferred Gauss data is then calculated from the final form of these peer codes.  By adding the <kbd>show-parity-peer-codes</kbd> option as a <a href="#Command-Line-Options">command line option</a> or as an <a href="#Options-In-Input-Files">input file option</a>, the programme displays both the unoriented left-preferred Gauss data and the corresponding labelled peer code.</p>
 
-<p>The parity bracket polynomial implementation requires a labelled peer code or immersion code as input, since the implementation tracks virtual and shortcut
-crossings as part of any graphical components yielded by the calculation and these are not described by Gauss codes.</p>
+<p>The parity bracket polynomial implementation accepts labelled peer codes, Gauss codes or planar diagram input.    Gauss codes and planar diagrams are converted to
+labelled peer codes by the implementation, since the implementation tracks virtual and shortcut
+crossings as part of any graphical components yielded by the calculation and these are not described by Gauss codes or planar diagrams.</p>
 
 <p>By default, the normalized version of the parity bracket polynomial is calculated but, if required, adding the <kbd>no-normalize-bracket</kbd> option as a <a href="#Command-Line-Options">command line option</a> or as an <a href="#Options-In-Input-Files">input file option</a> produces the non-normalized version.</p> 
 
@@ -623,17 +683,19 @@ of a smoothed state.</p>
 
 <p>
    <a href="#_top">back to top</a>
+
 </p>
 
 <h3><a NAME="Parity Arrow Polynomial"></a>The Parity Arrow Polynomial for Classical and Virtual Knots and Knotoids</h3>
 
-<p>Kaestner and Kauffman's parity arrow polynomial ([21]) is supported for classical or virtual knots and, with a relaxation of conditions, classical or virtual knotoids. 
-As with the <a href="#Parity Bracket Polynomial">parity bracket polynomial</a>, irreducible graphical components are represented by <a href="#Left-Preferred">unoriented left-preferred Gauss data</a>, augmented for the parity arrow polynomial with a set of "zig-zag counters".  In the case of knots, described in [21], the zig-zag counters record the number of surviving cusps on each arc of the diagram, written as a sequence of integers in parentheses after the Gauss data, corresponding to the terms in the Gauss data, with the counters for each unicursal component separated with a comma.  Thus, the irreducible graph L1 L2, R1 R2 (1 1, 0 0) describes a graphical component with two unicursal components, including an irreducible cusp on the arc terminating at crossing 1 having left parity (the L1 term) and one on the arc terminating at the L2 term.</p>
+<p>Kaestner and Kauffman's parity arrow polynomial ([18]) is supported for classical or virtual knots and, with a relaxation of conditions, classical or virtual knotoids. 
+As with the <a href="#Parity Bracket Polynomial">parity bracket polynomial</a>, irreducible graphical components are represented by <a href="#Left-Preferred">unoriented left-preferred Gauss data</a>, augmented for the parity arrow polynomial with a set of "zig-zag counters".  In the case of knots, described in [18], the zig-zag counters record the number of surviving cusps on each arc of the diagram, written as a sequence of integers in parentheses after the Gauss data, corresponding to the terms in the Gauss data, with the counters for each unicursal component separated with a comma.  Thus, the irreducible graph L1 L2, R1 R2 (1 1, 0 0) describes a graphical component with two unicursal components, including an irreducible cusp on the arc terminating at crossing 1 having left parity (the L1 term) and one on the arc terminating at the L2 term.</p>
 
 <! pIn the case that all of the unicursal components of the graphical component are loops, the graphical component is referred to as closed and may be regarded as a flat 
 virtual link. For such a closed component, the The number of zig-zag counters is the same as the number of terms in the Gauss data: >
 
-<p>As with the parity bracket polynomial, internally the implementation maintains irreducible graphical components as labelled per codes and by adding the <kbd>show-parity-peer-codes</kbd> option as a <a href="#Command-Line-Options">command line option</a> or as an <a href="#Options-In-Input-Files">input file option</a>, the programme displays both the unoriented left-preferred Gauss data and the corresponding labelled peer code.</p>
+<p>The parity arrow polynomial implementation accepts labelled peer codes, Gauss codes or planar diagram input, with Gauss codes and planar diagrams being converted to
+labelled peer codes by the implementation.  As with the parity bracket polynomial, internally the implementation maintains irreducible graphical components as labelled peer codes and by adding the <kbd>show-parity-peer-codes</kbd> option as a <a href="#Command-Line-Options">command line option</a> or as an <a href="#Options-In-Input-Files">input file option</a>, the programme displays both the unoriented left-preferred Gauss data and the corresponding labelled peer code.</p>
  
 <p>For the parity arrow polynomial, labelled peer codes are also augmented with a sequence of zig-zag counters but in the case of peer codes, the counters are written in an order that corresponds to the cusps remaining on the even and odd terminating edges at each crossing, with the even terminating edge counts presented first.  Thus, the irreducible graph [-5 -7, -1 -3]/# # * * (0 0 0 0 -1 1 0 0) has no surviving cusps on any of the even terminating edges and has one surviving cusp on the odd 
 terminating edges at crossings zero and one.  The sign associated with the counts displayed with the peer codes indicates the nature of the first cusp on the 
@@ -647,11 +709,12 @@ corresponding edge when traversing that edge according to the orientation induce
 
 <p>
    <a href="#_top">back to top</a>
+
 </p>
 
 <h4><a NAME="Relaxed Parity Arrow Polynomial"></a>Relaxed parity arrow polynomial</h4>
 
-It is not possible to apply the definition of the parity arrow polynomial given in [21] to knotoids and obtain an invariant, since the reduction skein relations do not produce well defined irreducible graphical components for knotoids.  An example is shown below, where the choice of Reidemeister II move determines whether a surviving cusp occurs on the arc between the head of the knotoid and an odd crossing, or on an arc between odd crossings.
+It is not possible to apply the definition of the parity arrow polynomial given in [18] to knotoids and obtain an invariant, since the reduction skein relations do not produce well defined irreducible graphical components for knotoids.  An example is shown below, where the choice of Reidemeister II move determines whether a surviving cusp occurs on the arc between the head of the knotoid and an odd crossing, or on an arc between odd crossings.
 
 <p style="margin-left: 2cm"><img SRC="braid-user-documentation-html-files/knotoid.png"></p>
 
@@ -680,6 +743,7 @@ K[-3 -5 -1]/# # * (0,1 0 0 0 -1 0) describes an irreducible component that may b
 
 <p>
    <a href="#_top">back to top</a>
+
 </p>
 
 <h3><a NAME="Affine Index Polynomial"></a>Kauffman's Affine Index Polynomial for virtual knots or knotoids</h3>
@@ -701,6 +765,7 @@ Although it is a simple polynomial to calculate by hand for a given knot diagram
 
 <p>
    <a href="#_top">back to top</a>
+
 </p>
 
 <h2><a NAME="The-Vogel-Algorithm"></a>6. The Vogel Algorithm</h2>
@@ -718,6 +783,7 @@ vogel.pdf</a> from the braid programme website.</p>
 
 <p>
    <a href="#_top">back to top</a>
+
 </p>
 
 <h2><a NAME="Sawollek"></a>7. Sawollek Normalized Conway polynomial</h2>
@@ -744,22 +810,39 @@ it may therefore be used as test that the closure is indeed connected. (Labelled
 
 <p>The <a href="#Labelled Peer Code">labelled peer code</a> is described in a <a href="http://www.layer8.co.uk/maths/download/labelled-peer-code.pdf">pdf document</a> from the braid programme website, and there is a brief description in the section <a href="#Labelled Peer Code"> Labelled Peer Code</a>.  The peer code option will determine a labelled peer code from a braid word or a labelled immersion code, or may be used to renumber a link diagram described by a labelled peer code.</p>
 
-<p>The peer code option may also be used to convert Gauss codes of classical, virtual or flat links, or of doodles, into labelled peer codes.  The algorithm for 
-identifying any virtual crossings that may need to be added in order to realize a given Gauss code is based on that used by Jeremy Green to produce his table of 
-virtual knot diagrams from Gauss codes.  The implementation here has been extended to minimize the number of virtual crossings added by considering all possible 
-choices of initial crossing. 
+<p>The peer code option may also be used to convert Gauss codes or planar diagrams of classical, virtual or flat links, or of doodles, into labelled peer codes.  
+The algorithm for identifying any virtual crossings that may need to be added in order to realize a given Gauss code is based on that used by Jeremy Green to 
+produce his table of virtual knot diagrams from Gauss codes.  The implementation here has been extended to minimize the number of virtual crossings added by 
+considering all possible choices of initial crossing and optimizing the gathering of strands that match the next crossing to be added to the diagram. 
 </p>
 
 <p>
    <a href="#_top">back to top</a>
+
 </p>
 
 <h3><a NAME="Gauss-Code"></a>Gauss Code and Gauss Data</h3>
 
-<p>The Gauss code task accepts a labelled peer code, labelled immersion code or a braid word as input, the input code may describe either a classical or virtual knot or link, or a classical or virtual (multi-)knotoid.  The default Gauss code task calculates the standard Gauss code based on either classical or flat crossings, together with an indication of whether the crossings are positive or negative.  Virtual crossings are ignored when calculating the Gauss code.  Details of the code format are given in the section <a href="#Gauss-Code-Definitions">Gauss Code Definitions</a>.</p>
+<p>The Gauss code task accepts a labelled peer code, labelled immersion code, Gauss code, planar diagram or braid word as input.  The input code may describe either a classical or virtual knot or 
+link, or a classical or virtual (multi-)knotoid.  The default Gauss code task calculates the standard Gauss code based on either classical or flat crossings, together with an 
+indication of whether the crossings are positive or negative.  Virtual crossings are ignored when calculating the Gauss code.  Details of the code format are given in the section 
+<a href="#Gauss-Code-Definitions">Gauss Code Definitions</a>.</p>
 
 <p>The Gauss code produced by this task is based on the edge numbering described by the input code.  In the case of a labelled peer code or labelled immersion code, the Gauss
 code is determined by starting at edge zero and following the orientation inherited by the edge labels, with the crossings numbered as in the input code.  For braid input, the tracing starts at the beginning of strand zero and subsequent components enumerated by searching from strand zero sequentially for new strands that have not been traced.  The crossings are numbered according to the braid terms. </p> 
+
+<h4><a NAME="OU-format-output"></a>OU format Gauss codes</h4>
+
+<p>If the long programme option <kbd>OU-format</kbd> is given, the Gauss code task writes its output codes in the "over and under" format for Gauss codes.
+That is, it produces a a sequence of terms of the form (O|U)&lt;crossing-num>&lt;crossing-sign>.  For example, the labelled peer code 
+<kbd>[-7 13 -11 -1 3 -5 9]/+ + - + + - - </kbd> written as a Gauss code in over and under format is <kbd>O1-U2-O3+U4+U5+O6+O2-U1-O4+O7-U6+O5+U7-U3+</kbd>.</p>
+
+<h4><a NAME="PD-format-output"></a>Planar diagram format Gauss codes</h4>
+
+<p>If the long programme option <kbd>PD-format</kbd> is given, the Gauss code task writes its output codes as planar diagrams.  For example, the Gauss code
+<kbd>O1-U2-O3+U4+U5+O6+O2-U1-O4+O7-U6+O5+U7-U3+</kbd> in <kbd>PD-format</kbd> is 
+<kbd>X[8,1,9,2] X[2,7,3,8] X[14,4,1,3] X[4,10,5,9] X[5,13,6,12] X[11,7,12,6] X[13,10,14,11]</kbd></p>
+
 
 <h4><a NAME="Left-Preferred"></a>Left preferred and unoriented left preferred Gauss data</h4>
 
@@ -794,8 +877,28 @@ knotoid or a long knot, this may not be the case.</p>
       
 <p>Adding the <kbd>ulpgd</kbd> option causes the programme to evaluate the unoriented left preferred gauss data, obtained by considering the left preferred Gauss code corresponding to all combinations of unicursal loop component orientations and taking the lexicographically minimum amongst them.</p>
 
+<h4><a NAME="Over-Preferred"></a>Over preferred and unoriented over preferred Gauss code</h4>
+
+<p>  By analogy to the left preferred and unoriented left preferred Gauss data, the programme supports the evaluation of an "Over preferred" Gauss code
+that is a unique representation of a virtual diagram, suitable for virtual knots and links, welded knots and links, virtual knotoids and multiknotoids.  
+It mimics the left preferred Gauss code described above for doodles with preference given to over-crossings rather than under-crossings and adds a 
+comparison of crossing signs, with positive crossings preferred to negative crossings.</p>
+
+<p> The over preferred Gauss code for a diagram is one that describes the diagram containing O1, ..., On as a subsequence and is lexicographically 
+minimal amongst all such codes. </p>
+   
+<p> For each given orientation of the unicursal components, all possible orderings of the components are considered and all possible starting positions 
+around the component relative to the starting location implicit within the input code.  For each combination of component ordering and starting position, 
+a Gauss code is evaluated where the crossing numbering is determined by the order in which they are first encountered.  The crossing signs are then appended 
+and the resulting codes compared lexicographcally.</p>  
+
+<p>The unoriented variant of the task considers both orientations of each unicursal component in all combinations.</p>
+
+<p>Adding the <kbd>opgc</kbd> option as a <a href="#Command-Line-Options">command line option</a> or as an <a href="#Options-In-Input-Files">input file option</a> causes the programme to evaluate the (oriented) over preferred Gauss code.  Adding the <kbd>uopgc</kbd> option causes the programme to evaluate the unoriented over preferred gauss code</p>
+
 <p>
    <a href="#_top">back to top</a>
+
 </p>
 
 <h3><a NAME="Satellites"></a>Satellite links</h3>
@@ -821,6 +924,7 @@ of n defaults to 2.
 
 <p>
    <a href="#_top">back to top</a>
+
 </p>
 
 <h3><a NAME="Renumbering-Labelled-Peer-Codes"></a>Renumbering Labelled Peer Codes</h3>
@@ -860,6 +964,7 @@ The shift vector is appended to the labelled peer code input in the form of a <i
       
 <p>
    <a href="#_top">back to top</a>
+
 </p>
 
 <h2><a NAME="Command-Line-Options"></a>10. Command Line Options</h2>
@@ -880,17 +985,17 @@ The shift vector is appended to the labelled peer code input in the form of a <i
 <kbd>dowker</kbd>: calculate the Dowker code for the closure of the braid, provided it is a knot <br>
 <kbd>dynnikov</kbd>: carry out the Dynnikov test to determine whether the braid is trivial or not <br>
 <kbd>fixed-point</kbd>: evaluate the fixed-point invariant of a braid <br>
-<kbd>gauss</kbd>: evaluate Gauss code of a braid<br>
+<kbd>gauss</kbd>: evaluate a Gauss code of a <br>
 <kbd>homfly</kbd>: evaluate the HOMFLY polynomial for the closure of a braid<br>
 <kbd>info</kbd>: display status information (currently just the number of components) for the braid<br>
-<kbd>immersion</kbd>: evaluate labelled immersion code<br>
+<kbd>immersion</kbd>: evaluate a labelled immersion code<br>
 <kbd>jones-polynomial</kbd>: evaluate the Jones polynomial for a classical or virtual link<br>
 <kbd>kauffman-bracket</kbd>: evaluate the Kauffman polynomial for a classical or virtual link<br>
 <kbd>knotoid-bracket</kbd>: evaluate the Turaev extended bracket polynomial for a knotoid<br>
 <kbd>matrix</kbd>: evaluate matrix switch polynomial invariants<br>
 <kbd>parity-arrow</kbd>: evaluate Kaestner and Kauffman's the parity arrow polynomial<br>
 <kbd>parity-bracket</kbd>: evaluate Manturov's parity bracket polynomial<br>
-<kbd>peer</kbd>: evaluate labelled peer code<br>
+<kbd>peer</kbd>: evaluate a labelled peer code<br>
 <kbd>quaternion</kbd>: evaluate quaternionic switch polynomial invariants<br>
 <kbd>rack-polynomial</kbd>: evaluate the finite switch polynomial invariants<br>
 <kbd>satellite[=n]</kbd>: evaluate the peer code of the n-parallel cable satellite of a knot's peer code, n defaults to 2<br>
@@ -976,6 +1081,7 @@ input braid.   In both cases, the programme displays wait informaiton, or "comfo
 <p><a href="#Command-Line-Options">back to command line options</a>
    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
    <a href="#_top">back to top</a>
+
 </p>
 
 <h3><a NAME="Debug-Option"></a>Generating debugging output</h3>
@@ -1042,6 +1148,7 @@ bracket_polynomial: bracket_polynomial = -A^-2-A^2
 
 <p>
    <a href="#_top">back to top</a>
+
 </p>
 
 <h3>Example command lines</h3>
@@ -1068,6 +1175,7 @@ the display of <a href="#Wait-information">wait information</a> with the wait th
 <p><a href="#Command-Line-Options">back to command line options</a>
    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
    <a href="#_top">back to top</a>
+
 </p>
 
 <h2><a NAME="Input-File-Format"></a>11. Input File Format</h2>
@@ -1094,7 +1202,7 @@ and may contain comments and whitespace.  </p>
 
 <h3><a NAME="Title-Lines"></a>Title Lines</h3>
 
-<p>If a line in the input file begins with two consecutive dash (<kbd>-</kbd>) characters then the text on that line is considered by the programme to be a title for the next switch definition, braid statement, labelled peer code, labelled immersion code or Gauss code.  When reading the input file for the next switch or input data, the programme records any titles it encounters, the 
+<p>If a line in the input file begins with two consecutive dash (<kbd>-</kbd>) characters then the text on that line is considered by the programme to be a title for the next switch definition, braid statement, labelled peer code, labelled immersion code, Gauss code or planar diagram.  When reading the input file for the next switch or input data, the programme records any titles it encounters, the 
 last of which is associated with the next switch or data input line it finds.</p>
 
 <p>Here is an example of a title line.</p>
@@ -1103,7 +1211,7 @@ last of which is associated with the next switch or data input line it finds.</p
 
 <p>Titles may comprise any text that usefully identifies the corresponding braid or code; notice that title lines may also contain comments, which are removed before the title is processed.</p>
 
-<p>The programme will scan the input file either for the particular input types the selected task is prepared to accept (eith braid words, labelled peer codes, labelled immersion codes, or Gauss codes) and ignores lines it is not looking for.  Thus, if an input file contains both a braid word and a code for the same link, you can use the same title for each, as in the following: </p>
+<p>The programme will scan the input file either for the particular input types the selected task is prepared to accept (either braid words, labelled peer codes, labelled immersion codes, Gauss codes or planar diagrams) and ignores lines it is not looking for.  Thus, if an input file contains both a braid word and a code for the same link, you can use the same title for each, as in the following: </p>
 
 <p style="margin-left: 1cm"><kbd>
      -- The figure 8 knot 
@@ -1132,6 +1240,7 @@ last of which is associated with the next switch or data input line it finds.</p
 <p><a href="#Input-File-Format">back to input file format</a>
    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
    <a href="#_top">back to top</a>
+
 </p>
 
 <h3><a NAME="Braid-Definitions"></a>Braid Definitions</h3>
@@ -1246,6 +1355,7 @@ s1s3s2s1s3s2s1s3s2{doodle}
 
 <p><a href="#Input-File-Format">back to input file format</a>
    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;   <a href="#_top">back to top</a>
+
 </p>
 
 <h3><a NAME="Switch-Definitions"></a>Switch Definitions</h3>
@@ -1452,6 +1562,7 @@ definitions are likely to result in matrix representations whose determinants ta
 <p><a href="#Input-File-Format">back to input file format</a>
    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
    <a href="#_top">back to top</a>
+
 </p>
 
 <h3><a NAME="Gauss-Code-Definitions"></a>Gauss Code Definitions</h3>
@@ -1482,6 +1593,8 @@ specifications of Gauss codes:</p>
 
 <p><B>Note: the line break caracter '</B><kbd>\</kbd><B>'may not appear after the '</B><kbd>/</kbd><B>', 
 since the programme uses the '</B><kbd>/</kbd><B>' as the indication that the Gauss code is complete.</B></p>
+
+<h3><a NAME="Planar-Diagram-Definitions"></a>Planar Diagram Definitions</h3>
 
 <h3><a NAME="Labelled-Peer-Code-Definitions"></a>Labelled Peer Code Definitions</h3>
 
@@ -1544,6 +1657,7 @@ required when using the <kbd>alexander</kbd> <a href="#Command-Line-Options">pro
 <p><a href="#Input-File-Format">back to input file format</a>
    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
    <a href="#_top">back to top</a>
+
 </p>
 
 <h3><a NAME="Labelled-Immersion-Code-Definitions"></a>Labelled Immersion Code Definitions</h3>
@@ -1598,11 +1712,9 @@ is prefixed with <kbd>K:</kbd> to indicate that it should be considered as a kno
 
 <h3><a NAME="Long-Knot-Definitions"></a>Long Knot Definitions</h3>
 
-<p>Long knots, as discussed in section <a href="#Long-Knots">Long Knots</a>, are specified in the input file using a labelled peer code as described in sections 
-<a href="#Labelled Peer Code">Entering Labelled Peer Codes</a>  
-and <a href="#Labelled-Peer-Code-Definitions">Labelled Peer Code Definitions</a>, prefixed with <kbd>L:</kbd>, indicating a long knot.</p>
-
-<p>The <kbd>L</kbd> prefix indicates to the programme that the edge numbering of the immersion is not carried out modulo <kbd>2n</kbd> and that the long knot invariants described in section <a href="#Long-Knots">Long Knots</a> should be calculated.</p>
+<p>Long knots, as discussed in section <a href="#Long-Knots">Long Knots</a>, are specified in the input file using either labelled peer codes or Gauss codes, as described in sections 
+<a href="#Labelled Peer Code">Entering Labelled Peer Codes</a>, <a href="#Labelled-Peer-Code-Definitions">Labelled Peer Code Definitions</a> and <a href="#Gauss Codes">Gauss Codes</a>, 
+prefixed with <kbd>L:</kbd>, indicating a long knot.</p>
 
 <p>The following are examples of long knot specifications:</p>
 
@@ -1614,7 +1726,7 @@ and <a href="#Labelled-Peer-Code-Definitions">Labelled Peer Code Definitions</a>
 <br>
 </kbd></p>
 
-As described in section <a href="#Long-Knots">Long Knots</a> it is possible to move the point at infinity and calculate different invariants for long knots.   This moving of the point at infinity is specified by following the long-knot specifier <kbd>L</kbd> by a plus or minus sign and a number, indicating that the point at infinity be moved forwards (<kbd>+</kbd>) or backwards (<kbd>-</kbd>) by the specified number of edges.  The following examples demonstrate this syntax:</p>
+As described in section <a href="#Long-Knots">Long Knots</a>, when specified by a <a href="#Labelled Peer Code">labelled peer code</a>, it is possible to move the point at infinity and calculate different invariants for long knots.   A change to the point at infinity is indicated by following the long-knot specifier <kbd>L:</kbd> by a plus or minus sign and a number, indicating that the point at infinity be moved forwards (<kbd>+</kbd>) or backwards (<kbd>-</kbd>) by the specified number of edges.  The following examples demonstrate this syntax:</p>
 
 <p style="margin-left: 1cm"><kbd>
     -- the fly with infinity moved backwards 1 edge
@@ -1624,21 +1736,25 @@ As described in section <a href="#Long-Knots">Long Knots</a> it is possible to m
 <br>
 </kbd></p>
 
-<p><b>Note:</b> no spaces may appear between the <kbd>L</kbd> and the initial <kbd>(</kbd> character.</p>
+<p><b>Note:</b> no spaces may appear amongst the characters between the <kbd>L</kbd> and the start of the code; that is, either side of the <kbd>:</kbd> or the specification of a new
+location for the point at infinity.</p>
 
-<p>In addition to specifying individual long knots the programme is capable of handling the concatenation product for long knots.  An input file may specify two or more long knots to be concatenated in a single line of the input file using the <kbd>~</kbd> character to separate the factors.  The syntax for each of the long knots to be concatenated is as specified above, and each may specify a shift in the point at infinity.  If the point at infinity of a long knot factor is moved, the move is processed prior to the component being concatenated with the other factors.</p>
+<p>In addition to specifying individual long knots, when specified using labelled peer codes, the programme is capable of handling the concatenation product for long knots.  An input file may specify two or more long knots to be concatenated in a single line of the input file using the <kbd>~</kbd> character to separate the factors.  The syntax for each of the long knots to be concatenated is as specified above, and each may specify a shift in the point at infinity.  If the point at infinity of a long knot factor is moved, the move is processed prior to the component being concatenated with the other factors.</p>
 
 <p>An arbitrary number of spaces or tabs may appear either side of the <kbd>~</kbd> character but the entire concatenation specification must appear on a single line in the input file.</p>
 
 <p>The following is an example of the concatenation product specification in an input file:</p>
 
 <p style="margin-left: 1cm"><kbd>
-L:+2(0 4 2)(1 3)/+ - * + +~ L:-3(0 4 2) (-1 -3)/+ + - + * ~ L:(0 4 2)(1 3)/+ * - + -
+L:+2[-5 -9 -7 -1 -3]/+ + * + +~ L:-3[-7 -5 -9 -1 -3]/+ * + + + ~ L:[9 11 -7 -3 -5 1]/- - * - - *
 </kbd></p>
+
+<p>Concatenation of long knots specified by Gauss codes is not currently supported.</p>
 
 <p><a href="#Input-File-Format">back to input file format</a>
    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
    <a href="#_top">back to top</a>
+
 </p>
 
 <h3><a NAME="Options-In-Input-Files"></a>Putting Programme Options Into Input Files</h3>
@@ -1679,22 +1795,25 @@ L:+2(0 4 2)(1 3)/+ - * + +~ L:-3(0 4 2) (-1 -3)/+ + - + * ~ L:(0 4 2)(1 3)/+ * -
 <kbd>kauffman-bracket</kbd>: evaluate the normalized Kauffman bracket polynomial <br>
 <kbd>knotoid-bracket</kbd>: evaluate the Turaev extended bracket polynomial for a knotoid <br>
 <kbd>line-reflect</kbd>: reflect all the braids in the file in a horizontal line drawn south of the braid<br>
-<kbd>lpgd</kbd>: calculate the left preferred Gauss code, rather than a standard gauss code<br>
+<kbd>lpgd</kbd>: calculate the left preferred Gauss data, rather than a standard gauss code<br>
 <kbd>matrix</kbd>: evaluate matrix switch polynomial invariants<br>
-<kbd>mod-p=&#060;p&#062;</kbd>: calculate mod p using the specified value for p (only used for non-Weyl algebra switches)<br>
+<kbd>mod-p=&lt;p&gt;</kbd>: calculate mod p using the specified value for p (only used for non-Weyl algebra switches)<br>
 <kbd>no_auto_delta1</kbd>: only calculate Delta<sub>1</sub> if Delta<sub>0</sub>=0 (the default is always to calculate delta_1 <br>
 <kbd>no-even-writhe</kbd>: normalize the parity bracket polynomial with the full writhe rather than the even writhe<br>
 <kbd>no-expanded-bracket</kbd>: do not expand D=(-A^2-A^{-2}) in bracket polynomials<br>
 <kbd>no-normalize-bracket</kbd>: do not normalize bracket polynomial invariants<br>
 <kbd>normalize-quaternions</kbd>: normalize quaternionic polynomial invariants<br>
+<kbd>opgc</kbd>: calculate the over preferred Gauss code, rather than a standard gauss code<br>
+<kbd>OU-format</kbd>: write Gauss codes as a sequence (O|U)&lt;crossing-num>&lt;crossing-sign><br>
 <kbd>parity-arrow</kbd>: evaluate Kaestner and Kauffman's the parity arrow polynomial<br>
 <kbd>parity-bracket</kbd>: evaluate the normalized parity bracket polynomial <br>
+<kbd>PD-format</kbd>: write Gauss codes in planar diagram format<br>
 <kbd>peer</kbd>: evaluate labelled peer code<br>
 <kbd>plane-reflect</kbd>: reflect all the braids in the file in the plane of the page <br>
-<kbd>power=&#060;n&#062;</kbd>: causes the programme to evaluate the specified power of a switch and write the result to the output file<br>
+<kbd>power=&lt;n&gt;</kbd>: causes the programme to evaluate the specified power of a switch and write the result to the output file<br>
 <kbd>quaternion</kbd>: evaluate quaternionic switch polynomial invariants<br>
 <kbd>rack-polynomial</kbd>: evaluate the rack polynomial for the specified braids<br>
-<kbd>rack-terms=&#060;k&#062;</kbd>: set the global value k for the number of terms used to calculate rack polynomials<br>
+<kbd>rack-terms=&lt;k&gt;</kbd>: set the global value k for the number of terms used to calculate rack polynomials<br>
 <kbd>raw-output</kbd>: produce raw output, that is the result only without descriptive text<br>
 <kbd>reflect-braid</kbd>: reflect all the braids in the input file<br>
 <kbd>rho</kbd>: use the Study rho mapping for calculating Study determinants <br>
@@ -1704,9 +1823,10 @@ L:+2(0 4 2)(1 3)/+ - * + +~ L:-3(0 4 2) (-1 -3)/+ + - + * ~ L:(0 4 2)(1 3)/+ * -
 <kbd>show-varmaps</kbd>: show variable mappings instead of substituting mapped variables in polynomial output<br>
 <kbd>silent</kbd>: do not generate any output to the command line (stdout), used for batch processing<br>
 <kbd>TeX-polynomials</kbd>: display output polynomials in TeX format (not supported for the Jones polynomial)<br>
-<kbd>ulpgd</kbd>: calculate the unoriented left preferred Gauss code, rather than a standard gauss code<br>
+<kbd>ulpgd</kbd>: calculate the unoriented left preferred Gauss data, rather than a standard gauss code<br>
+<kbd>uopgc</kbd>: calculate the unoriented over preferred Gauss code, rather than a standard gauss code<br>
 <kbd>vogel</kbd>: apply the vogel algorithm to a labelled peer code <br>
-<kbd>wait[=&#060;n&#062;]</kbd>:  force <a href="#Wait-information"> wait information </a> to be displayed <br>
+<kbd>wait[=&lt;n&gt;]</kbd>:  force <a href="#Wait-information"> wait information </a> to be displayed <br>
 <kbd>weyl</kbd>: evaluate Weyl algebra switch polynomial invariants<br>
 <kbd>zig-zag-delta</kbd>: include delta with K_i and Lambda_i variables when calculating the arrow polynomial<br>
 </p>
@@ -1739,6 +1859,7 @@ links contained in <kbd>fred</kbd></p>
 <p><a href="#Input-File-Format">back to input file format</a>
    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
    <a href="#_top">back to top</a>
+
 </p>
 
 <h3><a NAME="Exit-In-Input-Files"></a>Premature Termination of an Input Files</h3>
@@ -1750,6 +1871,7 @@ links contained in <kbd>fred</kbd></p>
 <p><a href="#Input-File-Format">back to input file format</a>
    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
    <a href="#_top">back to top</a>
+
 </p>
 
 <h3>Example Input File</h3>
@@ -1829,6 +1951,7 @@ S = a, 0, 0, a/a-1, b, c, b^2+a-1/c-ca, b/1-a
 <p><a href="#Input-File-Format">back to input file format</a>
    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
    <a href="#_top">back to top</a>
+
 </p>
 
 <h2><a NAME="Version-History"></a>12. Version History</h2>
@@ -1923,8 +2046,18 @@ or virtual knots or knotoids.  Added the parity arrow polynomial for classical o
 codes based on Jeremy Green's algorithm for drawing virtual knots and links from Gauss codes.  Added support for reading Gauss codes of the form 
 sequence{(O|U)<crossing-num><crossing-sign>, e.g. O1-O2+U1-O3+O4+U2+U3+U4+
 </p>
+
+<p>Version 24.0 (December 2021) Added the opgc and uopgc options to the Gauss code task, added OU format for Gauss code output.  Added support for knotoids and long-knots 
+to be specified via Gauss codes using the "K:" and "L:" syntax.</p>
+
+<p>Version 25.0 (March 2022) Added planar diagram support as an alternative input format, added support for Gauss code and planar diagram input to the knotoid bracket, 
+parity bracket and parity arrow polynomial tasks.</p>
+
    <a href="#_top">back to top</a>
+
 </p>
+
+<p>Version 25.0  (March 2022) Added planar diagram support as an alternative input format and the PD-format output option for Gauss codes.</p>
 
 <h2><a NAME="Bug-Tracker"></a>13. Bug Tracker</h2>
 
@@ -1955,6 +2088,7 @@ caused the bigint division operator to generate a floating point exception.  Thi
 
 <p>
    <a href="#_top">back to top</a>
+
 </p>
 
 <h2>References:</h2>
@@ -1980,10 +2114,10 @@ caused the bigint division operator to generate a floating point exception.  Thi
 <p>[18] A. Kaestner, L, H, Kauffman, Parity, Skein Polynomials and Categorification, arXiv:1110.4911v1</p>
 <p>[19] B. Cisneros, M. Flores, J. Juyumaya, C.Roque-Márquez, An Alexander type invariant for doodles, arXiv:2005.06290v1</p>
 <p>[20] V. O. Manturov. Parity in knot theory. (Russian) Mat. Sb. 201 (2010), no. 5, 65–110; translation in Sb. Math. 201 (2010), no. 5-6, 693733.</p>
-<p>[21] A. Kaestner, L. H. Kauffman, Parity, Skein Polynomials and Categorification, arXiv:1110.4911</p>
 
 <p>
    <a href="#_top">back to top</a>
+
 </p>
 
 </body>
