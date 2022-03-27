@@ -6,6 +6,8 @@ used by the programme
 
 #include <hash-defs.h>
 #include <braid-control.h>
+#include <braid-util.h>
+#include <debug-control.h>
 #include <generic-code.h>
 
 template <class T> class Rational : public rational<T>
@@ -305,20 +307,3 @@ if (rational_control::DEBUG)
 	}
 	return result;
 }
-
-
-/* next the class structure for tracking the crossing labels when converting Gauss codes to labelled peer codes */
-
-class gc_pc_xlabels
-{
-	public:
-	
-	pair<int,int> gauss;
-	pair<int,int> immersion;
-	
-	enum move {X01, X02, X11, X12, X21, X22, X31, X32, X41, X42, X2OV1, X2OV2, X2UV1, X2UV2, V, I, WL, WR, C, END};
-	enum direction {UNKNOWN,UPWARDS,DOWNWARDS,SIDEWAYS};
-	
-	gc_pc_xlabels(): gauss({-1,-1}), immersion({-1,-1}) {}
-	
-};

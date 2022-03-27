@@ -20,9 +20,11 @@
    zig-zag counts in the order corresponding to the terms of the orientation matrix and not indexed by the crossing
    numbers.
    
-   In the current implementation, zig_zag_count data is only added when constructing gauss_orientation_data from a 
+NB In the current implementation, zig_zag_count data is only added when constructing gauss_orientation_data from a 
    labelled peer code.  The gauss_orientation_data records the absolute value of the count, not the sign recorded in
    generic_code_data.
+   
+NB In the curent implementation the classical_gauss_data and classical_crossing_sign are only added when extended_version = false
 */    
 class gauss_orientation_data
 {
@@ -35,6 +37,9 @@ public:
 	vector<int>		immersion_crossing; // maps Gauss data crossings to immersion crossings
 	matrix<int> 	zig_zag_count;  // used by parity arrow polynomial 2 x num_terms/2 matrix
 	matrix<int>		orientation_matrix; // columns of row[0] = LEFT|RIGHT row[1] = <crossing-number>
+	
+	vector<int>		classical_gauss_data;
+	vector<int>		classical_crossing_sign;
 	
 	enum {LEFT = 3, RIGHT = 4};  // only need LEFT < RIGHT; values align with generic_code_data, just because...
 	enum parity {NONE = 0, ODD = 1, EVEN = 2};  
