@@ -1,5 +1,5 @@
 
-;                          Input file for braid programme version 23.0
+;                          Input file for braid programme version 25.0
 
 
 ; An input file may contain one or more braid definitions together with
@@ -53,8 +53,11 @@
 ;[no-expanded-bracket]    ; do not expand D=(-A^2-A^{-2}) in bracket polynomials
 ;[no-normalize-bracket]   ; do not normalize bracket polynomial invariants
 ;[normalize-quaternions]  ; normalize quaternionic polynomial invariants
+;[opgc]                   ; calculate the over preferred Gauss code, rather than a standard gauss code\n";
+;[OU-format]              ; write Gauss codes as a sequence (O|U)<crossing-num><crossing-sign>\n";
 ;[parity-arrow]           ; evaluate Kaestner and Kauffman's parity arrow polynomial
 ;[parity-bracket]         ; evaluate the Manturov parity bracket polynomial
+;[PD-format]              ; write Gauss codes in planar diagram format\n";
 ;[peer]                   ; evaluate labelled peer code
 ;[plane-reflect]          ; reflect all the braids in the file in the plane of the page
 ;[power=n]                ; evaluate the nth power of the switch when calculating switch polynomial invariants
@@ -64,6 +67,7 @@
 ;[raw-output]             ; produce raw output, that is the result only without descriptive text
 ;[reflect-braid]          ; reflect all the braids in the input file
 ;[relaxed-parity]         ; evaluate the relaxed variant of the parity arrow polynomial
+;[remove=n]               ; remove the n-th component from a peer code
 ;[rho]                    ; use the Study rho mapping for calculating Study determinants
 ;[satellite[=n]]          ; calculate the peer code of the n-parallel cable satellite of a knot's peer code (default n=2)
 ;[sawollek]               ; evaluate Sawolleks normalized Conway polynomial
@@ -71,7 +75,8 @@
 ;[show-varmaps]           ; show variable mappings instead of substituting mapped variables in polynomial output
 ;[silent]                 ; do not generate any output to the command line (stdout)
 ;[TeX-polynomials]        ; display output polynomials in TeX format (not supported for the Jones polynomial)
-;[ulpgd]                  ; calculate the unoriented left preferred Gauss code, rather than a standard gauss code
+;[ulpgd]                  ; calculate the unoriented left preferred Gauss data, rather than a standard gauss code
+;[uopgc]                  ; calculate the unoriented over preferred Gauss code, rather than a standard gauss code
 ;[vogel]                  ; use the Vogel algorithm to determine an equivalent braid word
 ;[wait[=n]]               ; display determinant wait information, (based on nxn minors, so larger n produces less frequent output)
 ;[weyl]                   ; Weyl algebra switch polynomial invariant 
@@ -403,3 +408,16 @@ s1s2s1t2-s1-s2-s1t2
 ; Gauss codes for doodles are similarly specified using left and right:
 L1 L2 R1 R2 L3 L4 R3 R4 / # # # #
 
+; Planar diagram data
+; ===================
+
+; We use the standard convention of starting at the ingress under-arc and working around the crossings anti-clockwise
+;X[4,2,5,1] X[2,9,3,8] X[9,4,10,3] X[11,6,1,5] X[7,11,8,10], X[12,7,12,6]
+
+; You can split PD input over multiple lines using the escape character '\'
+;X[1,10,2,11] X[9,2,10,3] X[3,7,4,6] X[15,5,16,4] \
+;  X[5,17,6,16] X[7,14,8,15] X[8,18,9,17] X[11,18,12,19] \
+;  X[19,12,20,13] X[13,20,14,1] {rotate=180}
+
+; Knotoids are prefixed with "K:", the leg crossing must appear first
+K:X[4,1,5,2] X[2,6,3,7] X[7,3,8,4] X[5,8,6,9] X[9,11,10,12] X[10,12,11,1] {shortcut}

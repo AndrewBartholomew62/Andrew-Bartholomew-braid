@@ -1,4 +1,4 @@
-                     Braid v23.0 Help Information
+                     Braid v25.0 Help Information
 
 This programme was originally designed to carry out a number of tasks relating to 
 virtual, and consequently classical, braids.  It has evolved to include tasks that
@@ -99,17 +99,22 @@ that may appear as an input file programme option may be used as a <long_option>
     no-expanded-bracket     do not expand D=(-A^2-A^{-2}) in bracket polynomials
     no-normalize-bracket    do not normalize bracket polynomial invariants
     normalize-quaternions   normalize quaternionic polynomial invariants
+    opgc                    calculate the over preferred Gauss code, rather than a standard gauss code;
+    OU-format               write Gauss codes as a sequence (O|U)<crossing-num><crossing-sign>;
+    PD-format               write Gauss code as a planar diagram
     plane-reflect           reflect all the braids in the file in the plane of the page
     power=n                 evaluate the nth power of the switch when calculating switch polynomial invariants
     rack-terms=k            set the global valu k for the number of terms to consider for rack-polynomials
     raw-output              produce raw output, that is the result only without descriptive text
     relaxed-parity          evaluate the relaxed variant of the parity arrow polynomial
+    remove=n                remove the n-th component from a peer code
     rho                     use the Study rho mapping for calculating Study determinants
-    show-parity-peer-codes  show peer codes in addition to unoriented left preferred Gauss codes in parity bracket polynomial output\n";	
+    show-parity-peer-codes  show peer codes in addition to unoriented left preferred Gauss codes in parity bracket polynomial output;	
     show-varmaps            show variable mappings instead of substituting mapped variables in polynomial output
     silent                  do not generate any output to the command line (stdout)
 	TeX-polynomials         display output polynomials in TeX format (not supported for the Jones polynomial)
-	ulpgc                   calculate the unoriented left preferred Gauss code, rather than a standard gauss code
+    ulpgd                   calculate the unoriented left preferred Gauss data, rather than a standard gauss code;
+    uopgc                   calculate the unoriented over preferred Gauss code, rather than a standard gauss code;
     wait[=n]                display determinant wait information, (based on nxn minors, so larger n produces less frequent output)
     zig-zag-delta           include the delta with K_i and Lambda_i variables when calculating the arrow polynomial
 
@@ -372,6 +377,27 @@ according to the given orientation.  Crossing types are then labelled with the "
 decoration '#'
 
 L1 L2 R1 R2 L3 L4 R3 R4 / # # # #
+
+Planar diagram data
++++++++++++++++++++
+ 
+The programme supports planar diagram descriptions of knots, links, knotoids and multi-knotoids.  Arcs between classical 
+crossings (or the leg and head of a knotoid) are labelled sequentially from 1 as we trace each unicursal component. For 
+virtual knots and links, the components may be considered in any order and with any chosen orientation and any arc may 
+be chosen as the starting point for each component.  
+
+Each crossing is described by the set of labels that appear at the crossing, using the standard convention of starting 
+at the ingress under-arc and working anticlockwise around the crossing. 
+
+X[4,2,5,1] X[2,9,3,8] X[9,4,10,3] X[11,6,1,5] X[7,11,8,10], X[12,7,12,6]
+
+Knotoids may be described by planar diagrams by preceding the description with "K:", as in the case of Gauss codes. 
+For knotoids and multi-knotoids, it is required that the numbering start at the leg of the segment component of the 
+knotoid, so that the arc containing the leg is numbered 1. It is also required that the description of the crossing 
+involving the leg of the knotoid appear first in the list of crossings. 
+
+K:X[4,1,5,2] X[2,6,3,7] X[7,3,8,4] X[5,8,6,9] X[9,11,10,12] X[10,12,11,1]
+
 
 Immersion codes
 +++++++++++++++
