@@ -78,6 +78,7 @@ public:
 	
 	enum type 
 	{
+		UNKNOWN = 0,
 		TYPE1 = -1,
 		TYPE2 = 1
 	};
@@ -140,7 +141,7 @@ class gc_pc_xlabels
 
 void read_immersion_code (generic_code_data& code_data, string input_string);
 void write_immersion_code(ostream& s, generic_code_data& code_data);
-void print_code_data(generic_code_data& code_data, ostream& s, string prefix="");
+void print_code_data(ostream& s, generic_code_data& code_data, string prefix="");
 void read_peer_code (generic_code_data& code_data, string input_string);
 void write_peer_code(ostream& s, const generic_code_data& code_data, bool zig_zags=false, bool labelled=true);
 void read_gauss_code (generic_code_data& code_data, string input_string);
@@ -162,3 +163,4 @@ bool realizable_code_data(generic_code_data& code_data, matrix<int>& cycle, int&
 bool valid_knotoid_input(generic_code_data& code_data);
 string over_preferred_gauss_code(generic_code_data& code_data, bool unoriented);
 int amalgamate_zig_zag_counts(int a, int b);
+string read_dowker_code (string input_string);

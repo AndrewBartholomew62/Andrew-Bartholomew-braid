@@ -12,4 +12,4 @@ void plane_reflect_braid(string& braid);
 void line_reflect_braid(string& braid);
 void parse_braid(string word, int num_terms, vector<int>& braid_num, vector<int>& type);
 void convert_rep (char*& word, bool silent);
-bool valid_braid_input (string input_string, int& num_terms, int& num_strings, bool raw_output=true, bool silent_output=true, bool output_as_input=false);
+bool valid_braid_input (string& input_string, int& num_terms, int& num_strings, bool raw_output=true, bool silent_output=true, bool output_as_input=false);

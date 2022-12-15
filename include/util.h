@@ -87,7 +87,7 @@ int num_len (long n);
 char* c_string(const string& s);
 void print_state(istream& is);
 bool fileExists(const std::string& filename);
-void stringSubstitute(string& str, char ch1, char ch2);
+void substitute_string_variable(string& str, char ch1, char ch2);
 char next_variable (string variables);
 
 // This function is used only for debugging .h files

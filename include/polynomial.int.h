@@ -74,7 +74,8 @@ public:
 	friend void dump <> (ostream& s, const polynomial<T,V,U>& poly, string);
 	friend void sanitize <> (polynomial<T,V,U>*);
 	friend void set_to_one <> (polynomial<T,V,U>& poly, char ch);	
-	friend void substitute <> (polynomial<T,V,U>& poly, char c1, char c2);	
+	friend void substitute_polynomial_variable <> (polynomial<T,V,U>& poly, char c1, char c2);	
+	friend polynomial<T,V,U> substitute_signed_polynomial_variable <> (const polynomial<T,V,U>& poly,  char c1, char c2, bool change_sign);
 	friend polynomial<T,V,U> Laurent_factor <> (polynomial<T,V,U>& poly);	
 	friend void Laurent_scale <> (polynomial<T,V,U>& poly);	
 	friend polynomial<T,V,U> lub_Laurent_factor <> (polynomial<T,V,U> a, polynomial<T,V,U> b);

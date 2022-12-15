@@ -10,6 +10,7 @@ used by the programme
 #include <debug-control.h>
 #include <generic-code.h>
 
+
 template <class T> class Rational : public rational<T>
 {
 public:
@@ -307,3 +308,8 @@ if (rational_control::DEBUG)
 	}
 	return result;
 }
+
+struct alpha_char 
+{
+    bool operator()(char c) {return isalpha(c);}
+};

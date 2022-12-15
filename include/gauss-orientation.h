@@ -38,8 +38,8 @@ public:
 	matrix<int> 	zig_zag_count;  // used by parity arrow polynomial 2 x num_terms/2 matrix
 	matrix<int>		orientation_matrix; // columns of row[0] = LEFT|RIGHT row[1] = <crossing-number>
 	
-	vector<int>		classical_gauss_data;
-	vector<int>		classical_crossing_sign;
+	vector<int>		classical_gauss_data;  // length num_terms
+	vector<int>		classical_crossing_sign;  // length num_crossings
 	
 	enum {LEFT = 3, RIGHT = 4};  // only need LEFT < RIGHT; values align with generic_code_data, just because...
 	enum parity {NONE = 0, ODD = 1, EVEN = 2};  

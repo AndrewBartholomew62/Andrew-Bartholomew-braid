@@ -26,7 +26,9 @@ public:
 	friend bool operator != <> (const int, const matrix<T,St>&);
 
 	friend T trace <> (const matrix<T,St> M);
-	friend T determinant <> (const matrix<T,St>& M, string title, int n, int* rperm, int* cperm, int recursion_level);
+	friend T determinant <> (const matrix<T,St>& M, string title, int n, int* rperm, int* cperm);
+	friend T permanent <> (const matrix<T,St>& M, string title, int n, int* rperm, int* cperm);
+	friend T immanant <> (const matrix<T,St>& M, string title, int n, int* rperm, int* cperm, bool permanent, int recursion_level);
 	
 	typedef St scalar_type;
     matrix<T,St> ():v(0),rows(0),cols(0){};

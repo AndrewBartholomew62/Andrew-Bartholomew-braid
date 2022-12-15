@@ -21,7 +21,7 @@ struct matrix_control
 	enum parameters
 	{
 		general=1, // unused
-		determinant=2, 
+		immanant=2, 
 		multiply=4, 
 		inverse=8, 
 		// 'all' also supported
@@ -172,7 +172,7 @@ template<class T, class St> inline T trace (const matrix<T,St> M)
 */
 
 template <class T, class St> 
-T determinant (const matrix<T,St>& M, string title="untitled", int n=0, int* rperm=0, int* cperm=0, int recursion_level=0)
+T immanant (const matrix<T,St>& M, string title, int n, int* rperm, int* cperm, bool permanent, int recursion_level=0)
 {
 
 	// last change 3/9/06
@@ -182,26 +182,26 @@ T determinant (const matrix<T,St>& M, string title="untitled", int n=0, int* rpe
     T temp = zero;
 	bool clean_up_perms = false;
 
-	/* We are starting a new determinant calculation if recursion_level == 0 */
+	/* We are starting a new immanant calculation if recursion_level == 0 */
 	if (!recursion_level)
 	{
 		matrix_control::reset_count = 0;
 
-if (matrix_control::DEBUG & matrix_control::determinant)
+if (matrix_control::DEBUG & matrix_control::immanant)
 {
-	debug << "matrix::determinant: underlying matrix M = \n" << M << endl;
-	debug << "matrix::determinant: n = " << n << endl;
-	debug << "matrix::determinant: matrix_control::WAIT_INFO = " << (matrix_control::WAIT_INFO?"true":"false") << endl;
-	debug << "matrix::determinant: matrix_control::COMFORT_DOTS = " << (matrix_control::COMFORT_DOTS?"true":"false") << endl;
-	debug << "matrix::determinant: matrix_control::wait_threshold = " << matrix_control::wait_threshold << endl;
+	debug << "matrix::immanant: underlying matrix M = \n" << M << endl;
+	debug << "matrix::immanant: n = " << n << endl;
+	debug << "matrix::immanant: matrix_control::WAIT_INFO = " << (matrix_control::WAIT_INFO?"true":"false") << endl;
+	debug << "matrix::immanant: matrix_control::COMFORT_DOTS = " << (matrix_control::COMFORT_DOTS?"true":"false") << endl;
+	debug << "matrix::immanant: matrix_control::wait_threshold = " << matrix_control::wait_threshold << endl;
 }
 	}
 	
 	if (rperm == 0)
 	{
 	
-if (matrix_control::DEBUG & matrix_control::determinant)
-	debug << "matrix::determinant: default parameters provided, creating permutations" << endl;
+if (matrix_control::DEBUG & matrix_control::immanant)
+	debug << "matrix::immanant: default parameters provided, creating permutations" << endl;
 	
 		n = M.numcols();
 		rperm = new int[M.numrows()];
@@ -214,14 +214,14 @@ if (matrix_control::DEBUG & matrix_control::determinant)
 	}
 
 
-if (matrix_control::DEBUG & matrix_control::determinant && n >= matrix_control::DET_DEBUG_LIMIT)
+if (matrix_control::DEBUG & matrix_control::immanant && n >= matrix_control::DET_DEBUG_LIMIT)
 {
-    debug << "matrix::determinant: ";
+    debug << "matrix::immanant: ";
     for (int k=0;k<recursion_level;k++)
 		debug << "    ";
     debug << "n = " << n << ", recursion_level = " << recursion_level << endl;
 
-    debug << "matrix::determinant: ";
+    debug << "matrix::immanant: ";
 	for (int k=0;k<recursion_level;k++)
 	    debug << "    ";
 	debug << "rperm: ";
@@ -229,7 +229,7 @@ if (matrix_control::DEBUG & matrix_control::determinant && n >= matrix_control::
     	debug << rperm[k] << " ";
 	debug << endl;
 
-    debug << "matrix::determinant: ";
+    debug << "matrix::immanant: ";
     for (int k=0;k<recursion_level;k++)
 		debug << "    ";
     debug << "cperm: ";
@@ -241,8 +241,8 @@ if (matrix_control::DEBUG & matrix_control::determinant && n >= matrix_control::
 	if (n==1)
 	{
 
-if (matrix_control::DEBUG & matrix_control::determinant && n >= matrix_control::DET_DEBUG_LIMIT)
-	debug << "matrix::determinant: returning single element " << M[rperm[0]][cperm[0]] << endl;
+if (matrix_control::DEBUG & matrix_control::immanant && n >= matrix_control::DET_DEBUG_LIMIT)
+	debug << "matrix::immanant: returning single element " << M[rperm[0]][cperm[0]] << endl;
 
 		if (clean_up_perms)
 		{
@@ -253,16 +253,16 @@ if (matrix_control::DEBUG & matrix_control::determinant && n >= matrix_control::
 	}
     else if (n == 2)
     {
-if (matrix_control::DEBUG & matrix_control::determinant && n >= matrix_control::DET_DEBUG_LIMIT)
+if (matrix_control::DEBUG & matrix_control::immanant && n >= matrix_control::DET_DEBUG_LIMIT)
 {
-    debug << "matrix::determinant: ";
+    debug << "matrix::immanant: ";
 	for (int k=0;k<recursion_level;k++)
 		debug << "    ";
     debug << "positive term: [" << rperm[0] << "][" << cperm[0] << "]*["
           << rperm[1] << "][" << cperm[1] << "] = " 
 	      << M[rperm[0]][cperm[0]] * M[rperm[1]][cperm[1]];
 	debug << endl;
-    debug << "matrix::determinant: ";
+    debug << "matrix::immanant: ";
     for (int k=0;k<recursion_level;k++)
 		debug << "    ";
     debug << "negative term: [" << rperm[0] << "][" << cperm[1] << "]*["
@@ -270,8 +270,17 @@ if (matrix_control::DEBUG & matrix_control::determinant && n >= matrix_control::
 	      << M[rperm[0]][cperm[1]] * M[rperm[1]][cperm[0]];
 	debug << endl;	
 }
-		det =   M[rperm[0]][cperm[0]] * M[rperm[1]][cperm[1]]
-		      - M[rperm[0]][cperm[1]] * M[rperm[1]][cperm[0]];
+
+		if (permanent)
+		{
+			det =   M[rperm[0]][cperm[0]] * M[rperm[1]][cperm[1]]
+			      + M[rperm[0]][cperm[1]] * M[rperm[1]][cperm[0]];
+		}
+		else
+		{
+			det =   M[rperm[0]][cperm[0]] * M[rperm[1]][cperm[1]]
+			      - M[rperm[0]][cperm[1]] * M[rperm[1]][cperm[0]];
+		}
 
     }
     else
@@ -281,7 +290,7 @@ if (matrix_control::DEBUG & matrix_control::determinant && n >= matrix_control::
 		bool evaluate_along_row = true;
 		
 		/* Look to see whether there are more zeros along the top row or left column
-		   we evaluate the determinant based on the largest number of zero values
+		   we evaluate the immanant based on the largest number of zero values
 		*/
 		int num_zeros = 0;
 		for (int i=0; i < n; i++)
@@ -296,12 +305,12 @@ if (matrix_control::DEBUG & matrix_control::determinant && n >= matrix_control::
 		if (num_zeros < 0)
 			evaluate_along_row = false;
 
-if (matrix_control::DEBUG & matrix_control::determinant && n >= matrix_control::DET_DEBUG_LIMIT)
+if (matrix_control::DEBUG & matrix_control::immanant && n >= matrix_control::DET_DEBUG_LIMIT)
 {
-    debug << "matrix::determinant: ";
+    debug << "matrix::immanant: ";
     for (int k=0;k<recursion_level;k++)
 		debug << "    ";
-    debug << "evaluating " << n << "-sub-determinant " << (evaluate_along_row? "along row" : "down column") 
+    debug << "evaluating " << n << "-sub-immanant " << (evaluate_along_row? "along row" : "down column") 
 	      << ", row-column num_zeros = " << num_zeros << endl;
 }
 
@@ -310,9 +319,9 @@ if (matrix_control::DEBUG & matrix_control::determinant && n >= matrix_control::
 			for (int i=1; i<n;i++)
 	    		sub_r_perm[i-1] = rperm[i];
 
-if (matrix_control::DEBUG & matrix_control::determinant && n >= matrix_control::DET_DEBUG_LIMIT)
+if (matrix_control::DEBUG & matrix_control::immanant && n >= matrix_control::DET_DEBUG_LIMIT)
 {
-    debug << "matrix::determinant: ";
+    debug << "matrix::immanant: ";
     for (int k=0;k<recursion_level;k++)
 		debug << "    ";
     debug << "sub_r_perm (fixed for iterative calls at this level): ";
@@ -326,9 +335,9 @@ if (matrix_control::DEBUG & matrix_control::determinant && n >= matrix_control::
 			for (int i=1; i<n;i++)
 	    		sub_c_perm[i-1] = cperm[i];
 			
-if (matrix_control::DEBUG & matrix_control::determinant && n >= matrix_control::DET_DEBUG_LIMIT)
+if (matrix_control::DEBUG & matrix_control::immanant && n >= matrix_control::DET_DEBUG_LIMIT)
 {
-    debug << "matrix::determinant: ";
+    debug << "matrix::immanant: ";
     for (int k=0;k<recursion_level;k++)
 		debug << "    ";
     debug << "sub_c_perm (fixed for iterative calls at this level): ";
@@ -351,19 +360,19 @@ if (matrix_control::DEBUG & matrix_control::determinant && n >= matrix_control::
 					for (int j=i+1;j<n;j++)
 			    		sub_c_perm[j-1] = cperm[j];
 
-if (matrix_control::DEBUG & matrix_control::determinant && n >= matrix_control::DET_DEBUG_LIMIT)
+if (matrix_control::DEBUG & matrix_control::immanant && n >= matrix_control::DET_DEBUG_LIMIT)
 {
-    debug << "matrix::determinant: ";
+    debug << "matrix::immanant: ";
 	for (int k=0;k<recursion_level;k++)
 		debug << "    ";
     debug << n-1 << "-multiplier =" << (i%2? " -1 * " :" ") << M[rperm[0]][cperm[i]] << endl;
 }
 
-					temp = M[rperm[0]][cperm[i]] * determinant(M,title, n-1, sub_r_perm, sub_c_perm, recursion_level+1);
+					temp = M[rperm[0]][cperm[i]] * immanant(M,title, n-1, sub_r_perm, sub_c_perm, permanent, recursion_level+1);
 
-if (matrix_control::DEBUG & matrix_control::determinant && n >= matrix_control::DET_DEBUG_LIMIT)
+if (matrix_control::DEBUG & matrix_control::immanant && n >= matrix_control::DET_DEBUG_LIMIT)
 {
-    debug << "matrix::determinant: ";
+    debug << "matrix::immanant: ";
     for (int k=0;k<recursion_level;k++)
 		debug << "    ";
     debug << "additive term = " << temp << endl;
@@ -377,19 +386,19 @@ if (matrix_control::DEBUG & matrix_control::determinant && n >= matrix_control::
 					for (int j=i+1;j<n;j++)
 			    		sub_r_perm[j-1] = rperm[j];
 
-if (matrix_control::DEBUG & matrix_control::determinant && n >= matrix_control::DET_DEBUG_LIMIT)
+if (matrix_control::DEBUG & matrix_control::immanant && n >= matrix_control::DET_DEBUG_LIMIT)
 {
-    debug << "matrix::determinant: ";
+    debug << "matrix::immanant: ";
 	for (int k=0;k<recursion_level;k++)
 		debug << "    ";
     debug << n-1 << "-multiplier =" << (i%2? " -1 * " :" ") << M[rperm[i]][cperm[0]] << endl;
 }
 
-					temp = M[rperm[i]][cperm[0]] * determinant(M,title, n-1, sub_r_perm, sub_c_perm, recursion_level+1);
+					temp = M[rperm[i]][cperm[0]] * immanant(M,title, n-1, sub_r_perm, sub_c_perm, permanent, recursion_level+1);
 
-if (matrix_control::DEBUG & matrix_control::determinant && n >= matrix_control::DET_DEBUG_LIMIT)
+if (matrix_control::DEBUG & matrix_control::immanant && n >= matrix_control::DET_DEBUG_LIMIT)
 {
-    debug << "matrix::determinant: ";
+    debug << "matrix::immanant: ";
     for (int k=0;k<recursion_level;k++)
 		debug << "    ";
     debug << "additive term = " << temp << endl;
@@ -397,17 +406,18 @@ if (matrix_control::DEBUG & matrix_control::determinant && n >= matrix_control::
 				}
 				
 
-				if (i%2)
+//				if (i%2)
+				if (!permanent && i%2)
 					det -= temp;
 				else
 					det += temp;
-
-if (matrix_control::DEBUG & matrix_control::determinant && n >= matrix_control::DET_DEBUG_LIMIT)
+	
+if (matrix_control::DEBUG & matrix_control::immanant && n >= matrix_control::DET_DEBUG_LIMIT)
 {
-    debug << "matrix::determinant: ";
+    debug << "matrix::immanant: ";
     for (int k=0;k<recursion_level;k++)
 		debug << "    ";
-    debug << n << "-sub-determinant: " << det << endl;
+    debug << n << "-sub-immanant: " << det << endl;
 }
 
 	    	}
@@ -427,7 +437,7 @@ if (matrix_control::DEBUG & matrix_control::determinant && n >= matrix_control::
 			if (matrix_control::wait_count > 1000)
 			{
 				matrix_control::reset_count++;
-	    		cout << "\nworking on determinants for " << title << " (" << matrix_control::reset_count << "), please wait\n";
+	    		cout << "\nworking on " << (permanent? "permanent": "determinant") << " for " << title << " (" << matrix_control::reset_count << "), please wait\n";
 	    		matrix_control::wait_count = 0;
 			}
 			else
@@ -435,12 +445,12 @@ if (matrix_control::DEBUG & matrix_control::determinant && n >= matrix_control::
     	}
 	}
 
-if (matrix_control::DEBUG & matrix_control::determinant && n >= matrix_control::DET_DEBUG_LIMIT)
+if (matrix_control::DEBUG & matrix_control::immanant && n >= matrix_control::DET_DEBUG_LIMIT)
 {
-    debug << "matrix::determinant: ";
+    debug << "matrix::immanant: ";
     for (int k=0;k<recursion_level;k++)
 		debug << "    ";
-    debug << n << "-determinant: " << det << endl;
+    debug << n << "-immanant: " << det << endl;
 }
 
 	if (clean_up_perms)
@@ -451,6 +461,17 @@ if (matrix_control::DEBUG & matrix_control::determinant && n >= matrix_control::
     return det;
 }
 
+template <class T, class St> 
+T determinant (const matrix<T,St>& M, string title="untitled", int n=0, int* rperm=0, int* cperm=0)
+{
+	return immanant (M, title, n, rperm, cperm, false); // permanent = false
+}
+
+template <class T, class St> 
+T permanent (const matrix<T,St>& M, string title="untitled", int n=0, int* rperm=0, int* cperm=0)
+{
+	return immanant (M, title, n, rperm, cperm, true); // permanent = true
+}
 
 #include<matrix.int.h>
 

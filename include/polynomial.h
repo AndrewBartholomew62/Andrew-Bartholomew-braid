@@ -162,7 +162,7 @@ struct polynomial_control {
 		multiply=8, 
 		divide=16, 
 		gcd=32,
-		input=64
+		input=64,
 		// 'all' also supported
 	};
 
@@ -382,6 +382,165 @@ template <typename T, typename V, typename U> ostream& operator << (ostream& os,
 	}
 
     return os;
+}
+
+template <typename T, typename V, typename U> polynomial<T,V,U> substitute_signed_polynomial_variable (const polynomial<T,V,U>& poly,  char c1, char c2, bool change_sign)
+{
+    char        v;
+    int         i;
+    U factor;
+    U place;
+    int power;
+    bool negative;
+    bool first_term = true;
+	ostringstream os;
+
+    /* check for the zero polynomial */
+    if (poly.p == 0)
+    {
+        return poly;
+    }
+
+if (polynomial_control::DEBUG & polynomial_control::general)
+{
+	debug << "substitute_signed_polynomial_variable: presented with polynomial" << endl;
+	dump(debug,poly,"substitute_signed_polynomial_variable: ");
+}
+
+    pterm<T,U>* pterm_ptr;
+    pterm_ptr = poly.p;
+    while (pterm_ptr->next)
+        pterm_ptr = pterm_ptr->next;
+
+    /* now at then end of the list, output and move backwards */
+    do
+    {
+
+if (polynomial_control::DEBUG & polynomial_control::general)
+{
+	debug << "substitute_signed_polynomial_variable: term ";
+	factor = poly.l;
+	place = pterm_ptr->pl;
+	
+	for (i=0; i<poly.nv;i++)
+	{
+		factor /= (2*(poly.vd[i]+1));
+		if ((place/factor)%U(2))
+			negative = true;
+		else
+			negative = false;
+
+		power = place/factor/U(2);
+		if (negative)
+			power *= -1;
+
+		debug << poly.vc[i];
+		debug << '^';
+		debug << power;
+
+		place %= factor;
+	}
+	debug << endl;
+}
+
+        factor = poly.l;
+        place = pterm_ptr->pl;
+        T coefficient = pterm_ptr->n;
+		bool positive_term = (coefficient > T(0));
+		
+//		bool changed_sign = false;
+
+if (polynomial_control::DEBUG & polynomial_control::general)
+	debug << "substitute_signed_polynomial_variable:   positive_term = " << positive_term << endl;
+		
+        /* check whether the term sign will change as a resut of substituting c1 */        
+        for (i=0; i<poly.nv;i++)
+        {
+            factor /= (2*(poly.vd[i]+1));
+            power = place/factor/U(2);
+
+            if (change_sign && power%U(2) && poly.vc[i] == c1) // odd power with a change of sign
+            {
+				positive_term = !positive_term; // invert the term's sign
+				coefficient *= T(-1);
+//				changed_sign = true;
+if (polynomial_control::DEBUG & polynomial_control::general)
+	debug << "substitute_signed_polynomial_variable:   change of sign in term required, positive_term = " << positive_term << " coefficient = " << coefficient << endl;
+				break;
+            }
+            place %= factor;
+        }
+
+        if (!first_term && positive_term)			
+            os << '+';
+        else if (!polynomial_control::MOD_P && pterm_ptr->pl && coefficient == T(-1))
+           os << '-';
+
+
+        if (!pterm_ptr->pl ||
+		    (polynomial_control::MOD_P && coefficient == T(-1) && coefficient != T(1)) || // we could be working mod 2 so -1 == 1
+			(coefficient != T(1) && coefficient != T(-1))
+		   ) 
+		{
+            os << coefficient;
+		}
+			
+        factor = poly.l;
+        place = pterm_ptr->pl;
+        for (i=0; i<poly.nv;i++)
+        {
+            factor /= (2*(poly.vd[i]+1));
+            if ((place/factor)%U(2))
+                negative = true;
+            else
+                negative = false;
+
+            power = place/factor/U(2);
+            if (negative)
+                power *= -1;
+
+            if (power)
+            {
+                v = poly.vc[i];
+                				
+				if (poly.vm.count(v) && polynomial_control::SUBSTITUTE_MAPPED_VARIABLES && !polynomial_control::OUTPUT_PROXY_VARIABLES_ONLY)
+					os << poly.get_varmap(v);
+				else
+				{
+	                if (v == c1)
+						os << c2;
+	                else
+						os << v;
+				}
+
+                if (power != 1)
+                {
+					if (polynomial_control::TeX)
+						os << "^{";
+					else
+						os << '^';
+					
+                    os << power;
+                    
+					if (polynomial_control::TeX)
+						os << '}';
+                }
+            }
+
+            place %= factor;
+        }
+
+if (polynomial_control::DEBUG & polynomial_control::general)
+	debug << "substitute_signed_polynomial_variable:   os.str() = " << os.str() << endl;
+
+        /* step back one term */
+        pterm_ptr = pterm_ptr->prev;
+        first_term = false;
+    } while (pterm_ptr);
+
+
+	polynomial<T,V,U> result(os.str());
+    return result;
 }
 
 template <typename T, typename V, typename U> istream& operator >> (istream& s, polynomial<T,V,U>& p)
@@ -1595,17 +1754,16 @@ if (polynomial_control::DEBUG & polynomial_control::sanitize)
 }
 
 
-/* The function substitute substitutes character c1 for character c2 in poly.
-*/
+/* The function substitute_polynomial_variable substitutes character c1 for character c2 in poly. */
 
-template <typename T, typename V, typename U> void substitute (polynomial<T,V,U>& poly, char c1, char c2)
+template <typename T, typename V, typename U> void substitute_polynomial_variable (polynomial<T,V,U>& poly, char c1, char c2)
 {
 	/* if c1 doesn't exist in poly, or if c2 is already used in poly, do nothing */
 	if (!strchr(poly.vc,c1) || strchr(poly.vc,c2))
 		return;
 
 if (polynomial_control::DEBUG & polynomial_control::general) 
-	debug << "substitute: substituting " << c1 << " for " << c2 << " in " << poly <<  endl;
+	debug << "substitute_polynomial_variable: substituting " << c1 << " for " << c2 << " in " << poly <<  endl;
 		
 	ostringstream oss;
 	bool substitute_hold = polynomial_control::SUBSTITUTE_MAPPED_VARIABLES;
@@ -1613,7 +1771,7 @@ if (polynomial_control::DEBUG & polynomial_control::general)
 	oss << poly;
 	
 	string str_poly = oss.str();
-	stringSubstitute(str_poly,c1,c2);
+	substitute_string_variable(str_poly,c1,c2);
 	
 	map<char,V> poly_map = poly.vm;
 	if (poly.vm.count(c1))
@@ -1629,7 +1787,7 @@ if (polynomial_control::DEBUG & polynomial_control::general)
 	
 /*if (polynomial_control::DEBUG & polynomial_control::general) 
 {
-	debug << "substitute: polynomial changed to ";
+	debug << "substitute_polynomial_variable: polynomial changed to ";
 	dump(debug,poly);
 }
 */
@@ -2132,11 +2290,11 @@ if (polynomial_control::DEBUG & polynomial_control::general)
 						char new_variable = next_variable(combined_variables);
 if (polynomial_control::DEBUG & polynomial_control::general) 
 	debug << "merge_variables:   case 1.1.1: variable " << am_ptr->first << " appears in b, new_variable = " << new_variable <<  endl;
-						substitute(b,am_ptr->first,new_variable);
-						stringSubstitute(b_variables,am_ptr->first,new_variable);
+						substitute_polynomial_variable(b,am_ptr->first,new_variable);
+						substitute_string_variable(b_variables,am_ptr->first,new_variable);
 
-						substitute(b,bv,am_ptr->first);
-						stringSubstitute(b_variables,bv,am_ptr->first);
+						substitute_polynomial_variable(b,bv,am_ptr->first);
+						substitute_string_variable(b_variables,bv,am_ptr->first);
 							
 						combined_variables += new_variable;
 if (polynomial_control::DEBUG & polynomial_control::general) 
@@ -2144,8 +2302,8 @@ if (polynomial_control::DEBUG & polynomial_control::general)
 					}
 					else // case 1.1.2
 					{
-						substitute(b,bv,am_ptr->first);
-						stringSubstitute(b_variables,bv,am_ptr->first);
+						substitute_polynomial_variable(b,bv,am_ptr->first);
+						substitute_string_variable(b_variables,bv,am_ptr->first);
 							
 if (polynomial_control::DEBUG & polynomial_control::general) 
 	debug << "merge_variables:   case 1.1.2: variable " << am_ptr->first << " does not appear in b, b changed to " << b << ", b_variables = " << b_variables << endl;
@@ -2202,19 +2360,19 @@ if (polynomial_control::DEBUG & polynomial_control::general)
 								char new_variable = next_variable(combined_variables);
 if (polynomial_control::DEBUG & polynomial_control::general) 
 	debug << "merge_variables:   case 3.1.2.1.1: new_variable for " << am_ptr->first << " in b is " << new_variable <<  endl;
-								substitute(b,am_ptr->first,new_variable);
-								stringSubstitute(b_variables,am_ptr->first,new_variable);
+								substitute_polynomial_variable(b,am_ptr->first,new_variable);
+								substitute_string_variable(b_variables,am_ptr->first,new_variable);
 
-								substitute(b,bv,am_ptr->first);
-								stringSubstitute(b_variables,bv,am_ptr->first);
+								substitute_polynomial_variable(b,bv,am_ptr->first);
+								substitute_string_variable(b_variables,bv,am_ptr->first);
 							
 if (polynomial_control::DEBUG & polynomial_control::general) 
 	debug << "merge_variables:   b changed to " << b << ", b_variables = " << b_variables << endl;
 							}
 							else // case 3.1.2.1.2
 							{
-								substitute(b,bv,am_ptr->first);
-								stringSubstitute(b_variables,bv,am_ptr->first);
+								substitute_polynomial_variable(b,bv,am_ptr->first);
+								substitute_string_variable(b_variables,bv,am_ptr->first);
 							
 if (polynomial_control::DEBUG & polynomial_control::general) 
 	debug << "merge_variables:   case 3.1.2.1.2: variable " << am_ptr->first << " does not appear in b, b changed to " << b << ", b_variables = " << b_variables << endl;
@@ -2226,8 +2384,8 @@ if (polynomial_control::DEBUG & polynomial_control::general)
 							V b_map = bm_ptr->second;
 if (polynomial_control::DEBUG & polynomial_control::general) 
 	debug << "merge_variables:   case 3.1.2.2: new variable for " << b_map << " in b is " << new_variable << endl;
-							substitute(b,bv,new_variable);
-							stringSubstitute(b_variables,bv,new_variable);
+							substitute_polynomial_variable(b,bv,new_variable);
+							substitute_string_variable(b_variables,bv,new_variable);
 if (polynomial_control::DEBUG & polynomial_control::general) 
 	debug << "merge_variables:   b updated to " << b << endl;
 						
@@ -2252,8 +2410,8 @@ if (polynomial_control::DEBUG & polynomial_control::general)
 					char new_variable = next_variable(combined_variables);
 if (polynomial_control::DEBUG & polynomial_control::general) 
 	debug << "merge_variables:   new variable for " << bv << " in b is " << new_variable << endl;
-					substitute(b,bv,new_variable);
-					stringSubstitute(b_variables,bv,new_variable);
+					substitute_polynomial_variable(b,bv,new_variable);
+					substitute_string_variable(b_variables,bv,new_variable);
 if (polynomial_control::DEBUG & polynomial_control::general) 
 	debug << "merge_variables:   b updated to " << b << endl;
 					combined_variables += new_variable;
@@ -2277,19 +2435,19 @@ if (polynomial_control::DEBUG & polynomial_control::general)
 							char new_variable = next_variable(combined_variables);
 if (polynomial_control::DEBUG & polynomial_control::general) 
 	debug << "merge_variables:   cae 4.1.1.1: new_variable for " << am_ptr->first << " in b is " << new_variable <<  endl;
-							substitute(b,am_ptr->first,new_variable);
-							stringSubstitute(b_variables,am_ptr->first,new_variable);
+							substitute_polynomial_variable(b,am_ptr->first,new_variable);
+							substitute_string_variable(b_variables,am_ptr->first,new_variable);
 
-							substitute(b,bv,am_ptr->first);
-							stringSubstitute(b_variables,bv,am_ptr->first);
+							substitute_polynomial_variable(b,bv,am_ptr->first);
+							substitute_string_variable(b_variables,bv,am_ptr->first);
 							
 if (polynomial_control::DEBUG & polynomial_control::general) 
 	debug << "merge_variables:   b changed to " << b << ", b_variables = " << b_variables << endl;
 						}
 						else // case 4.1.1.2
 						{
-							substitute(b,bv,am_ptr->first);
-							stringSubstitute(b_variables,bv,am_ptr->first);
+							substitute_polynomial_variable(b,bv,am_ptr->first);
+							substitute_string_variable(b_variables,bv,am_ptr->first);
 							
 if (polynomial_control::DEBUG & polynomial_control::general) 
 	debug << "merge_variables:   case 4.1.1.2: variable " << am_ptr->first << " does not appear in b, b changed to " << b << ", b_variables = " << b_variables << endl;
@@ -2302,8 +2460,8 @@ if (polynomial_control::DEBUG & polynomial_control::general)
 if (polynomial_control::DEBUG & polynomial_control::general) 
 	debug << "merge_variables:   case 4.1.2: new variable for " << b_map << " in b is " << new_variable << endl;
 					
-						substitute(b,bv,new_variable);
-						stringSubstitute(b_variables,bv,new_variable);
+						substitute_polynomial_variable(b,bv,new_variable);
+						substitute_string_variable(b_variables,bv,new_variable);
 if (polynomial_control::DEBUG & polynomial_control::general) 
 	debug << "merge_variables:   b updated to " << b << endl;
 					

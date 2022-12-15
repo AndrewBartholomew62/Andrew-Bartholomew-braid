@@ -49,6 +49,7 @@ struct braid_control
 	static bool		LONG_KNOT;  // used by the switch polynomial invariant template functions that don't have access to generic code data
 	static bool		LPGD;
 	static bool		MATRIX;
+	static bool		MOCK_ALEXANDER;
 	static bool     NORMALIZING_Q_POLYNOMIALS;
 	static bool		NORMALIZE_BRACKET;
 	static bool		NUMERATOR_GCD;

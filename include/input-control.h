@@ -10,6 +10,7 @@ struct input_control
 		gauss_code      = 0x00000010,
 		planar_diagram  = 0x00000020,
 		lace_code       = 0x00000040,
+		dowker_code     = 0x00000080,
 /*		remainder = 0x00000020,
 		equal =  	0x00000040,
 		greater =  	0x00000080,
