@@ -1,5 +1,5 @@
 
-;                          Input file for braid programme version 25.0
+;                          Input file for braid programme version 25.1
 
 
 ; An input file may contain one or more braid definitions together with
@@ -421,3 +421,17 @@ L1 L2 R1 R2 L3 L4 R3 R4 / # # # #
 
 ; Knotoids are prefixed with "K:", the leg crossing must appear first
 K:X[4,1,5,2] X[2,6,3,7] X[7,3,8,4] X[5,8,6,9] X[9,11,10,12] X[10,12,11,1] {shortcut}
+
+; Dowker-Thistlethwaite codes
+; ===========================
+
+; Dowker-Thistlethwaite codes as defined and used by knotscape are supported but must be prefixed with DT: to distinguish them
+; from other input formats.  Only Dowker-Thistlethwaite codes for prime knots are supported and they must appear on a single line.
+
+;-- Knotscape 4a-1  Rolfsen 4-1
+;DT:4 6 8 2
+
+;-- Knotscape 15n-168030
+;DT:10 18 26 -22 -24 20 28 6 4 2 30 -8 16 14 12
+
+

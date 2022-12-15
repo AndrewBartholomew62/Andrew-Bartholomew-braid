@@ -1,10 +1,8 @@
-                     Braid v25.0 Help Information
+                     Braid v25.1 Help Information
 
-This programme was originally designed to carry out a number of tasks relating to 
-virtual, and consequently classical, braids.  It has evolved to include tasks that
-relate to virtual knots, long knots and knotoids but that do not involve a braid 
-representation.  However, in the absence of anything better, the name 'braid' has
-been retained for the programme.
+This programme was originally designed to carry out a number of tasks relating to virtual, and consequently classical, 
+braids.  It has evolved to include tasks that relate to virtual knots, long knots and knotoids but that do not involve 
+a braid representation.  However, in the absence of anything better, the name 'braid' has been retained for the programme.
 
 The following tasks are provided:
 
@@ -26,7 +24,7 @@ The following tasks are provided:
    16. Kauffman's Affine Index Polynomial for virtual knots or knotoids
    17. Sawolleks normalized Conway polynomial
    18. The Dynnikov test for the trivial braid
-   19. The Dowker(-Thistlethwaite) code for the closure of the braid
+   19. The Dowker(-Thistlethwaite) code for the closure of the braid or a labelled peer code
    20. The Gauss code for a labelled peer code or the closure of a braid word
    21. The labeled immersion code for the closure of the braid
    22. The labeled peer code for an immersion code or the closure of a braid
@@ -54,7 +52,7 @@ The <task> is a keyword identifying the required task, valid task keywords are:
     automorphism        evaluate commutative automorphism switch polynomial invariants
     burau               evaluate Burau switch polynomial invariants
     dowker              calculate the Dowker code for the closure of a braid, provided 
-                        it is a knot, or of a labelled immersion code
+                        it is a knot, or of a labelled peer code or labelled immersion code
     dynnikov            carry out the Dynnikov test to determine whether the braid is 
                         trivial or not 
     fixed-point         evaluate the fixed-point invariant of a braid
@@ -77,9 +75,8 @@ The <task> is a keyword identifying the required task, valid task keywords are:
     vogel               apply the Vogel algorithm to a labelled peer code
     weyl                evaluate Weyl algebra switch polynomial invariants
 
-In fact, a <task> is just an example of a <long_option>. Any of the programme option keywords 
-that may appear as an input file programme option may be used as a <long_option>.  The other
-<long_options> available are:
+In fact, a <task> is just an example of a <long_option>. Any of the programme option keywords that may appear as an input 
+file programme option may be used as a <long_option>.  The other <long_options> available are:
 
     complex-delta1          calculate Delta_1^C rather than Delta_1^H for quaternionic switches
     delta1-only             display polynomial output for Delta_1 only
@@ -141,30 +138,25 @@ The supported <short_options> are:
     z      do not calculate Delta_1 when Delta_0 is non-zero
     Z      display Delta_1 polynomials only
 
-Multiple options may be specified at once, but no spaces are permitted within the
-option string.  The 'c' option has a single suboption 2, specified as c{2}
+Multiple options may be specified at once, but no spaces are permitted within the option string.  The 'c' option has a single 
+suboption 2, specified as c{2}
 
-When the Burau or Alexander tasks are chosen, the programme evaluates the Burau 
-matrix representation, M, of a braid word or immersion code.  For virtual knots
-and links, the 0th ideal polynomial is evaluated.  By default the programme always 
-calculates the 1st ideal polynomial, even if the 0th ideal polynomial is non-zero.
-Using the z option this behaviour may be suppressed (note that the 0th ideal polynomial 
-is zero for all classical knots and links).  
+When the Burau or Alexander tasks are chosen, the programme evaluates the Burau matrix representation, M, of a braid word or 
+immersion code.  For virtual knots and links, the 0th ideal polynomial is evaluated.  By default the programme always calculates 
+the 1st ideal polynomial, even if the 0th ideal polynomial is non-zero.  Using the z option this behaviour may be suppressed 
+(note that the 0th ideal polynomial is zero for all classical knots and links).  
 
 The switch used for the Burau and Alexander cases is
 
         S = 1-st  t      
             s     0   
 
-If the Alexander task is selected, the variable s is set to 1 before displaying the 
-0th ideal polynomial.  The variable s is always set to 1 in order to calculate the 
-1st ideal polynomial so that the hcf of the generators may be evaluated.
+If the Alexander task is selected, the variable s is set to 1 before displaying the 0th ideal polynomial.  The variable s is always 
+set to 1 in order to calculate the 1st ideal polynomial so that the hcf of the generators may be evaluated.
 
-When the quaternionic matrix representation is selected, the programme
-determines a matrix representation based either on the default quaternionic
-switch, or one supplied by the user.  The programme evaluates the 0th and 1st ideal 
-polynomials for both the classical and virtual cases, unless the z option is used 
-to suppress the 1st ideal polynomial.
+When the quaternionic matrix representation is selected, the programme determines a matrix representation based either on the default 
+quaternionic switch, or one supplied by the user.  The programme evaluates the 0th and 1st ideal polynomials for both the classical 
+and virtual cases, unless the z option is used to suppress the 1st ideal polynomial.
 
 The default quaternionic switch is the Budapest switch:
 
@@ -172,33 +164,23 @@ The default quaternionic switch is the Budapest switch:
             jt^-1 (1+i)
 
 
-The matrix, Weyl and commutative automorphism switch options proceed in a similar 
-manner to the quaternionic option.  Here, however, a matrix switch or Wely algebra 
-switch generally contains multiple variables, so only the generators of the 1st 
-ideal polynomial are calculated.
+The matrix, Weyl and commutative automorphism switch options proceed in a similar manner to the quaternionic option.  Here, however, a 
+matrix switch or Wely algebra switch generally contains multiple variables, so only the generators of the 1st ideal polynomial are calculated.
 
-The Dowker and immersion code options only yield a code if the closure of the 
-braid is a knot, and may therefore be used as test that the closure is indeed 
-connected.  Note that Dowker codes are only defined for classical braids,
-whilst labelled immersion codes are defined for virtual and classical braids.
-The Dowker code option may also be allplied to a labelled immersion code, which
-are only defined for knots.
+The Dowker and immersion code options only yield a code if the closure of the braid is a knot, and may therefore be used as test that the 
+closure is indeed connected.  Note that Dowker codes are only defined for classical braids, whilst labelled immersion codes are defined for 
+virtual and classical braids.  The Dowker code option may also be allplied to a labelled immersion code, which are only defined for knots.
 
-During the operation of some of the tasks large determinants may need to be
-calculated for some input data.  The wait option provides a comfort signal
-that indicates the programme is running when engaged in a particularly time
-consuming task.  Please see the user documentation for more details.
+During the operation of some of the tasks large determinants may need to be calculated for some input data.  The wait option provides a 
+comfort signal that indicates the programme is running when engaged in a particularly time consuming task.  Please see the user documentation 
+for more details. 
 
-If an <infile> is supplied it may contain a number of braid definitions
-Labeled immersion codes or Gauss codes to which the chosen options are 
-applied successively.  The input file may also contain a number of quaternionic 
-representations, and even default programme options to be applied to the file's 
-contents.  The format of the input file is described in the user documentation
+If an <infile> is supplied it may contain a number of braid definitions Labeled immersion codes or Gauss codes to which the chosen options are 
+applied successively.  The input file may also contain a number of quaternionic representations, and even default programme options to be applied 
+to the file's contents.  The format of the input file is described in the user documentation
 
-A copy of the output produced by the programme is placed in the file 
-'braid.out' created in the same directory as the one from which the 
-programme was started.  This filename may be overridden by specifying an
-<outfile>; if no <infile> is used but it is required to specify an <outfile>,
+A copy of the output produced by the programme is placed in the file 'braid.out' created in the same directory as the one from which the programme 
+was started.  This filename may be overridden by specifying an <outfile>; if no <infile> is used but it is required to specify an <outfile>,
 the empty string must be supplied as a placemarker, as in the command line
 
 braid -b "" fred
@@ -206,40 +188,24 @@ braid -b "" fred
 
 Input format
 ============
-Tasks 1-6 take as input a braid word, a labelled peer code, or a labelled immersion code.
-Tasks 7-10 take braid words, tasks 11 and 12 take either a labelled peer code, a labelled 
-immersion code immersion code or a Gauss code.  Task 13 takes all input formats, task
-14 takes a labelled peer code or a labelled immersion code, and the remaining tasks take
-a braid word.
 
-Since the programme deals with virtual braids, we cannot use the
-alphabetical notation for braids.  Instead we use the syntax s1, s2, s3 to
-denote a, b, c, and -s1, -s2, -s3 for A, B, C.  This allow us to introduce
-virtual crossings as t1, t2, t3, etc.
+Since the programme deals with virtual braids, we cannot use the alphabetical notation for braids.  Instead we use the syntax s1, s2, s3 to
+denote a, b, c, and -s1, -s2, -s3 for A, B, C.  This allow us to introduce virtual crossings as t1, t2, t3, etc.
 
-A braid word may be followed by one or more braid qualifiers that provide 
-additional information about the braid.  Two braid qualifiers are currently 
-defined, welded and rack-terms.  Braid qualifiers are specified within braces 
-immediately following the braid statement, multiple qualifiers may be included, 
+A braid word may be followed by one or more braid qualifiers that provide additional information about the braid.  Two braid qualifiers are currently 
+defined, welded and rack-terms.  Braid qualifiers are specified within braces immediately following the braid statement, multiple qualifiers may be included, 
 separated by spaces or commas.  
 
- - The "doodle" qualifier indicates that the braid should be regarded as a doodle
-   rather than a knot
- - The "double" qualifier indicates that the braid should be replaced by the Kamada double covering 
-   of the braid before it is processed.
- - The "flip" qualifier that indicates that the braid strands should be renumbered
-   in the opposite direction before the braid is processed.
- - The "invert" qualifier that indicates that the braid should be inverted (reflected 
-   in a vertical line so the order of the generators is reversed and the sign of classical
-   crossings toggled)
- - The "line-reflect" qualifier that indicates that the braid should be reflected in a 
-   horizontal line south of the braid (strands renumbered and signs of classical crossings toggled)
- - The "plane-reflect" qualifier that indicates that the braid should be reflected in the 
-   plane of the diagram (signs of classical crossings toggled)
- - The "rack-terms=n" qualifier indicates the number of terms, n, that should be used
-   when calculating a rack-polynomial for this braid
- - The "welded" qualifier indicates that the braid should be regarded as a welded 
-   knot or link
+ - The "doodle" qualifier indicates that the braid should be regarded as a doodle rather than a knot
+ - The "double" qualifier indicates that the braid should be replaced by the Kamada double covering of the braid before it is processed.
+ - The "flip" qualifier that indicates that the braid strands should be renumbered in the opposite direction before the braid is processed.
+ - The "invert" qualifier that indicates that the braid should be inverted (reflected in a vertical line so the order of the generators is 
+   reversed and the sign of classical crossings toggled)
+ - The "line-reflect" qualifier that indicates that the braid should be reflected in a horizontal line south of the braid (strands renumbered 
+   and signs of classical crossings toggled)
+ - The "plane-reflect" qualifier that indicates that the braid should be reflected in the plane of the diagram (signs of classical crossings toggled)
+ - The "rack-terms=n" qualifier indicates the number of terms, n, that should be used when calculating a rack-polynomial for this braid
+ - The "welded" qualifier indicates that the braid should be regarded as a welded knot or link
 
 Here are some examples of braid qualifiers: 
 
@@ -251,71 +217,55 @@ Here are some examples of braid qualifiers:
     s1s2t1t2s2s1 {flip,invert,line-reflect}
     s1s3s2s1s3s2s1s3s2{doodle}
 	
-The rack-terms qualifier must be specified with a value.  Setting the t option
-at the command line overrides any rack-terms value specified in a braid qualifier.
+The rack-terms qualifier must be specified with a value.  Setting the t option at the command line overrides any rack-terms value specified in a braid qualifier.
 
 Labelled peer codes
 +++++++++++++++++++
 
-A labelled peer code is derived from labelling consecutive semi-arcs in a
-diagram and from this labelling determining the odd numbered peer edges 
-for each even edge.  The components of a link diagram must be numbered so each 
-crossing has an odd edge and an even edge arriving at the crossing with respect 
-to the orientation induced by the numbering.  The odd peer edges are written in 
-the ascending order of  the corresponding even edges, with the peers of even edges
-belonging to different components separated by commas.  The peers associated with 
-type I crossings are written as negative numbers and those associated with 
-type II crossings are written as positive numbers.  The colection of peers is 
-enclosed within square brackets, followed by a '/' character and followed
-the labels associated with each crossing.  Further details of the syntax of a 
-labelled peer code are given in the user documentation; here is an example of a 
+A labelled peer code is derived from labelling consecutive semi-arcs in a diagram and from this labelling determining the odd numbered peer edges 
+for each even edge.  The components of a link diagram must be numbered so each crossing has an odd edge and an even edge arriving at the crossing with respect 
+to the orientation induced by the numbering.  The odd peer edges are written in the ascending order of  the corresponding even edges, with the peers of even edges
+belonging to different components separated by commas.  The peers associated with type I crossings are written as negative numbers and those associated with 
+type II crossings are written as positive numbers.  The colection of peers is enclosed within square brackets, followed by a '/' character and followed
+the labels associated with each crossing.  Further details of the syntax of a labelled peer code are given in the user documentation; here is an example of a 
 labelled peer code for a link with two components.
 
 [-11 9,-3 1 -13 5 -7]/ + - - + - + -
 
-Labelled peer codes may be specified with qualifiers, in a similar manner to braids,
-enclosed in braces. The following qualifiers are supported:
+Labelled peer codes may be specified with qualifiers, in a similar manner to braids, enclosed in braces. The following qualifiers are supported:
 
     shift<shift-vector>
     satellite[=n]
 
 Shift vector
 ------------
-A shift vector moves the starting point for the numbering of each component of a diagram
-backwards with respect to the orientation by a number of semi-arcs. 
+A shift vector moves the starting point for the numbering of each component of a diagram backwards with respect to the orientation by a number of semi-arcs. 
 
 [-11 9,-3 1 -13 5 -7]/ + - - + - + - {shift[0,2]}
 
-If the shift value is positive it indicates a backwards shift of the starting point for
-the numbering of the corresponding component.  If it is negative, it represents a backwards shift
-of the absolute value together with an orientation reversal.  
+If the shift value is positive it indicates a backwards shift of the starting point for the numbering of the corresponding component.  If it is negative, it 
+represents a backwards shift of the absolute value together with an orientation reversal.  
 
 [-11 9,-3 1 -13 5 -7]/ + - - + - + - {shift[-1,3]} ; this is a valid shift vector
 
-If the code represents a link and any component is shifted by an odd number of edges, 
-we must have all intersecting components shifted by an odd number of edges, otherwise 
-we will violate the requirement to have an odd and even edge terminating at every crossing.
-Since the peer code has to be connected to be realizable, this means that every component 
-has to be shifted by an odd number of edges.  Thus we have to shift every component by an odd
-number of edges or every component by an even number of edges.  
+If the code represents a link and any component is shifted by an odd number of edges, we must have all intersecting components shifted by an odd number of edges, 
+otherwise we will violate the requirement to have an odd and even edge terminating at every crossing.  Since the peer code has to be connected to be realizable, 
+this means that every component has to be shifted by an odd number of edges.  Thus we have to shift every component by an odd number of edges or every component 
+by an even number of edges.  
 
-If a component's orientation is reversed we also violate the requirement to have an odd and 
-even edge terminating at every crossing.  Therefore an orientation reversal must be accompanied by
-an odd shift of the component being reversed or of those other components it meets at a crossing.	
-By considering orientation reversal an "odd" operation, a particular shift vector is valid if 
-every entry is odd or every entry is even.  Thus -2 is odd and -1 is even. 
+If a component's orientation is reversed we also violate the requirement to have an odd and even edge terminating at every crossing.  Therefore an orientation 
+reversal must be accompanied by an odd shift of the component being reversed or of those other components it meets at a crossing.	By considering orientation 
+reversal an "odd" operation, a particular shift vector is valid if every entry is odd or every entry is even.  Thus -2 is odd and -1 is even. 
 
 [-11 9,-3 1 -13 5 -7]/ + - - + - + - {shift[-1,2]} ; another valid shift vector
 
 Satellites
 ----------
 
-The satellite qualifier causes the peer code to be replaced by that for the satellite link formed 
-by taking a number of concentric copies, n, of the unlink in a solid torus and a companion knot, 
-K, described by the original peer code.  The value of n defaults to 2.
+The satellite qualifier causes the peer code to be replaced by that for the satellite link formed by taking a number of concentric copies, n, of the unlink in a 
+solid torus and a companion knot, K, described by the original peer code.  The value of n defaults to 2.
 
-If the writhe (sum of signs) of K is w, the solid torus is twisted -2w times, which produces a 
-satellite whose writhe is w*S.
+If the writhe (sum of signs) of K is w, the solid torus is twisted -2w times, which produces a satellite whose writhe is w*S.
 
 [3 5 1]/+ - * {satellite=3}
  
@@ -329,14 +279,10 @@ L:[3 5 1]/+ + +
 Knotoids
 --------
 
-A knotoid K is also specified using immersion codes by adding a shortcut that passes
-everywhere under K, forming K_ in Turaev's notation.  Then, K_ is a knot for which we
-can write the labelled immersion code determined by labelling the semi-arc containing 
-the leg of K as zero and proceeding in the direction from the leg to the head.  We then
-identify the first crossing introduced by the shortcut by writing a ^ symbol *after* the
-crossing number in the immersion code.  There is a unique semi-arc that enters this 
-crossing as an under-arc with the orientation of K_ described above.  Thus the ^ 
-character uniquely identifies the semi-arc containing the head of K.  The following is 
+A knotoid K is also specified using immersion codes by adding a shortcut that passes everywhere under K, forming K_ in Turaev's notation.  Then, K_ is a knot for which we
+can write the labelled immersion code determined by labelling the semi-arc containing the leg of K as zero and proceeding in the direction from the leg to the head.  We then
+identify the first crossing introduced by the shortcut by writing a ^ symbol *after* the crossing number in the immersion code.  There is a unique semi-arc that enters this 
+crossing as an under-arc with the orientation of K_ described above.  Thus the ^ character uniquely identifies the semi-arc containing the head of K.  The following is 
 the labelled peeeer code of a knotoid
 
 [-3 -11 -1 -9 -5 -7^]/+ + + + + - ; a classical knotoid
@@ -354,47 +300,39 @@ K:[-5 7 -11 9 3 -1]/+ - + + - -
 Gauss codes
 +++++++++++
 
-An example of a Gauss code used by the Jones and Kauffman bracket polynomial tasks
-is
+An example of a Gauss code used by the Jones and Kauffman bracket polynomial tasks is
 
 1 -3 4 -1 +2 -4 3 -2 / + + - -
 
-On the left of the '/' character is the code describing the progress around the knot 
-(link components are separated by commas) and to the right of the '/' is 
-the parity of each crossing in the link diagram.  Note that the parity of
-a crossing given in a Gauss code does not have the same meaning as a label
-assigned to a crossing in a labelled peer or immersion code.  Full details of the code 
-specifications may be found in the user documentation.
+On the left of the '/' character is the code describing the progress around the knot (link components are separated by commas) and to the right of the '/' is 
+the parity of each crossing in the link diagram.  Note that the parity of a crossing given in a Gauss code does not have the same meaning as a label
+assigned to a crossing in a labelled peer or immersion code.  Full details of the code specifications may be found in the user documentation.
 
 Gauss codes for classical and virtual links are also supported using the "under/over" syntax
 O1-O2-U1-O3-O4-U2-U4-U3- ; a virtual knot
 U1+U2-,O3-,O1+O2-U3-
 
-The Gauss code of a doodle or flat link similarly numbers the crossings of the diagram and 
-follows each component from an arbitrary staring point.  As we traverse a crossing the code 
-records whether the other strand crosses our path from left to right or from right to left, 
-according to the given orientation.  Crossing types are then labelled with the "flat" 
-decoration '#'
+The Gauss code of a doodle or flat link similarly numbers the crossings of the diagram and follows each component from an arbitrary staring point.  As we traverse a 
+crossing the code records whether the other strand crosses our path from left to right or from right to left, according to the given orientation.  Crossing types are 
+then labelled with the "flat" decoration '#'
 
 L1 L2 R1 R2 L3 L4 R3 R4 / # # # #
 
 Planar diagram data
 +++++++++++++++++++
  
-The programme supports planar diagram descriptions of knots, links, knotoids and multi-knotoids.  Arcs between classical 
-crossings (or the leg and head of a knotoid) are labelled sequentially from 1 as we trace each unicursal component. For 
-virtual knots and links, the components may be considered in any order and with any chosen orientation and any arc may 
-be chosen as the starting point for each component.  
+The programme supports planar diagram descriptions of knots, links, knotoids and multi-knotoids.  Arcs between classical crossings (or the leg and head of a knotoid) 
+are labelled sequentially from 1 as we trace each unicursal component. For virtual knots and links, the components may be considered in any order and with any chosen 
+orientation and any arc may be chosen as the starting point for each component.  
 
-Each crossing is described by the set of labels that appear at the crossing, using the standard convention of starting 
-at the ingress under-arc and working anticlockwise around the crossing. 
+Each crossing is described by the set of labels that appear at the crossing, using the standard convention of starting at the ingress under-arc and working anticlockwise 
+around the crossing. 
 
 X[4,2,5,1] X[2,9,3,8] X[9,4,10,3] X[11,6,1,5] X[7,11,8,10], X[12,7,12,6]
 
-Knotoids may be described by planar diagrams by preceding the description with "K:", as in the case of Gauss codes. 
-For knotoids and multi-knotoids, it is required that the numbering start at the leg of the segment component of the 
-knotoid, so that the arc containing the leg is numbered 1. It is also required that the description of the crossing 
-involving the leg of the knotoid appear first in the list of crossings. 
+Knotoids may be described by planar diagrams by preceding the description with "K:", as in the case of Gauss codes. For knotoids and multi-knotoids, it is required that 
+the numbering start at the leg of the segment component of the knotoid, so that the arc containing the leg is numbered 1. It is also required that the description of the 
+crossing involving the leg of the knotoid appear first in the list of crossings. 
 
 K:X[4,1,5,2] X[2,6,3,7] X[7,3,8,4] X[5,8,6,9] X[9,11,10,12] X[10,12,11,1]
 
@@ -404,26 +342,28 @@ Immersion codes
 
 Immersion codes have been deprecated but limited support remains for backwards compatibility.
 
-An immersion code is derived from labelling consecutive semi-arcs in a
-diagram and from this labelling determining a permutation of n-1 integers, 
-where there are n crossings (virtual or classical) in the diagram.
-This presentation is written as a product of cycles in the normal manner but has
-signs applied to the elements of the cycles to indicate the 'Type' of the
-crossings.  A labelled immersion code is formed by following an immersion
-code with a '/' character and specifying a number of labels, one for each
-crossing in order.  The full syntax of a labelled immersion code is given 
-in the user documentation; here is a labelled immersion code for the Kishino knot 
-K3 as an example.
+An immersion code is derived from labelling consecutive semi-arcs in a diagram and from this labelling determining a permutation of n-1 integers, 
+where there are n crossings (virtual or classical) in the diagram.  This presentation is written as a product of cycles in the normal manner but has
+signs applied to the elements of the cycles to indicate the 'Type' of the crossings.  A labelled immersion code is formed by following an immersion
+code with a '/' character and specifying a number of labels, one for each crossing in order.  The full syntax of a labelled immersion code is given 
+in the user documentation; here is a labelled immersion code for the Kishino knot K3 as an example.
 
 (-0 -6 -4 -2)(1 7 5 3) / - * + + + * - -
 
+Dowker-Thistlethwaite codes
++++++++++++++++++++++++++++
 
+Dowker-Thistlethwaite codes for prime knots are supported.  They are converted to peer codes and then the selected task is carried out using the peer code.  
+The mirror image described by the peer code is determined by the software and not currently controllable by the user.  Dowker Thistlethwaite codes are 
+prefixed by DT: to distinguish them from other input formats.
+
+DT:4 8 10 14 2 16 20 6 22 24 12 26 18
+DT:6 -10 -14 12 -16 -2 18 -4 -8
 
 User documentation
 ==================
-These help notes provide only an overview of the capabilities of the braid preogramme.
-Full details of all options and input syntax is provided in the user documentation.
+These help notes provide only an overview of the capabilities of the braid preogramme.  Full details of all options and input syntax is provided in the user 
+documentation.
 
-The user documentation should be available with the programme distribution, 
-and is available on-line at www.layer8.co.uk/maths/braids.
+The user documentation should be available with the programme distribution, and is available on-line at www.layer8.co.uk/maths/braids.
 
