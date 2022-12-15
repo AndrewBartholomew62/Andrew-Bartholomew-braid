@@ -143,15 +143,9 @@ void print_bracket_variable(const bracket_variable bv, ostream& os, string prefi
 
 
 vector<int> gauss_parity(generic_code_data& code_data);
-//bool valid_knotoid_input(generic_code_data& code_data);
 int remove_virtual_Reidemeister_I(generic_code_data& code_data,vector<int>& component_flags);
-//int remove_Reidemeister_II(generic_code_data& code_data,vector<int>& component_flags);
 matrix<int> create_incidence_matrix (gauss_orientation_data& gauss_data);
-//void write_code_data(ostream& s, generic_code_data& code_data);
-//void read_peer_code (generic_code_data& code_data, string input_string);
-//void print_code_data(generic_code_data& code_data, ostream& s, string prefix);
 int remove_virtual_components(generic_code_data& code_data,vector<int>& component_flags);
-//int amalgamate_zig_zag_counts(int a, int b);
 generic_code_data partition_peer_code(generic_code_data& code_data, vector<int>& component_flags);
 
 /* The function bracket_polynomial evaluates various forms of bracket polynomial depending on the 
@@ -2322,7 +2316,7 @@ if (debug_control::DEBUG >= debug_control::BASIC)
 if (debug_control::DEBUG >= debug_control::BASIC)
 {
 	debug << "bracket_polynomial:   graphical component " << i << " component_code_data" << endl;
-    print_code_data(component_peer_code, debug, "bracket_polynomial:   ");
+    print_code_data(debug, component_peer_code, "bracket_polynomial:   ");
 	debug << "bracket_polynomial:   graphical component " << i << " peer code: ";
 	write_peer_code(debug,component_peer_code, true); // zig_zags = true
 	debug << endl;
@@ -2478,7 +2472,7 @@ if (debug_control::DEBUG >= debug_control::BASIC)
 	write_peer_code(debug,component_peer_code);
 	debug << endl;
 	debug << "bracket_polynomial: component_peer_code code_data" << endl;
-	print_code_data(component_peer_code, debug, "bracket_polynomial:   ");
+	print_code_data(debug,component_peer_code,"bracket_polynomial:   ");
 	debug << "bracket_polynomial:  partition_component_flags: ";
 	for (int j=0; j< num_unicursal_components; j++)
 		debug << partition_component_flags[j] << ' ';
@@ -2555,7 +2549,7 @@ if (debug_control::DEBUG >= debug_control::BASIC)
 if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 {
 	debug << "bracket_polynomial:     component_graph code_data" << endl;
-	print_code_data(component_graph.code_data,debug,"bracket_polynomial:       ");	
+	print_code_data(debug,component_graph.code_data,"bracket_polynomial:       ");	
 }
 							
 							polynomial<int,bracket_variable> component_poly("a");

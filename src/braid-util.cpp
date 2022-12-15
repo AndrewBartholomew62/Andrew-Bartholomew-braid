@@ -6,7 +6,7 @@ void plane_reflect_braid(string& braid)
 void line_reflect_braid(string& braid)
 void parse_braid(string word, int num_terms, vector<int>& braid_num, vector<int>& type)
 void convert_rep (char*& word, bool silent)
-bool valid_braid_input (string input_string, int& num_terms, int& num_strings, bool raw_output, bool silent_output, bool output_as_input)
+bool valid_braid_input (string& input_string, int& num_terms, int& num_strings, bool raw_output, bool silent_output, bool output_as_input)
 void parse_braid(string word, int num_terms, vector<int>& braid_num, vector<int>& type);
 **************************************************************************/
 #include <string>
@@ -328,46 +328,37 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 /* convert_rep takes a braid word in the standard representation using a,b,c,A,B,C etc.
    and converts it into si, -si format.
 */
-void convert_rep (char*& word, bool silent)
+void convert_rep (string& word, bool silent)
 {
-    string local;
-    char* wptr=word;
-    bool not_complete = true;
     bool inverse;
-
+	ostringstream oss;
 	
-	do
+	for (size_t i=0; i< word.length(); i++)
 	{
-		if (*wptr == '\0')
-			not_complete = false;	
-	    else if (!isalpha(*wptr))
+	    if (!isalpha(word[i]))
 		{
 			if (!silent)
-				cout << "Error in input: non-alphabetical character " << *wptr << " \n";
-			strcpy(word,"");
+				cout << "Error in input: non-alphabetical character " << word[i] << " \n";
+			word = "";
 			return;
 		}
 		else
 		{
-			if (*wptr >= 'a')
+			if (word[i] >= 'a')
 				inverse = false;
 			else
-				inverse = false;
+				inverse = true;
 
 			/* write this term into local */
 			if (inverse)
-				local += "-";
-			local += "s";
-			ostringstream oss(local);
-			oss << *wptr - (inverse?'A':'a')+1;
+				oss << '-';
+			oss << 's';
+			oss << word[i] - (inverse?'A':'a')+1;
 		}
-		wptr++;
 	    
-	} while (not_complete);
+	}
 
-	/* tidy up local, copy to word */
-	delete[] word;
-	word = c_string(local);
+	word = oss.str();
 }
 
 /* valid_braid_input returns a boolean indicating whether input is a valid braid, 
@@ -375,8 +366,10 @@ void convert_rep (char*& word, bool silent)
    
    If the braid includes the doodle qualifier, the function checks that only positive
    classical crossings have been specified.
+   
+   input_string needs to be a reference, since we might be converting the representation if we're presented with an abcABC format braid
 */
-bool valid_braid_input (string input_string, int& num_terms, int& num_strings, bool raw_output, bool silent_output, bool output_as_input)
+bool valid_braid_input (string& input_string, int& num_terms, int& num_strings, bool raw_output, bool silent_output, bool output_as_input)
 {
 	char*       mark;
 	int         number;
@@ -406,124 +399,105 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 		return false;
 	}
 
-	char* inbuf = c_string(input_string);
-
-	if (strchr(inbuf,'('))
+	if (input_string.find('s') == string::npos && input_string.find('S') == string::npos && input_string.find('t') == string::npos && input_string.find('T') == string::npos)
 	{
-		if (!silent_output)
-			cout << "\nLabelled immersion codes only supported for polynomial invariants" << endl;
-		if (!raw_output)
+		convert_rep(input_string,silent_output); //assume its a traditional representation of a classical braid
+		if (input_string.length() ==0)
 		{
-			output << (output_as_input? "\n;" : "\n");
-			output << "Labelled immersion codes only supported for polynomial invariants\n";
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+    debug << "braid::valid_braid_input: convert_rep found error in input " << endl;
+
+			return false; // convert_rep has found an error
 		}
-	
-if (debug_control::DEBUG >= debug_control::SUMMARY)
-	debug << "braid::valid_braid_input: labelled immersion codes only supported for polynomial invariants" << endl;
-		
-		return false;
-	}
-	else 
-	{
-		if (!strchr(inbuf,'s') && !strchr(inbuf,'S') && !strchr(inbuf,'t') && !strchr(inbuf,'T'))
+		else
 		{
-			convert_rep(inbuf,silent_output); //assume its a traditional representation of a classical braid
-			if (!strlen(inbuf))
-			{
-if (debug_control::DEBUG >= debug_control::SUMMARY)
-    debug << "braid::valid_braid_input: convert_rep found error in input " << inbuf << endl;
-
-				return false; // convert_rep has found an error
-			}			
-			else
-			{
 if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
-    debug << "braid::valid_braid_input: converted to = " << inbuf << endl;
-			}
+    debug << "braid::valid_braid_input: converted to = " << input_string << endl;
 		}
+	}
 	
-	    /* evaluate the number of terms in the word by counting the number of
-	       s and t characters - we scan the input at this point
-	    */
-	    char* cptr = inbuf;
-	    num_terms = 0;
-    	do
-	    {
-	        if (isalpha(*cptr))
-	        {
-	            num_terms++;
-	            if (isalpha(*(cptr+1)) || *(cptr+1) == '\0')
-	            {
-					if (!silent_output)
-						cout << "Error in input: must specify suffix for " << *cptr << "\n";
+	char* inbuf = c_string(input_string);
+	
+    /* evaluate the number of terms in the word by counting the number of
+       s and t characters - we scan the input at this point
+    */
+    char* cptr = inbuf;
+    num_terms = 0;
+	do
+    {
+        if (isalpha(*cptr))
+        {
+            num_terms++;
+            if (isalpha(*(cptr+1)) || *(cptr+1) == '\0')
+            {
+				if (!silent_output)
+					cout << "Error in input: must specify suffix for " << *cptr << "\n";
 
 if (debug_control::DEBUG >= debug_control::SUMMARY)
     debug << "braid::valid_braid_input: Error in input: must specify suffix for " << *cptr << endl;
 
-	                return false;
-	            }
-	        }
-	        else if (*cptr == '-')
-	        {
-	            if (!isalpha(*(cptr+1)) || *(cptr+1) == '\0')
-	            {
-	                if (*(cptr+1) == '\0')
-					{
-						if (!silent_output)
-							cout << "Error in input: word ends in '-'!\n";
+                return false;
+            }
+        }
+        else if (*cptr == '-')
+        {
+            if (!isalpha(*(cptr+1)) || *(cptr+1) == '\0')
+            {
+                if (*(cptr+1) == '\0')
+				{
+					if (!silent_output)
+						cout << "Error in input: word ends in '-'!\n";
 
 if (debug_control::DEBUG >= debug_control::SUMMARY)
     debug << "braid::valid_braid_input: Error in input: word ends in '-'!" << endl;
-					}
-	                else
-					{
-						if (!silent_output)
-							cout << "Error in input: must specify suffix for " << *(cptr-1) << "\n";
+				}
+                else
+				{
+					if (!silent_output)
+						cout << "Error in input: must specify suffix for " << *(cptr-1) << "\n";
 
 if (debug_control::DEBUG >= debug_control::SUMMARY)
     debug << "braid::valid_braid_input: Error in input: must specify suffix for " << *(cptr-1) << endl;
-					}
-	                return false;
-	            }
-	            else if (*(cptr+1) == 't' || *(cptr+1) == 'T')
-	            {
-					if (!silent_output)
-						cout << "Error in input: t crossings cannot be negative\n";
+				}
+                return false;
+            }
+            else if (*(cptr+1) == 't' || *(cptr+1) == 'T')
+            {
+				if (!silent_output)
+					cout << "Error in input: t crossings cannot be negative\n";
 if (debug_control::DEBUG >= debug_control::SUMMARY)
     debug << "braid::valid_braid_input: Error in input: t crossings cannot be negative" << endl;
-					return false;
-	            }
-	        }
-	    } while (*++cptr != '\0');
-	
-        /* Work out how many strings we have in the braid */
-        num_strings = 0;
-        cptr = inbuf;
-        for ( int i = 0; i< num_terms; i++)
-        {
-            if (*cptr == '-')
-                cptr++;
-
-            cptr++;
-            mark = cptr; /* mark where we start the number */
-
-            /* look for the end of the number */
-            while (isdigit(*cptr))
-                cptr++;
-
-	    	get_number(number, mark);
-        	    if (number > num_strings)
-           	    num_strings = number;
+				return false;
+            }
         }
-        num_strings++;
+    } while (*++cptr != '\0');
+
+	/* Work out how many strings we have in the braid */
+	num_strings = 0;
+	cptr = inbuf;
+	for ( int i = 0; i< num_terms; i++)
+	{
+		if (*cptr == '-')
+			cptr++;
+
+		cptr++;
+		mark = cptr; /* mark where we start the number */
+
+		/* look for the end of the number */
+		while (isdigit(*cptr))
+			cptr++;
+
+    	get_number(number, mark);
+			if (number > num_strings)
+			num_strings = number;
+	}
+	num_strings++;
 		
 if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 {
     debug << "braid::valid_braid_input: number of strands = " << num_strings << endl;
     debug << "braid::valid_braid_input: number of terms = " << num_terms << endl;
 }
-
-    }
 		
 	delete[] inbuf;
 	return true;

@@ -56,6 +56,8 @@ if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 		debug << "planar diagrams ";
     if (input_control::ACCEPT_MAP & input_control::lace_code)
 		debug << "lace codes ";
+    if (input_control::ACCEPT_MAP & input_control::dowker_code)
+		debug << "Dowker-Thistlethwaite codes ";
     debug << endl;
 }
 	
@@ -149,6 +151,7 @@ if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 			    - a braid word is indicated by the presents of an 's','S', 't' or 'T'
 			    - a planar diagram is indicated by the presence of an 'X'
 			    - a lace code is indicated by the presence of a '|'
+			    - a Dowker-Thistlethwaite code is indicated by the presence of a "DT:"
 			*/
 			if (!accepted_non_braid_input && !accepted_braid_input)
 			{
@@ -158,6 +161,13 @@ if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 
 if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
     debug << "get_input_word: detected acceptable start of immersion code" << endl;
+				}
+				else if (next_line.find("DT:") != string::npos && (input_control::ACCEPT_MAP & input_control::dowker_code))
+				{
+					accepted_non_braid_input = true;
+
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
+    debug << "get_input_word: detected acceptable start of a Dowker-Thistlethwaite code" << endl;
 				}
 				else if (strchr(line_buf,'[') && (input_control::ACCEPT_MAP & input_control::peer_code))
 				{
@@ -173,7 +183,7 @@ if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
     debug << "get_input_word: detected acceptable start of Gauss code" << endl;
 				}
-				else if ((strchr(line_buf,'s') || strchr(line_buf,'S') || 
+				else if ((strchr(line_buf,'s') || strchr(line_buf,'S') || strchr(line_buf,'a') || strchr(line_buf,'A') || 
 				          strchr(line_buf,'t') || strchr(line_buf,'T')) && (input_control::ACCEPT_MAP & input_control::braid_word))
 				{
 					accepted_braid_input = true;
@@ -226,7 +236,7 @@ if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 			    /* This test means we cannot break lines after
 				   the '/' character in the input file
 				*/
-				if (strchr(lptr,'/') || strchr(lptr,'|') || strchr(lptr,'O') || (strchr(lptr,'X') && !escape_present) )
+				if (strchr(lptr,'/') || strchr(lptr,'|') || strchr(lptr,'O') || strchr(lptr,'D') || (strchr(lptr,'X') && !escape_present) )
 				{
 					word_found = true;					
 					

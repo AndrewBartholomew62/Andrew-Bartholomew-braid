@@ -6,6 +6,10 @@ bool satellite_code_data(generic_code_data& knot_data, generic_code_data& satell
 void assign_satellite_code(generic_code_data& satellite_data, int s_edge, int s_prime_edge, int s_component, int s_prime_component, int type, int crossing)
 vector<int> gauss_parity(generic_code_data& code_data)
 string minimal_peer_code_representation (generic_code_data peer_code_data)
+
+void mock_alexander(generic_code_data& code_data)
+polynomial<int> nabla_k(generic_code_data& code_data, int starred_edge)	
+int find_cycle(matrix<int>& cycle, int num_cycles, int num_left_cycles, int edge_1, int edge_2, bool left_cycle)
 **************************************************************************/
 #include <sstream>
 #include <fstream>
@@ -13,6 +17,8 @@ string minimal_peer_code_representation (generic_code_data peer_code_data)
 #include <cstring>
 #include <valarray>
 #include <list>
+#include <algorithm>
+#include <cctype>
 #include <iomanip>
 
 using namespace std;
@@ -28,11 +34,13 @@ extern ifstream     input;
 #include <braid.h>
 #include <gauss-orientation.h>
 
+//bool CYCLE_KNOT_TYPE_NABLA_K = true;
 
 /********************* Function prototypes ***********************/
 void bracket_polynomial(generic_code_data& code_data, int variant);
 bool immersion_to_dowker (matrix<int>& code_table, vector<int>& code);
 bool gauss_to_peer_code(generic_code_data gauss_code_data, generic_code_data& peer_code_data, bool optimal=true, vector<int>* gauss_crossing_perm=0, bool evaluate_gauss_crossing_perm=false);
+//bool classical_gauss_to_peer_code(generic_code_data gauss_code_data, generic_code_data& peer_code_data);
 void standard_rep (string& word);
 string vogel (generic_code_data code_data);
 string affine_index_polynomial(string input_string, generic_code_data& code_data);
@@ -45,8 +53,8 @@ void assign_gauss_arc_direction(int arc_1, int arc_2, matrix<int>& gauss_code_ta
 string direction_to_string(int edge, vector<int>& gauss_arc_direction);
 void remove_fringe_edge(int edge, vector<int>& current_fringe);
 
-
-string new_over_preferred_gauss_code(generic_code_data& code_data, bool unoriented);
+void mock_alexander(generic_code_data& code_data);
+int find_cycle(matrix<int>& cycle, int num_cycles, int num_left_cycles, int edge_1, int edge_2, bool left_cycle);
 
 /* generic_code is the broker function for an input_string in the form of a labelled code, that is
    either a labelled immersion code or a labelled peer code.  It will do one of the following:
@@ -68,7 +76,7 @@ if (debug_control::DEBUG >= debug_control::BASIC)
 
 	/* first isolate any qualifiers from the input string */
 	string qualifier;
-	unsigned int satellite_code_qualifier = 0;
+	unsigned int satellite_strands = braid_control::SATELLITE;
 	
 	string::size_type pos = input_string.find('{');
 	if (pos != string::npos)
@@ -79,6 +87,7 @@ if (debug_control::DEBUG >= debug_control::BASIC)
 		input_string = input_string.substr(0,pos);
 	}
 
+	/* if we have a satellite qualifier, override the global valuse set by braid_control::SATELLITE with the value determined by the qualifier */
 	if (qualifier.find("satellite") != string::npos)
 	{
 		string::size_type pos = qualifier.find("satellite");
@@ -98,15 +107,15 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 			while (*cptr != '=')
 				cptr++;
 				
-			get_number(satellite_code_qualifier,++cptr);			
+			get_number(satellite_strands,++cptr);			
 			delete c_satellite_string;
 		}
 		else
-			satellite_code_qualifier = 2;
+			satellite_strands = 2;
 
 
 if (debug_control::DEBUG >= debug_control::BASIC)
-	debug << "generic_code: satellite qualifier provided, number of strands = " << satellite_code_qualifier << endl;
+	debug << "generic_code: satellite qualifier provided, number of strands = " << satellite_strands << endl;
 
 	}
 		
@@ -153,25 +162,27 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 	generic_code_data code_data;
 	read_code_data (code_data, input_string);
 
-	if (satellite_code_qualifier)
+	if (satellite_strands)
 	{
-		if (braid_control::SATELLITE)
+
+/*		if (braid_control::SATELLITE)
 		{
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "generic_code: ignoring satellite code qualifier due to braid_control::SATELLITE being specified" << endl;
 		}
 		else
+*/		
 		{	
 			generic_code_data satellite_data;
 			
-			if (satellite_code_data(code_data, satellite_data, satellite_code_qualifier))
+			if (satellite_code_data(code_data, satellite_data, satellite_strands))
 			{
 				code_data = satellite_data;
 
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 {
 	debug << "generic_code: replacing code data with satellite code data" << endl;
-	print_code_data(code_data,debug,"generic_code: ");	
+	print_code_data(debug,code_data,"generic_code: ");	
 
 }
 			}
@@ -259,7 +270,7 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 	}
 	else if (braid_control::DOWKER_CODE)
 	{
-		if(code_data.type == generic_code_data::immersion_code)
+		if(code_data.type == generic_code_data::peer_code || code_data.type == generic_code_data::immersion_code)
 		{
 			vector<int>	dowker_code;
 		    /* we use dowker_code to hold the Dowker code once calculated */
@@ -280,8 +291,16 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 				}
 				if (braid_control::OUTPUT_AS_INPUT)
 					output << "\n";
+				output << "DT:";
+				
 				for (int i=0;i<num_terms;i++)
-		    		output << dowker_code[i] << " ";
+				{
+		    		output << dowker_code[i];
+		    		
+		    		if (i< num_terms-1)
+						output << " ";
+		    	}
+		    		
 				if (!braid_control::SILENT_OPERATION)
 					cout << "\n";
 				output << "\n";
@@ -299,7 +318,7 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 		}
 		else
 		{
-			cout << "\nError! generic_code presented with a peer code for a call to immersion_to_dowker.\n";
+			cout << "\nError! generic_code presented with a a code that is not a peer code or an immersion code for a call to immersion_to_dowker.\n";
 			exit(0);
 		}
 	}
@@ -308,7 +327,8 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 		if(code_data.type == generic_code_data::gauss_code)
 		{
 			generic_code_data peer_code_data;
-		    if( gauss_to_peer_code(code_data, peer_code_data) )
+//			if ((braid_control::CLASSICAL_INPUT && classical_gauss_to_peer_code(code_data, peer_code_data)) || gauss_to_peer_code(code_data, peer_code_data) )		    
+			if (gauss_to_peer_code(code_data, peer_code_data))
 		    {
 				if (!braid_control::SILENT_OPERATION)
 				{
@@ -705,6 +725,22 @@ if (debug_control::DEBUG >= debug_control::BASIC)
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "generic_code: Affine index polynomial = " << poly << endl;
 	}
+	else if (braid_control::MOCK_ALEXANDER)
+	{
+		if(code_data.type == generic_code_data::gauss_code)
+		{
+			generic_code_data peer_code_data;
+		    if(gauss_to_peer_code(code_data, peer_code_data))
+		    {				
+				mock_alexander(peer_code_data);
+			}
+		}
+		else
+		{
+			mock_alexander(code_data);
+		}
+	}
+/*
 	else if (braid_control::SATELLITE)
 	{
 		generic_code_data satellite_data;
@@ -740,6 +776,7 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 			}
     	}	
 	}
+*/	
 	else
 	{
 		if (!braid_control::SILENT_OPERATION)
@@ -754,25 +791,17 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 	
 } // End of function generic_code
 
-/* the function immersion_to_dowker calculates the dowker code for the
-   labelled immersion code in code_table, storing the result at code.  
+/* the function immersion_to_dowker calculates the dowker code for the labelled peer code or immersion code in code_table, storing the result at code.  
    
-   The function returns a boolean indicating whether a code has been
-   written to 'code'.  If the code includes a virtual label the function  
-   returns false and leaves code unchanged.  Otherwise the code is set
-   to a vector containing the dowker code and the function returns true.
+   The function returns a boolean indicating whether a code has been written to 'code'.  If the code includes a virtual label the function  
+   returns false and leaves code unchanged.  Otherwise the code is set to a vector containing the dowker code and the function returns true.
 
-   Given that we have a code table most of the work for the 
-   dowker code is done except that the dowker code numbers semi-arcs from 1 rather 
-   than zero.  (See comments to the function braid_to_dowker for a 
-   description of the dowker code).  Therefore the OPEER row of the 
-   table gives the Dowker code once the odd-numbered peers have been incremented
-   by one.   
+   Given that we have a code table most of the work for the dowker code is done except that the dowker code numbers semi-arcs from 1 rather 
+   than zero.  (See comments to the function braid_to_dowker for a description of the dowker code).  Therefore the OPEER row of the 
+   table gives the Dowker code once the odd-numbered peers have been incremented by one.   
    
-   Note also that if we are given generic code data for an 
-   alternating knot then all the labels will be '+'.  Those crossings for
-   which the label is set to '-' are precisely those that require the 
-   corresponding dowker code element to be negated.
+   Note also that if we are given generic code data for an alternating knot then all the labels will be '+'.  Those crossings for which the label 
+   is set to '-' are precisely those that require the corresponding dowker code element to be negated.
 */
 bool immersion_to_dowker (matrix<int>& code_table, vector<int>& code)
 {
@@ -1077,7 +1106,7 @@ if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 {
 	debug << "satellite_code_data: presented with knot data" << endl;
-	print_code_data(knot_data, debug, "satellite_code_data:   ");
+	print_code_data(debug,knot_data,"satellite_code_data:   ");
 	debug << "satellite_code_data: number of strands required = " << strands << endl;
 }
 
@@ -1305,7 +1334,7 @@ if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 			satellite_data.orig_crossing[scode_table[ODD_ORIGINATING][i]] = i;
 		}
 
-//		print_code_data(satellite_data, cout, "    ");
+//		print_code_data(cout, satellite_data, "    ");
 		
 //		cout << "\nsatellite_code_data: number of strands = " << strands << " writhe = " << writhe << endl;
 		return true;
@@ -1500,6 +1529,7 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 	return parity;
 }
 
+#ifdef TAKEOUT
 /* un-oriented minimal representation of peer codes only */
 string minimal_peer_code_representation (generic_code_data peer_code_data)
 {
@@ -1623,4 +1653,460 @@ if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 	ostringstream oss;
 	write_peer_code(oss,minimum_peer_code_data);
 	return oss.str();
+}
+#endif
+
+polynomial<int> nabla_k(generic_code_data& code_data, int starred_edge);
+//void nabla_k(generic_code_data& code_data, int starred_edge);
+
+void mock_alexander(generic_code_data& code_data)
+{
+
+	bool pure_knotoid = (code_data.immersion == generic_code_data::character::PURE_KNOTOID);
+
+	if (code_data.type != generic_code_data::code_type::peer_code || (code_data.immersion != generic_code_data::character::PURE_KNOTOID && code_data.immersion != generic_code_data::character::KNOTOID))
+	{
+		if (!braid_control::SILENT_OPERATION)
+			cout << "mock_alexander requires the peer code of a knotoid, skipping" << endl;
+
+		if (!braid_control::RAW_OUTPUT)
+		{
+			output << (braid_control::OUTPUT_AS_INPUT? "\n;" : "\n");
+			output << "mock_alexander requires the peer code of a knotoid, skipping" << endl;
+		}
+
+if (debug_control::DEBUG >= debug_control::BASIC)
+	debug << "mock_alexander: mock_alexander requires the peer code of a knotoid, doing nothing" << endl;
+
+		return;
+	}
+	else
+	{
+		if(!pure_knotoid || valid_knotoid_input(code_data))  // only need to check knotoid data if it's a pure knotoid
+		{	
+/*				
+			if (CYCLE_KNOT_TYPE_NABLA_K)
+			{
+				polynomial<int> nabla_k_main = nabla_k(code_data,0);
+
+				for (int i=1; i< 2*code_data.num_crossings; i++)
+				{
+					polynomial<int> nabla_k_i = nabla_k(code_data,i);
+					
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+	debug << "mock_alexander: nabla_k_" << i << " = " << nabla_k_i << endl;
+	
+					if (nabla_k_i != nabla_k_main)
+					{
+						cout << "nabla_k_" << i << " = " << nabla_k_i << " nabla_k_main = " << nabla_k_main << endl; 
+						exit(0);
+					}
+				}
+			}
+*/
+			polynomial<int> nabla_k_main = nabla_k(code_data,0);
+
+			if (!braid_control::SILENT_OPERATION)
+				cout << "mock_alexander polynomial = " << nabla_k_main << endl;
+	
+			if (!braid_control::RAW_OUTPUT)
+			{
+				output << (braid_control::OUTPUT_AS_INPUT? "\n;" : "\n");
+				output << "mock_alexander polynomial = ";
+				if (braid_control::OUTPUT_AS_INPUT)
+					output << '\n';
+			}
+			output << nabla_k_main << endl;
+		}
+		else
+		{
+	
+			if (!braid_control::SILENT_OPERATION)
+				cout << "\nmock_alexander: invalid knotoid input, skipping" << endl;
+	
+			if (!braid_control::RAW_OUTPUT)
+			{
+				output << (braid_control::OUTPUT_AS_INPUT? "\n;" : "\n");
+				output << "mock_alexander: invalid knotoid input, skipping" << endl;
+			}
+	
+if (debug_control::DEBUG >= debug_control::BASIC)
+	debug << "nabla_k: invalid knotoid input" << endl;
+	
+			return;
+		}
+	}
+}	
+	
+polynomial<int> nabla_k(generic_code_data& code_data, int starred_edge)	
+{
+	bool pure_knotoid = (code_data.immersion == generic_code_data::character::PURE_KNOTOID);
+	
+//	if(!pure_knotoid || valid_knotoid_input(code_data))  // only need to check knotoid data if it's a pure knotoid
+	{		
+		matrix<int>& code_table = code_data.code_table;			
+		int head = code_data.head;	
+		int num_crossings = code_data.num_crossings;
+		int num_edges = 2*num_crossings;
+		int num_cycles;
+		int num_left_cycles;
+
+		int num_classical_crossings = num_crossings;
+		if (pure_knotoid)
+		{
+			for (int i=0; i< num_crossings; i++)
+			{
+				if (code_data.shortcut_crossing[i] != 0)
+					num_classical_crossings--;
+			}
+		}
+		
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+{
+	debug << "nabla_k: starred_edge = " << starred_edge << endl;
+	debug << "nabla_k: num_classical_crossings = " << num_classical_crossings << endl;
+}
+	
+		vector<int> crossing_sign(num_crossings);
+		
+		for (int i=0; i< num_crossings; i++)
+		{
+			if (code_table[LABEL][i] != generic_code_data::VIRTUAL)
+			{
+				if ((code_table[TYPE][i] == generic_code_data::TYPE1 && code_table[LABEL][i] == generic_code_data::NEGATIVE) ||
+				    (code_table[TYPE][i] == generic_code_data::TYPE2 && code_table[LABEL][i] == generic_code_data::POSITIVE))
+					crossing_sign[i] = 1;
+				else
+					crossing_sign[i] = -1;
+			}
+		}
+	
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+{
+	debug << "nabla_k: crossing_sign: ";
+	for (int i=0; i< num_crossings; i++)
+		debug << crossing_sign[i] << ' ';
+	debug << endl;
+}
+
+		matrix<int> cycle(num_crossings+2, num_edges+1);
+		calculate_turning_cycles(code_data, cycle, num_left_cycles, num_cycles);
+
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+{
+	debug << "nabla_k: num_cycles = " << num_cycles << endl;
+    debug << "nabla_k: number of left turning cycles = " << num_left_cycles;
+	for (int i=0; i<num_left_cycles; i++)
+	{
+		debug << "\nnabla_k: cycle " << i << " length = " << cycle[i][0] << ": ";
+		for (int j=1; j<=cycle[i][0]; j++)
+			debug << cycle[i][j] << " ";
+	}
+	debug << endl;
+    debug << "nabla_k: number of right turning cycles = " << num_cycles - num_left_cycles;
+	for (int i=num_left_cycles; i<num_cycles; i++)
+	{
+		debug << "\nnabla_k: cycle " << i << " length = " << cycle[i][0] << ": ";
+		for (int j=1; j<=cycle[i][0]; j++)
+			debug << cycle[i][j] << " "	;
+	}
+	debug << endl;
+}
+
+		/* identify the region of the knotoid complement corresponding to each turning cycle. turning cycles sharing a shortcut
+		   edge belong to the same region.
+		*/
+		vector<int> region(num_cycles);		
+		for (int i=0; i< num_cycles; i++)
+			region[i] = i;
+			
+		int first_shortcut_edge = starred_edge;  // set for the case of knot-type knotoids
+		
+		if (pure_knotoid)
+		{
+			if (code_table[LABEL][head] == generic_code_data::POSITIVE)
+				first_shortcut_edge = code_table[OPEER][head];
+			else if (code_table[LABEL][head] == generic_code_data::NEGATIVE)
+				first_shortcut_edge = 2*head;
+			else
+			{
+				/* shouldn't get here as valid_knotoid_input checks the first shortcut crossing cannot be virtual */
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
+	debug << "nabla_k: head " << 0 << " indicates first shortcut crosing is virtual" << endl;
+			}
+		}
+	
+		int head_cycle = -1; // the first turning cycle containing the first shortcut edge.
+		int first_starred_cycle = -1; // the first turning cycle containing the starred edge.
+		int second_starred_cycle = -1; // the first turning cycle containing the starred edge.
+		
+		for (int i = first_shortcut_edge; i<= (pure_knotoid? code_data.num_component_edges[0]: starred_edge); i++)
+		{
+			int shortcut_edge = i%code_data.num_component_edges[0]; // allows us to cycle to include edge zero, is equal to zero in the case of knot-type knotoids
+
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+	debug << "nabla_k: shortcut_edge " << shortcut_edge;
+			
+			/* identify first occurrence of the shortcut edge and note the first turning cycle containing the first edge
+			   of the shortcut, since this will determine the region containing the head of the knotoid.
+			*/
+			int first_cycle = -1;
+			int second_cycle;
+			bool finished = false;
+			for (int j=0; j< num_cycles; j++)
+			{
+				for (int k=1; k<= cycle[j][0]; k++)
+				{
+					if (abs(cycle[j][k]) == shortcut_edge)
+					{
+						if (first_cycle == -1)
+						{
+							first_cycle = j;							
+							if (i == first_shortcut_edge)
+								head_cycle = first_cycle;
+
+							if (i == starred_edge)
+								first_starred_cycle = first_cycle;
+						}
+						else
+						{
+							second_cycle = j;
+							
+							if (i == starred_edge)
+								second_starred_cycle = second_cycle;
+								
+							finished = true;
+						}
+						
+						break;
+					}
+				}
+				if(finished)
+					break;
+			}
+			
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+	debug << " first_cycle " << first_cycle << " second_cycle = " << second_cycle << endl;
+
+			region[second_cycle] = first_cycle;
+		}	
+
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+	debug << "nabla_k: head_cycle =  " << head_cycle << endl;
+
+		int index = 0;
+		for (int i=0; i< num_cycles; i++)
+		{
+			if(region[i] == i)
+				region[i] = index++;
+			else
+				region[i] = region[region[i]];
+		}
+		
+		int num_regions = index;
+
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+{
+	debug << "nabla_k: num_regions = " << num_regions << endl;
+	debug << "nabla_k: cycle to region mapping: ";
+	for (int i=0; i< num_cycles; i++)
+		debug << region[i] << ' ';
+	debug << endl;
+	debug << "nabla_k: first_starred_cycle = " << first_starred_cycle << endl;
+	debug << "nabla_k: second_starred_cycle = " << second_starred_cycle << endl;
+	debug << "nabla_k: region corresponding to starred_cycle = " << region[first_starred_cycle] << endl;
+}
+
+		
+		matrix<polynomial<int> > M(num_classical_crossings, num_regions);
+		
+		index = -1;
+		for (int i=0; i< num_crossings; i++)
+		{
+			if (!pure_knotoid || code_data.shortcut_crossing[i] == 0)
+			{
+				index++;
+//if (debug_control::DEBUG >= debug_control::SUMMARY)
+//	debug << "nabla_k: crossing " << crossing << " index = " << index << endl;
+
+				int edge_1;
+				int edge_2;
+				int turning_cycle;
+				int crossing_region;
+				
+				edge_1 = code_table[EVEN_TERMINATING][i];
+				edge_2 = code_table[ODD_TERMINATING][i];					
+				turning_cycle = find_cycle(cycle, num_cycles, num_left_cycles, edge_1, edge_2, (code_table[TYPE][i] == generic_code_data::type::TYPE1?true:false));
+				crossing_region = region[turning_cycle];					
+				M[index][crossing_region] += (crossing_sign[i] == 1? polynomial<int>("-B") : polynomial<int>("-W"));
+				
+				edge_2 = code_table[EVEN_ORIGINATING][i];
+				turning_cycle = find_cycle(cycle, num_cycles, num_left_cycles, edge_1, edge_2, (code_table[TYPE][i] == generic_code_data::type::TYPE1?false:true)); 
+				crossing_region = region[turning_cycle];					
+				M[index][crossing_region] += polynomial<int>("1");
+				
+				edge_1 = code_table[ODD_ORIGINATING][i];
+				turning_cycle = find_cycle(cycle, num_cycles, num_left_cycles, edge_1, edge_2, (code_table[TYPE][i] == generic_code_data::type::TYPE1?true:false)); 
+				crossing_region = region[turning_cycle];					
+				M[index][crossing_region] += (crossing_sign[i] == 1? polynomial<int>("W") : polynomial<int>("B"));
+
+				edge_2 = code_table[ODD_TERMINATING][i];
+				turning_cycle = find_cycle(cycle, num_cycles, num_left_cycles, edge_1, edge_2, (code_table[TYPE][i] == generic_code_data::type::TYPE1?false:true)); 
+				crossing_region = region[turning_cycle];					
+				M[index][crossing_region] += polynomial<int>("1");					
+			}
+		}
+		
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+{
+	debug << "nabla_k: M = " << endl;
+	for (int i=0; i< num_classical_crossings; i++)
+	{
+		debug << "nabla_k:     ";
+		for (int j=0; j< num_regions; j++)
+			debug << M[i][j] << ' ';
+		debug << endl;
+	}
+		
+	debug << endl;
+}
+		
+		/* nabla_k is determined by placing a star adjacent to the leg of the knotoid.  In a pure knotoid, the leg is always edge zero, and edge zero always appears
+		   in the first turning cycle, the star lies in region zero, so to evaluate nabla_ we omit the first column of M to calculate the permanent
+		   
+		   In a knot-type knotoid, we're being given a peer code of a knot and could consider the leg to be on any edge
+		*/ 
+		int r_perm[num_classical_crossings];
+		for (int i=0; i< num_classical_crossings; i++)
+			r_perm[i] = i;
+			
+		int c_perm[num_classical_crossings];
+//		for (int i=0; i< num_classical_crossings; i++)
+//			c_perm[i] = i+1;			
+
+		index = 0;
+		for (int i=0; i< num_regions; i++)
+		{
+			if (i == region[first_starred_cycle])
+				continue;
+				
+			c_perm[index++] = i;			
+		}
+		
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+{
+	debug << "nabla_k: main M = " << endl;
+	for (int i=0; i< num_classical_crossings; i++)
+	{
+		debug << "nabla_k:     ";
+		for (int j=0; j< num_classical_crossings; j++)
+			debug << M[i][c_perm[j]] << ' ';
+		debug << endl;
+	}
+		
+	debug << endl;
+}
+		
+		polynomial<int> nabla_k_main = permanent(M, "", num_classical_crossings, r_perm, c_perm);
+
+/*
+		if (!braid_control::SILENT_OPERATION)
+			cout << "nabla_k polynomial = " << nabla_k_main << endl;
+
+		if (!braid_control::RAW_OUTPUT)
+		{
+			output << (braid_control::OUTPUT_AS_INPUT? "\n;" : "\n");
+			output << "nabla_k polynomial = ";
+			if (braid_control::OUTPUT_AS_INPUT)
+				output << '\n';
+		}
+		output << nabla_k_main << endl;
+*/
+
+		/* nabla_k_prime is determined by placing a star adjacent to the head of the knotoid.  For a pure knotoid, the region needs to be looked up using 
+		   head_cycle so we omit the corresponding column of M to calculate the permanent, for a knot-type knotoid, nabla_k_prime = nabla_k
+		*/ 
+		
+		if (pure_knotoid)
+		{
+			index = 0;
+			for (int i=0; i< num_regions; i++)
+			{
+				if (i == region[head_cycle])
+					continue;
+					
+				c_perm[index++] = i;			
+			}
+		}
+
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+{
+	debug << "nabla_k: prime M = " << endl;
+	for (int i=0; i< num_classical_crossings; i++)
+	{
+		debug << "nabla_k:     ";
+		for (int j=0; j< num_classical_crossings; j++)
+			debug << M[i][c_perm[j]] << ' ';
+		debug << endl;
+	}
+		
+	debug << endl;
+}
+
+		if (braid_control::WAIT_SWITCH)
+		{
+		    matrix_control::WAIT_INFO = true;
+		    matrix_control::wait_threshold = braid_control::wait_threshold;
+		    matrix_control::wait_count = 0;
+		}
+		
+		polynomial<int> nabla_k_prime = permanent(M, "", num_classical_crossings, r_perm, c_perm);
+		
+		polynomial<int> step_1 = substitute_signed_polynomial_variable(nabla_k_prime,'W','A',true);
+		polynomial<int> step_2 = substitute_signed_polynomial_variable(step_1,'B','W',true);
+		polynomial<int> step_3 = substitute_signed_polynomial_variable(step_2,'A','B',false);
+
+			
+
+		if (step_3 != nabla_k_main)
+		{
+			cout << "nabla_k = " << nabla_k_main << " nabla_k_prime = " << nabla_k_prime << " step_3 = " << step_3 << endl; 
+			exit(0);
+		}
+		else
+		{
+			return nabla_k_main;
+		}
+		
+	}
+}
+
+int find_cycle(matrix<int>& cycle, int num_cycles, int num_left_cycles, int edge_1, int edge_2, bool left_cycle)
+{
+	int turning_cycle = -1;
+	
+	int start = (left_cycle? 0: num_left_cycles);
+	int end = (left_cycle? num_left_cycles: num_cycles);
+	bool found = false;
+	
+	for (int i=start; i< end; i++)
+	{
+		for (int j=1; j<= cycle[i][0]; j++)
+		{
+			if (abs(cycle[i][j]) == edge_1)
+			{
+				int succeeding_edge = (j<cycle[i][0]? j+1 : 1);
+				if (abs(cycle[i][succeeding_edge]) == edge_2)
+				{
+					turning_cycle = i;
+					found = true;
+					break;
+				}
+			}
+		}
+		if (found)
+			break;
+	}
+	
+	return turning_cycle;
 }

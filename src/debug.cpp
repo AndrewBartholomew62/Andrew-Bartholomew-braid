@@ -30,8 +30,10 @@ ofstream debug;
 
    
 */
+#include <debug-control.h>
 #include <debug.h>
 
+int debug_control::DEBUG = debug_control::OFF; 
 
 #include <util.h>
 #include <algorithm>
@@ -487,7 +489,7 @@ void set_debug_option_parameter(char *pptr, string option)
 #ifdef DEBUG_MATRIX	
 		if (!strcmp(pptr,"det"))
 		{
-			matrix_control::DEBUG |= matrix_control::determinant;
+			matrix_control::DEBUG |= matrix_control::immanant;
 			debug << "debug: setting debug option matrix_control::determinant\n";		
 		}
 		if (!strcmp(pptr,"*"))

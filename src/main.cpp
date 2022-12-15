@@ -88,6 +88,12 @@ documentation, available at www.layer8.co.uk/maths/braids
 	Version 24.0  Added the opgc and uopgc options to the Gauss code task, added OU format for Gauss code output (December 2021)	
 	Version 25.0  Added planar diagram support as an alternative input format, added supprt for Gauss code and planar diagram
 	              input to the knotoid bracket, parity bracket and parity arrow polynomial tasks (March 2022)
+	Version 25.1  Updated the handling of input files containing switches specifying the t-variable.  Updated the behaviour of "satellite" to make it an option 
+                  rather than a task.  This allowed the cabling of entries in an input file prior to carrying out the specified task.  Corrected an error in the 
+                  Vogel algorithm (lines 412 and 434) that caused segmentation error in some cases by not using abs.
+                  Updated the sawollek implementation of matrix P to be more clearly aligned with Sawollek's paper. (September 2022)
+                  Added draft mock Alexander option for knotoids (November 2022)
+                  Added the ability to read Dowker-Thistlethwaite codes for prime knots and convert them to labelled peer codes (December 2022).
 	
 ********************************************************************************************************************************************************/
 using namespace std;
@@ -119,7 +125,7 @@ ifstream    input;
 #include <gauss-orientation.h>
 
 /******************** Control Variables **********************/
-string braid_control::version  = "25.0";
+string braid_control::version  = "25.1";
 
 int braid_control::gcd_initializing;
 
@@ -161,6 +167,7 @@ bool braid_control::KNOTOID_BRACKET = false;
 bool braid_control::LINE_REFLECT_BRAID = false;
 bool braid_control::LONG_KNOT = false;
 bool braid_control::MATRIX = false;
+bool braid_control::MOCK_ALEXANDER = false;
 bool braid_control::NORMALIZING_Q_POLYNOMIALS = false;
 bool braid_control::NORMALIZE_BRACKET = true;
 bool braid_control::NUMERATOR_GCD = false;
@@ -215,7 +222,6 @@ bool braid_control::first_time = true;
 int braid_control::REMOVE_COMPONENT=0; // used to identify a component of a peer code to be removed
 int	braid_control::SWITCH_POWER=0; // used to control whether powers of switches are calculated.
 
-int debug_control::DEBUG = debug_control::OFF;
 bool braid_control::VOGEL_DEBUG = false;
 
 /* RACK_TERMS is the default for number of positive and negative terms added to
@@ -249,7 +255,6 @@ void set_cli_suboptions(char* optr, string option);
 void print_prog_params (ostream& os, string level, string prefix);
 Hmatrix H22inverse(Hmatrix& M);
 Hpmatrix Hpmatrix_from_q_switch(const Hmatrix& q_switch, bool t_variable);
-bool valid_braid_input (string input_string, int& num_terms, int& num_strings, bool raw_output, bool silent_output, bool output_as_input);
 Qpmatrix adj2(Qpmatrix& M);
 void simplify_matrix (Qpmatrix& M);
 string parse_long_knot_input_string (string input_string);
@@ -437,7 +442,10 @@ int main (int argc, char* argv[])
 			else if (selection == "22")
 			    braid_control::PEER_CODE = true;
 			else if (selection == "23")
+			{
 			    braid_control::SATELLITE = 2;
+			    braid_control::PEER_CODE = true;
+			}
 			else if (selection == "24")
 			    braid_control::STATUS_INFORMATION = true;
 			else if (selection == "25")
@@ -490,11 +498,12 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 }
 
 	if (braid_control::DEVELOPMENT_MODE)
-	{	
-		input_control::ACCEPT_MAP |= input_control::planar_diagram;
+	{			
+//		input_control::ACCEPT_MAP |= input_control::planar_diagram;
+//		input_control::ACCEPT_MAP |= input_control::gauss_code;
 
-if (debug_control::DEBUG >= debug_control::SUMMARY)
-	debug << "development: input_control::ACCEPT_MAP set to 0x" << hex << input_control::ACCEPT_MAP << dec << endl;
+//if (debug_control::DEBUG >= debug_control::SUMMARY)
+//	debug << "development: input_control::ACCEPT_MAP set to 0x" << hex << input_control::ACCEPT_MAP << dec << endl;
 		
 		string buffer;
 		string title;
@@ -505,14 +514,13 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 			exit(0);
     	}	
 		
-		while (true)
+		while (getline(input,buffer))
 		{
-			get_input_word (input, buffer, title);
-			cout << "read " << buffer << endl;
-
-			if (buffer == "exit")
-				break;
+			polynomial<int> p(buffer);
+			cout << p << endl;
+		
 		}
+		
 exit(0);
 
 		string input_string;// = "[5 11 7 1, 13 3 15 9]/+ * + + * * # #";
@@ -632,10 +640,9 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 			if (strlen(line_buf))
 			{
 				cptr = strchr(line_buf,'[');
-				if (cptr && !strchr(line_buf,'\\') && !strchr(line_buf,'/') && !strchr(line_buf,'X'))
+				if (cptr && !strchr(line_buf,'\\') && !strchr(line_buf,'/') && next_line.find("X[")== string::npos && next_line.find("S[") == string::npos && next_line.find("s[") == string::npos) 
 				{		
-					/* this is an options line not a line containing a peer code
-					   make sure there's an end to the option definitions on this line 
+					/* this is an options line and not a line containing a peer code, a planar diagram or a switch specifying the t-variable.  Make sure there's an end to the option definitions on this line 
 					*/
 					if (!strchr(line_buf,']'))
 					{
@@ -1410,7 +1417,15 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 			    		fundamental_equation_satisfied = false;
 				}
 				else
+				{
 		    		fundamental_equation_satisfied = false;
+if (debug_control::DEBUG >= debug_control::DETAIL)
+{
+	debug << "braid::main: determinant(A) = " << determinant(A) << endl;
+	debug << "braid::main: determinant(B) = " << determinant(B) << endl;
+	debug << "braid::main: determinant(1-A) = " << determinant(A1) << endl;
+}
+		    	}
 
 				if (fundamental_equation_satisfied)
 				{
@@ -1432,6 +1447,16 @@ if (debug_control::DEBUG >= debug_control::BASIC)
 
 if (debug_control::DEBUG >= debug_control::BASIC)
 	debug << "braid::main: D = \n" << D << endl;
+
+
+if (debug_control::DEBUG >= debug_control::BASIC)
+{
+	debug << "braid::YB-test ";
+	debug << "A = (" << A[0][0] << ", " << A[0][1] << ", " <<  A[1][0] << ", " <<  A[1][1] << "), ";
+	debug << "B = (" << B[0][0] << ", " << B[0][1] << ", " <<  B[1][0] << ", " <<  B[1][1] << "), ";
+	debug << "C = (" << C[0][0] << ", " << C[0][1] << ", " <<  C[1][0] << ", " <<  C[1][1] << "), ";
+	debug << "D = (" << D[0][0] << ", " << D[0][1] << ", " <<  D[1][0] << ", " <<  D[1][1] << ')' << endl;
+}
 
 
 					if (braid_control::EQUALITY_TEST)
@@ -3092,21 +3117,21 @@ if (debug_control::DEBUG >= debug_control::BASIC)
 				   
 				   This clause is also the default case where SWITCH_POLYNOMIAL_INVARIANT == false */
 				typedef matrix<polynomial<scalar>,scalar> Bmatrix;
+				Bmatrix switch_matrix(2,2);
+				Bmatrix switch_matrix_inverse(2,2);		
 				
 				/* Set the scalar variant to bigint unless we are already doing mod-p */
 				if (!braid_control::CALCULATE_MOD_P)
 					scalar::set_variant(scalar::BIGINT);	
-
+					
 //				string str = "0 s t 1-st"; // old Burau definition
 				string str = "1-st t s 0"; // current Burau definition
 				istringstream ss(str);
-				Bmatrix switch_matrix(2,2);
 				ss >> switch_matrix[0][0] >> switch_matrix[0][1] >> switch_matrix[1][0] >> switch_matrix[1][1];
 
 //				string str_inv = "1-s^-1t^-1 t^-1 s^-1 0"; // old Burau inverse
 				string str_inv = "0 s^-1 t^-1 1-s^-1t^-1"; // current Burau inverse
 				istringstream ss_inv(str_inv);
-				Bmatrix switch_matrix_inverse(2,2);		
 				ss_inv >> switch_matrix_inverse[0][0] >> switch_matrix_inverse[0][1] 
 				   >> switch_matrix_inverse[1][0] >> switch_matrix_inverse[1][1];
 			
@@ -3172,13 +3197,20 @@ if (debug_control::DEBUG >= debug_control::BASIC)
 
 		while (get_next_input_string(input_file,input_string, title))
 		{
-			if (input_string.find('/') != string::npos || (input_string.find('O') != string::npos && input_string.find('U') != string::npos) || input_string.find('X') != string::npos )
+			if (input_string.find('/') != string::npos || (input_string.find('O') != string::npos && input_string.find('U') != string::npos) || input_string.find('X') != string::npos || input_string.find("DT:") != string::npos)
 			{
 				generic_code(input_string, title);
 			}
-			else
+			else if (find_if(input_string.begin(), input_string.end(), alpha_char()) != input_string.end())  // if the input string contains an alphabetical character
 			{
 				braid(input_string, title);
+			}
+			else  
+			{
+				cout << "Error! Unknown code " << input_string << endl;
+				exit(0);
+//				string peer_code = dowker_to_peer_code (input_string);
+//				cout << peer_code << endl;
 			}
 		}
 	}
@@ -3488,6 +3520,12 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 		braid_control::WEYL = false;
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: MATRIX read from " << source << endl;
+	}
+	else if (!strcmp(loc_buf,"mock"))
+	{
+   		braid_control::MOCK_ALEXANDER = true;
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+	debug << "set_programme_long_option: MOCK_ALEXANDER read from " << source << endl;
 	}
 	else if (!strcmp(loc_buf,"mod-p"))
 	{
@@ -3857,13 +3895,12 @@ void set_programme_short_option(char* cptr)
 			cout << "  kauffman-bracket: calculate the normalized Kauffman bracket polynomial\n";
 			cout << "  knotoid-bracket: calculate the Turaev extended bracket polynomial of a knotoid\n";
 			cout << "  matrix: matrix-switch polynomial invariant\n";
+			cout << "  mock: mock Alexander polynomial invariants of knotoids\n";
 			cout << "  parity-arrow: calculate the normalized parity arrow polynomial\n";
 			cout << "  parity-bracket: calculate the normalized parity bracket polynomial\n";
 			cout << "  peer: peer code\n";
 	    	cout << "  quaternion: quaternionic-switch polynomial invariant\n";
 			cout << "  rack-polynomial: calculate the rack-polynomial invariant\n";
-			cout << "  satellite[=r]: calculate the peer code of the r-parallel cable satellite of a knot's peer code\n";
-			cout << "                 r: default value 2\n";
 			cout << "  sawollek: calculate Sawollek's normalized Conway polynomial\n";
 			cout << "  vogel: Vogel algorithm\n";
 			cout << "  weyl: Weyl-algebra-switch polynomial invariant\n\n";
@@ -3892,7 +3929,7 @@ void set_programme_short_option(char* cptr)
 			cout << "  normalize-quaternions  normalize quaternionic polynomial invariants\n";
 			cout << "  opgc                   calculate the over preferred Gauss code, rather than a standard Gauss code\n";
 			cout << "  OU-format              write Gauss codes as a sequence (O|U)<crossing-num><crossing-sign>\n";
-			cout << "  pd-data                write Gauss code as a planar diagram\n";
+			cout << "  PD-format              write Gauss code as a planar diagram\n";
 			cout << "  plane-reflect          reflect all the braids in the file in the plane of the page\n";
 			cout << "  power=n                evaluate the nth power of the switch when calculating switch polynomial invariants\n";
 			cout << "  rack-terms=k           set the global value k for the number of terms to consider for rack-polynomials\n";
@@ -3900,6 +3937,8 @@ void set_programme_short_option(char* cptr)
 			cout << "  relaxed-parity         evaluate the relaxed variant of the parity arrow polynomial\n";
 			cout << "  remove=n               remove the n-th component from a peer code\n";
 			cout << "  rho                    use the Study rho mapping for calculating Study determinants\n";
+			cout << "  satellite[=n]:         determine the peer code of the n-parallel cable satellite of a knot's peer code before carrying out the required programme task\n";
+			cout << "                         n: default value 2\n";
 			cout << "  show-parity-peer-codes show peer codes in addition to unoriented left preferred Gauss codes in parity bracket polynomial output\n";
 			cout << "  show-varmaps           show variable mappings instead of substituting mapped variables in polynomial output\n";
 			cout << "  silent                 do not generate any output to the command line (stdout)\n";
@@ -4694,7 +4733,7 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 							set_to_one(delta_0,'s');
     				}
 
-	    			Laurent_scale (delta_0);
+					Laurent_scale (delta_0);
 
 					if (!braid_control::DISPLAY_DELTA_1_ONLY)
 					{
@@ -7381,7 +7420,7 @@ void set_main_debug_option_parameter(char* pptr, string option)
 		{
 			if (!strcmp(pptr,"summary") || !strcmp(pptr,"1") )
 			{
-				debug_control::DEBUG = debug_control::BASIC;
+				debug_control::DEBUG = debug_control::SUMMARY;
 				debug << "main::set_main_debug_option_parameter: setting debug option debug_control::DEBUG = debug_control::BASIC\n";		
 			}
 			if (!strcmp(pptr,"basic") || !strcmp(pptr,"2") )
@@ -7500,6 +7539,7 @@ void set_acceptable_input_type()
 		input_control::ACCEPT_MAP |= input_control::gauss_code;
 		input_control::ACCEPT_MAP |= input_control::braid_word;
 		input_control::ACCEPT_MAP |= input_control::planar_diagram;
+		input_control::ACCEPT_MAP |= input_control::dowker_code;
 
 		if (!braid_control::SILENT_OPERATION)
 			cout << "\n\nReading braid words, labelled immersion codes, labelled peer codes and planar diagrams from input.\n\n";
@@ -7518,6 +7558,7 @@ void set_acceptable_input_type()
 		input_control::ACCEPT_MAP |= input_control::gauss_code;
 		input_control::ACCEPT_MAP |= input_control::braid_word;
 		input_control::ACCEPT_MAP |= input_control::planar_diagram;
+		input_control::ACCEPT_MAP |= input_control::dowker_code;
 
 
 		if (!braid_control::SILENT_OPERATION)
@@ -7534,6 +7575,7 @@ void set_acceptable_input_type()
 	{
 		input_control::ACCEPT_MAP |= input_control::braid_word;
 		input_control::ACCEPT_MAP |= input_control::immersion_code;
+		input_control::ACCEPT_MAP |= input_control::peer_code;
 
 		if (!braid_control::SILENT_OPERATION)
 			cout << "\n\nReading braid words and labelled immersion codes from input.\n\n";
@@ -7595,6 +7637,22 @@ void set_acceptable_input_type()
 			if (braid_control::OUTPUT_AS_INPUT)
 				output << ';';
 			output << "Reading braid words, labelled immersion codes, labelled peer codes and Gauss codes from input.\n\n";
+		}
+	}
+	else if (braid_control::MOCK_ALEXANDER)
+	{
+		input_control::ACCEPT_MAP |= input_control::peer_code;
+		input_control::ACCEPT_MAP |= input_control::gauss_code;
+		input_control::ACCEPT_MAP |= input_control::planar_diagram;		
+
+		if (!braid_control::SILENT_OPERATION)
+			cout << "\n\nReading labelled peer codes and Gauss codes from input.\n\n";
+		if (!braid_control::RAW_OUTPUT)
+		{
+			output << "\n\n";
+			if (braid_control::OUTPUT_AS_INPUT)
+				output << ';';
+			output << "Reading labelled peer codes and Gauss codes from input.\n\n";
 		}
 	}
 	else

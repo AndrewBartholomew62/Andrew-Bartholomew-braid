@@ -72,7 +72,7 @@ bool fileExists(const std::string& filename)
     return false;
 }
 
-void stringSubstitute(string& str, char ch1, char ch2) 
+void substitute_string_variable(string& str, char ch1, char ch2) 
 {
   for (unsigned int i = 0; i < str.length(); ++i) 
   {

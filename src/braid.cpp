@@ -55,8 +55,6 @@ extern ifstream     input;
 void help_info();
 void tostring (char*& cptr, int n);
 polynomial<int> sawollek(string braid, int num_terms);
-//bool valid_braid_input (string input_string, int& num_terms, int& num_strings, bool raw_output, bool silent_output, bool output_as_input);
-//void parse_braid(string word, int num_terms, vector<int>& braid_num, vector<int>& type);
 void dynnikov(string input_string, int num_strings, int num_terms);
 int braid_to_dowker (string braid, int num_terms, int*& code);
 Hpolynomial study_determinant (const Qpmatrix& H_matrix, int n=0, int* rperm=0, int* cperm=0);
@@ -164,7 +162,7 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 		output << (braid_control::OUTPUT_AS_INPUT? "\n;" : "\n");
 	   	output << input_string;		
 	}
-					
+						
 	if (valid_braid_input(input_string, num_terms, num_strings, braid_control::SILENT_OPERATION, braid_control::RAW_OUTPUT, braid_control::OUTPUT_AS_INPUT))
 	{
 		if (braid_control::DOWKER_CODE)
@@ -411,7 +409,7 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 		{
 		    /* call the function sawollek to evaluate the polynomial */
 			polynomial<int>	delta = sawollek(input_string, num_terms);
-			if (!braid_control::SILENT_OPERATION)
+			if (!braid_control::SILENT_OPERATION)			
 				cout << "\nSawollek's normalized Z-polynomial = " << delta << "\n";
 			if (!braid_control::RAW_OUTPUT)
 			{
@@ -923,9 +921,7 @@ int braid_to_dowker (string braid, int num_terms, int*& code)
     }
 }
 
-/* the function sawollek evaluates Sawollek's normalized Conway
-   polynomial for braid.
-*/
+/* The function sawollek evaluates Sawollek's normalized Conway polynomial for braid. */
 polynomial<int> sawollek(string braid, int num_terms)
 {
     char* mark;
@@ -999,13 +995,13 @@ polynomial<int> sawollek(string braid, int num_terms)
 
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 {
-    debug << "\nsawolleck: braid crossing heights\n";
+    debug << "sawolleck: braid crossing heights\n";
     for (int i=0; i<num_terms; i++)
-		debug <<  height[i] << " ";
+		debug <<  height[i] << " ";		
     debug << "\nsawolleck: braid crossing numbers\n";
     for (int i=0; i<num_terms; i++)
 		debug <<  crossing_num[i] << " ";
-    debug << "\nsawolleck: difference between positive and negative crossings = " << w_power;
+    debug << "\nsawolleck: difference between positive and negative crossings = " << w_power << endl;
 }
 
     /* assign space for the Sawollek matrix M */
@@ -1034,9 +1030,7 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 	    	/* this is a real crossing */
 	    	if (height[i] <0)
 	    	{
-				/* (*matrixptr)[2*real_crossing][2*real_crossing]
-		    		zero from initialization
-				*/
+				/* (*matrixptr)[2*real_crossing][2*real_crossing] zero from initialization */
 				Smatrix[2*real_crossing][2*real_crossing+1] = Polynomial("-x^-1y");
 				Smatrix[2*real_crossing+1][2*real_crossing] = Polynomial("-y^-1");
 				Smatrix[2*real_crossing+1][2*real_crossing+1] = Polynomial("1-x^-1");
@@ -1045,19 +1039,25 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 	    	}
 	    	else
 	    	{
+				
+				/* (*matrixptr)[2*real_crossing+1][2*real_crossing+1] zero from initialization */
 				Smatrix[2*real_crossing][2*real_crossing] = Polynomial("1-x");
 				Smatrix[2*real_crossing][2*real_crossing+1] = Polynomial("-y");
 				Smatrix[2*real_crossing+1][2*real_crossing] = Polynomial("-xy^-1");
-				/* (*matrixptr)[2*real_crossing+1][2*real_crossing+1]
-		   			zero from initialization
-				*/
+
 	    	}
 	    	real_crossing++;
 		}
     }
 
-    /* Now determine the permutation P and at the same time evaluate
-       the matrix M-P
+    /* Now determine the permutation matrix P and at the same time evaluate the matrix M-P.  The matrix P is the identity matrix whose columns are 
+       permuted according to the permutation described by Sawollek.
+       
+       The ingress arcs at the real crossings in the diagram are enumerated (1,d),(1,u),(2,d),2(u),... where d=down and u=up; that is the left and 
+       right enumeration used by Sawollek rotated to coincide with our usual horizontal view of a braid.  Each upper and lower egress arc at a real 
+       crossing, i, of the braid corresponds to an element of the above enumeration determined by the real crossing number of the braid crossing and 
+       whether we are considering the upper (u) or lower (d).  That is the egress arc is identified with a variable associated with the enumeration.
+       By tracing along the braid to the next real crossing, j, (ingress arc) we obtain the permuation value (i,u|d) -> (j,u|d)
     */
     for (int i=0; i<2*num_real_crossings; i++)
     {
@@ -1074,16 +1074,22 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 		    }
 		}
 
-		if (i%2)
-		    string_num = height[crossing] + 1;  // upper output string
-		else
-	    	string_num = height[crossing];  // lower output string
-
-		/* look along braid to find the next real crossing involving
-		   string.  We need the do loop because we may switch strands
-		   through virtual crossings and need to follow the braid around
-		   more than once.
+		/* The rows of Smatrix occur in pairs with the up action relation first and the down action second.  That means
+		   that when we create the permutation matrix for each crossing, we need to consider the top string first and
+		   then the lower string
 		*/
+		if (i%2)
+			string_num = height[crossing];  // lower output string
+		else
+			string_num = height[crossing] + 1;  // upper output string
+
+		/* look along braid to find the next real crossing involving string.  We need the do loop because we may switch 
+		   strands through virtual crossings and need to follow the braid around more than once.
+		*/
+		
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+    debug << "sawolleck: i = " << i << ", real_crossing = " << real_crossing << ", crossing_num = " << crossing << ", string_num = " << string_num;		
+    
 		string_found = false;
 		do
 		{
@@ -1095,9 +1101,13 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 						string_num++; // follow strand through virtual crossing
 		    		else
 		    		{
+						
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+    debug << " terminates at lower strand of crossing " << crossing_num[j] << endl;		
+
 						string_found = true;
 						/* subtract non-zero permutation element from M */
-						Smatrix[2*(crossing_num[j]-1)][i] -= 1;
+						Smatrix[i][2*(crossing_num[j]-1)] -= 1;
 						break;
 		    		}
 				}
@@ -1107,9 +1117,11 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 						string_num--; // follow strand through virtual crossing
 		    		else
 		    		{
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+    debug << " terminates at upper strand of crossing " << crossing_num[j] << endl;		
 						string_found = true;
 						/* subtract non-zero permutation element from M */
-						Smatrix[2*(crossing_num[j]-1)+1][i] -= 1;
+						Smatrix[i][2*(crossing_num[j]-1)+1] -= 1;
 						break;
 		    		}
 				}
@@ -1126,9 +1138,11 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 			    			string_num++; // follow strand through virtual crossing
 						else
 						{
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+    debug << " terminates at lower strand of crossing " << crossing_num[j] << endl;		
 			    			string_found = true;
 			    			/* subtract non-zero permutation element from M */
-			    			Smatrix[2*(crossing_num[j]-1)][i] -= 1;
+							Smatrix[i][2*(crossing_num[j]-1)] -= 1;
 			    			break;
 						}
 		    		}
@@ -1138,9 +1152,11 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 			    			string_num--; // follow strand through virtual crossing
 						else
 						{
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+    debug << " terminates at upper strand of crossing " << crossing_num[j] << endl;		
 			    			string_found = true;
 			    			/* subtract non-zero permutation element from M */
-			    			Smatrix[2*(crossing_num[j]-1)+1][i] -= 1;
+							Smatrix[i][2*(crossing_num[j]-1)+1] -= 1;
 			    			break;
 						}
 		    		}
@@ -1151,8 +1167,9 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 
 if (debug_control::DEBUG >= debug_control::BASIC)
 {
-    debug << "\n\nsawolleck: Sawollek matrix (M-P)\n";
+    debug << "sawolleck: Sawollek matrix (M-P)\n";
     debug << Smatrix;
+    debug << endl;
 }
 
     /* now calculate det(Smatrix) we want to include all the
@@ -1167,9 +1184,8 @@ if (debug_control::DEBUG >= debug_control::BASIC)
 	matrix_control::WAIT_INFO = false;
 	
 if (debug_control::DEBUG >= debug_control::SUMMARY)
-{
-    debug << "\nsawolleck: det(M-P) = " << poly;
-}
+    debug << "\nsawolleck: det(M-P) = " << poly << endl;
+    
     if (poly.nonzero())
     {
 		/* now calculate the normalizing factor and include the w_power
@@ -1210,9 +1226,7 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 				poly *= -1;
 
 if (debug_control::DEBUG >= debug_control::BASIC)
-{
-    debug << "\nsawolleck: normalizing poly= " << (w_power%2? -1 : 1);
-}
+    debug << "sawolleck: normalizing poly= " << (w_power%2? -1 : 1) << endl;
 
 		}
 		else
@@ -1231,17 +1245,14 @@ if (debug_control::DEBUG >= debug_control::BASIC)
 	    	poly *= Polynomial(oss.str());
 
 if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
-{
-    debug << "\nsawolleck: normalizing poly here= " << Polynomial(oss.str());
-}
+    debug << "sawolleck: normalizing poly here= " << Polynomial(oss.str()) << endl;
 
         }
-    }
-
+        
 if (debug_control::DEBUG >= debug_control::SUMMARY)
-{
-    debug << "\nsawolleck: Sawollek's normalized Z-polynomial = " << poly << "\n";
-}
+    debug << "\nsawolleck: Sawollek's normalized Z-polynomial = " << poly << endl;
+
+    }
 
 	delete[] inbuf;
     delete[] height;
@@ -1694,6 +1705,9 @@ if (debug_control::DEBUG >= debug_control::BASIC)
 */
 string braid_to_generic_code (string braid, int num_terms, int code_type)
 {   
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
+	debug << "braid_to_generic_code: presented with string " << braid << endl;
+
 	/* record the value of i for each \sigma_i or \tau_i in braid_num and
 	   the type of each crossing, from a braid perspective, in braid_type.
 	*/

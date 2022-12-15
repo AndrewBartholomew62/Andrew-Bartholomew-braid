@@ -75,7 +75,7 @@ gauss_orientation_data::gauss_orientation_data (generic_code_data& code_data, bo
 if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "gauss_orientation_data::constructor(generic_code_data): code_data: " << endl;
-	print_code_data(code_data,debug,"gauss_orientation_data::constructor(generic_code_data):   ");
+	print_code_data(debug,code_data,"gauss_orientation_data::constructor(generic_code_data):   ");
 }
 	vector<int>& term_crossing = code_data.term_crossing;
 

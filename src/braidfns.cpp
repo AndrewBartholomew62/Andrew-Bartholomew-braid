@@ -72,6 +72,7 @@ void print_prog_params (ostream& os, string level, string prefix)
 	os << prefix << "braid_control::KAUFFMAN_BRACKET = " << braid_control::KAUFFMAN_BRACKET << endl;
 	os << prefix << "braid_control::KNOTOID_BRACKET = " << braid_control::KNOTOID_BRACKET << endl;
 	os << prefix << "braid_control::MATRIX = " << braid_control::MATRIX << endl;
+	os << prefix << "braid_control::MOCK_ALEXANDER = " << braid_control::MOCK_ALEXANDER << endl;
 	os << prefix << "braid_control::PARITY_ARROW = " << braid_control::PARITY_ARROW << endl;
 	os << prefix << "braid_control::PARITY_BRACKET = " << braid_control::PARITY_BRACKET << endl;
 	os << prefix << "braid_control::PEER_CODE = " << braid_control::PEER_CODE << endl;
@@ -201,7 +202,7 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 {
 	debug << "long_knot_concatenation: concatenated code table:" << endl;
-	print_code_data (code_data_1, debug,"long_knot_concatenation: ");
+	print_code_data (debug,code_data_1,"long_knot_concatenation: ");
 }
 
 	write_peer_code (oss, code_data_1);

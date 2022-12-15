@@ -409,7 +409,7 @@ if (braid_control::VOGEL_DEBUG)
 						found = false;
 						for (int l=1; l<= cycle[k][0]; l++)
 						{
-							edge = cycle[k][l];
+							edge = abs(cycle[k][l]);
 							
 							/* look for edge in c1 */
 							for (int m=1; m<= seifert_e_circle[c1][0]; m++)
@@ -417,7 +417,7 @@ if (braid_control::VOGEL_DEBUG)
 								if (seifert_e_circle[c1][m] == edge)
 								{
 									e1 = edge;
-									found = true;
+									found = true;	
 									break;
 								}
 							}
@@ -431,9 +431,9 @@ if (braid_control::VOGEL_DEBUG)
 							found = false;
 							for (int l=1; l<= cycle[k][0]; l++)
 							{
-								edge = cycle[k][l];
+								edge = abs(cycle[k][l]);
 							
-								/* look for edge in c1 */
+								/* look for edge in c2 */
 								for (int m=1; m<= seifert_e_circle[c2][0]; m++)
 								{
 									if (seifert_e_circle[c2][m] == edge)
@@ -534,6 +534,7 @@ if (braid_control::VOGEL_DEBUG)
 
 			generic_code_data new_code_data;
 			new_code_data.head = -1;
+			new_code_data.type = generic_code_data::peer_code;
 			new_code_data.num_crossings = num_crossings+2;
 			
 			matrix<int> new_code_table(CODE_TABLE_SIZE,num_crossings+2);
@@ -651,7 +652,7 @@ if (braid_control::VOGEL_DEBUG)
 
 	debug << "vogel: peer code written from new_code_table: " << oss.str() << endl;
 	debug << "vogel: new code data after reading new peer_code: " << endl;
-	print_code_data(code_data, debug, "vogel: ");
+	print_code_data(debug,code_data,"vogel: ");
 	debug << endl;
 }
 
