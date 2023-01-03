@@ -58,7 +58,6 @@ extern ofstream		debug;
 void vogel_error (string errstring);
 string braid_reduce (string word);
 string virtual_vogel (string inbuf);
-bool realizable_code_data(generic_code_data& code_data, matrix<int>& cycle, int& num_left_cycles, int& num_cycles);
 int on_circle(matrix<int>& seifert_circle, int circle, int crossing);
 
 string vogel (generic_code_data code_data)

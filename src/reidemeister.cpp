@@ -4523,7 +4523,7 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 					int index = 0;
 					for (int i=0; i< num_initial_start_virtual_crossings; i++)
 					{
-						edge = start+1+i;
+						edge = (start+1+i - first_edge_on_component[start_component])%num_component_edges[start_component] + first_edge_on_component[start_component];
 						
 						/* check that this edge terminates at a crossing that remains on the start detour when the peer
 						   detour has moved.  If the peer detour intersects the start detour, we may lose crossings from
@@ -4839,11 +4839,11 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 	}
 	else
 	{
-if (debug_control::DEBUG >= debug_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "remove_Reidemeister_II: no Reidemeister II moves detected." << endl;	
 	}
 
-if (debug_control::DEBUG >= debug_control::DETAIL)
+if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "remove_Reidemeister_II: returning num_components_removed = " << num_components_removed << endl;	
 	
 	return 	num_components_removed;	
