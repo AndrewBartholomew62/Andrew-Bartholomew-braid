@@ -7,7 +7,7 @@
 
 <body LANG="en-GB">
 
-<p ALIGN=CENTER><a NAME="_top"></a><FONT SIZE=6><B> Braid v25.1  User Documentation </B></FONT></p>
+<p ALIGN=CENTER><a NAME="_top"></a><FONT SIZE=6><B> Braid v26.0  User Documentation </B></FONT></p>
 
 <br>
 
@@ -25,9 +25,13 @@ programme is <a href="http://www.layer8.co.uk/maths/braids">http://www.layer8.co
     <p style="margin-left: 1cm"><a href="#Braid Words">Braid Words</a></p>
   	 <p style="margin-left: 1cm"><a href="#Dowker-Thistlethwaite Codes">Dowker-Thistlethwaite Codes</a></p></li>
     <p style="margin-left: 1cm"><a href="#Gauss Codes">Gauss Codes</a></p>
+    	<p style="margin-left: 2cm"><a href="#Knotoid-Gauss-codes">Gauss Codes for Knotoids</a></p>
+    	<p style="margin-left: 2cm"><a href="#Multi-linkoid-Gauss-codes">Gauss Codes for Multi-linkoids</a></p>
   	 <p style="margin-left: 1cm"><a href="#Label Codes">Label Codes</a></p></li>
-  	 <p style="margin-left: 2cm"><a href="#Labelled Peer Code">Labelled Peer Code</a></p></li>
-  	 <p style="margin-left: 2cm"><a href="#Labelled Immersion Code">Labelled Immersion Code</a></p></li>
+  	   <p style="margin-left: 2cm"><a href="#Labelled Peer Code">Labelled Peer Code</a></p></li>
+    	  <p style="margin-left: 3cm"><a href="#Knotoid-peer-codes">Labelled Peer Codes for Knotoids</a></p>
+    	  <p style="margin-left: 3cm"><a href="#Multi-linkoid-peer-codes">Labelled Peer Codes for Multi-linkoids</a></p>
+  	   <p style="margin-left: 2cm"><a href="#Labelled Immersion Code">Labelled Immersion Code</a></p></li>
     <p style="margin-left: 1cm"><a href="#Planar Diagrams">Planar Diagrams</a></p>
     <p style="margin-left: 1cm"><a href="#Long knot input codes">Input codes for long knots</a></p>
 
@@ -51,6 +55,7 @@ programme is <a href="http://www.layer8.co.uk/maths/braids">http://www.layer8.co
 <li><p><a href="#The-Vogel-Algorithm">The Vogel Algorithm</a></p>
 <li><p><a href="#Sawollek">Sawollek Normalized Conway polynomial</a></p></li>
 <li><p><a href="#Dynnikov-Test">Dynnikov Test for Trivial Braids</a></p></li>
+<li><p><a href="#Hamiltonian-circuits">Hamiltonian circuits</a></p></li>
 <li><p><a href="#Knot-Link-Code-Tasks">Knot and Link Code Conversion</a></p></li>
     <p style="margin-left: 1cm"><a href="#Gauss-Code">Gauss codes and Gauss data</a></p>
     <p style="margin-left: 1cm"><a href="#Satellites">Satellite links</a></p>
@@ -85,33 +90,42 @@ but that do not involve a braid representation.  However, in the absence of anyt
 
 <p>The tasks provided by the programme support the following:</p>
 <ol>
-<li>The Alexander and Burau polynomial invariant</li>
-<li>The Burau, or generalized Alexander, polynomial invariant</li>
-<li>The Alexander-like polynomial invariant of a classical doodle</li>
-<li>Various quaternionic polynomial invariants</li>
-<li>Various matrix-switch polynomial invariants</li>
-<li>Various Weyl algebra switch polynomial invariants</li>
-<li>Various finite-switch polynomial invariants (also known as rack polynomials)</li>
-<li>The fixed-point invariant of the braid representation of a knot or doodle</li>
-<li>Various commutative automorphism switch invariants</li>
-<li>Vogel's algorithm for determining a braid word from a knot or link diagram</li>
-<li>The HOMFLY polynomial</li>
-<li>The Kauffman bracket polynomial of a classical or virtual knot, link, knotoid or multi-knotoid</li>
-<li>The Jones polynomial of a classical or virtual knot, link, knotoid or multi-knotoid</li>
-<li>Turaev's extended bracket polynomial of a classical or virtual knotoid or multi-knotoid</li>
-<li>The arrow polynomial of a classical or virtual knot, link, long knot, long virtual knot, knotoid or multi-knotoid</li>
-<li>The parity bracket polynomial of a classical or virtual knot or  knotoid</li>
-<li>The parity arrow polynomial of a classical or virtual knot or knotoid</li>
-<li>Kauffman's Affine Index Polynomial for virtual knots or knotoids</li>
+<li>Alexander and Burau polynomial invariant</li>
+<li>Alexander-like polynomial invariant of a classical doodle</li>
+<li>Burau, or generalized Alexander, polynomial invariant</li>
+<li>Commutative automorphism switch invariants</li>
+<li>Finite-switch polynomial invariants (also known as rack polynomials)</li>
+<li>Fixed-point invariant of the braid representation of a knot or doodle</li>
+<li>Matrix-switch polynomial invariants</li>
+<li>Quaternionic polynomial invariants</li>
 <li>Sawollek's normalized Conway polynomial for a braid word</li>
-<li>The Dynnikov test for the trivial braid</li>
-<li>The Dowker(-Thistlethwaite) code for a braid or labelled peer code</li>
-<li>The Gauss code for a labelled peer code or the closure of a braid word</li>
-<li>The labelled immersion code for a braid word</li>
-<li>The labelled peer code for a braid word or a labelled immersion code</li>
-<li>The labelled peer code for the Gauss code of a classical, virtual or flat link</li>
-<li>The labelled peer code for the planar diagram description (PD code) of a classical or virtual link</li>
-<li>The labelled peer code for the n-parallel cable satellite of a knot's peer code</li>
+<li>Weyl algebra switch polynomial invariants</li>
+<br>
+<li>Arrow polynomial of a classical or virtual knot, link, long knot, long virtual knot, knotoid or multi-knotoid</li>
+<li>HOMFLY polynomial</li>
+<li>Jones polynomial of a classical or virtual knot, link, knotoid or multi-knotoid</li>
+<li>Kauffman's Affine Index Polynomial for virtual knots or knotoids</li>
+<li>Kauffman bracket polynomial of a classical or virtual knot, link, knotoid or multi-knotoid</li>
+<li>Turaev's extended bracket polynomial of a classical or virtual knotoid or multi-knotoid</li>
+<li>Parity arrow polynomial of a classical or virtual knot or knotoid</li>
+<li>Parity bracket polynomial of a classical or virtual knot or  knotoid</li>
+<br>
+<li>Dynnikov test for the trivial braid</li>
+<li>Hamiltonian circuits within classical or flat knot or link diagram</li>
+<li>Vogel's algorithm for determining a braid word from a knot or link diagram</li>
+<br>
+<li>Dowker(-Thistlethwaite) code for a braid or labelled peer code</li>
+<li>Gauss code for a labelled peer code or the closure of a braid word</li>
+<li>Labelled immersion code for a braid word</li>
+<li>Labelled peer code for
+	<ul>
+		<li>braid word of a classical or virtual knot or link</li>
+		<li>labelled immersion code of a classical or virtual knot or link</li>
+		<li>Gauss code of a classical, virtual or flat link, knotoid, multi-knotoid or multi-linkoid</li>
+		<li>Labelled peer code for the planar diagram description (PD code) of a classical or virtual link</li>
+		<li>the n-parallel cable satellite of a knot's peer code</li>
+	</ul>
+</li>
 </ol>
 
 <p>
@@ -120,14 +134,13 @@ but that do not involve a braid representation.  However, in the absence of anyt
 
 <h3><a NAME="Starting-the-programme"></a>Starting the programme</h3>
 
-<p>The programme is started by typing <kbd>braid</kbd> at a command prompt, a menu is then displayed that allows 
-the user to choose which task to apply.  Alternatively the programme may be started with a number of 
-<a href="#Command-Line-Options">command line options</a> to select a particular task directly. It is also possible 
-to supply an <a href="#Input-File-Format">input file</a> containing the input to the programme that allows the
-programme to operate in batch mode.</p>
+<p>The programme is a command line tool, started by typing <kbd>braid</kbd> at a command prompt together with a number of 
+<a href="#Command-Line-Options">command line options</a> to select a particular task. It is also possible 
+to supply an <a href="#Input-File-Format">input file</a> using a command of the form <kbd>braid &lt;inputfile> </kbd>, where &lt;inputfile> is a file
+containing the input codes and parameters that you wish to provide to the the programme.  A combination of command line and input file parameters may also be provided.</p>
 
-<p>Typing <kbd>exit</kbd> at any prompt will cause the programme to terminate.</p>
-<p>The word <kbd>help</kbd> may be entered at any prompt to display a list of the 
+<p>Typing <kbd>q</kbd>, <kbd>Q</kbd> or <kbd>exit</kbd> at the input prompt will cause the programme to terminate.</p>
+<p>The word <kbd>help</kbd> may be entered at the prompt to display a list of the 
 <a href="#Command-Line-Options">command line options</a> supported by the programme and other 
 help information.  After displaying the help information, the programme terminates.</p>
 
@@ -237,7 +250,7 @@ follows:</p>
 
 <p style="margin-left: 1cm"><kbd>[-11 9, -3 1 -13 5 -7] / + - - + - + -</kbd></p>
 
-<h5><a NAME="Labelled Peer Codes for Knotoids" ></a>Labelled Peer Codes for Knotoids</h5>
+<h5><a NAME="Knotoid-peer-codes" ></a>Labelled Peer Codes for Knotoids</h5>
 
 <p>A knotoid K is specified using a labelled peer code by adding a shortcut that passes everywhere under K, forming K_ in Turaev's notation.  Then, K_ is a knot for which we
 can write the <a href="#Labelled Peer Code">labelled peer code</a> determined by numbering the semi-arc containing the leg of K as zero and proceeding in the direction from the leg to the head.</p>  
@@ -263,6 +276,33 @@ K:[3 5 1]/+++
 
 </p>describes the knot-type knotoid obtained from the trefoil by removing a section of the interior edge zero.</p>
 
+<h5><a NAME="Multi-linkoid-peer-codes" ></a>Labelled Peer Codes for Multi-linkoids</h5>
+
+<p>A knotoid having multiple open (segment) components, also referred to as a multi-linkoid, is similarly represented with shortcuts comprised of under-crossings but requires the additional syntax 
+defined by an <a href="../download/labelled-peer-code.pdf">extended labelled peer code</a>.</p>
+
+<ul>
+  <li>A '^' symbol placed after an odd peer indicates that the corresponding component is open and the first edge of the component (an even edge) is the leg.</li>
+  <li>A '$' symbol placed after an odd peer indicates that the corresponding component is open and the last edge of the component (an odd edge) is the leg.</li>
+  <li>A '@' symbol placed before the first odd peer of a component indicates that the component is knot-like open and that the leg and head occur within the first (even) edge of the component.</li>
+  <li>A '@' symbol placed after the last odd peer of a component indicates that the component is knot-like open and that the leg and head occur within the last (odd) edge of the component.</li>
+</ul>
+   
+<p>Note that the above syntax requires that the peer labels assigned to a multi-knotoid diagram with shortcuts added are such that, if the the leg of an open component lies on an even edge then it is the
+first edge of the component and if it lies on an odd edge, then it is the last edge of the component.  The component of a multi-knotoid containing label zero must be an open component (as in the case of knotoids)
+but the other components may be numbered in any order that allows the odd and even terminating edge numbering to be extended across the diagram.</p>
+   
+<p>The following multi-linkoid diagram is described by the labelled peer code <kbd>[9 -15^, -11 13$, @3 17 -19 21 -1 5 -7]/+ - - - + - - + + - -</kbd>.</p>
+
+<p style="margin-left: 2cm"><IMG SRC="braid-user-documentation-html-files/multi-linkoid-peer.png"></p>
+
+<p>The extended peer code allows any diagram to be described, including ones containing Reidemeister I loops, or ones in which the first or last crossing of an open segment is virtual.  However, for many 
+simple multi-linkoid diagrams it is convenient to use the Gauss code syntax for multi-knotoids described below and let the draw programme determine the extended peer code automatically.  Note that the
+metapost output file produced by the draw programme includes the labelled peer code in the comment section before each figure, so it is available for modification, if required.</p>
+
+
+
+<h5><a NAME="Labelled Peer Code Qualifiers" ></a>Labelled Peer Code Qualifiers</h5>
 
 <p>Labelled peer codes may be appended with additional information to the braid programme, as described in the section on 
 <a href="#Labelled-Peer-Code-Qualifiers">labelled peer code qualifiers</a>.</p>
@@ -324,7 +364,7 @@ component from an arbitrary staring point.  Since in these cases there are no ov
 
 <p style="margin-left: 1cm"><kbd>L1 R2, L3, R1 L2 R3 / # # #</kbd></p>
 
-<h5><a NAME="Knotoid-Gauss-codes"></a>Gauss codes for knotoids</h5>
+<h5><a NAME="Knotoid-Gauss-codes"></a>Gauss codes for Knotoids</h5>
 
 <p>To indicate that a Gauss code represents a knotoid rather than a virtual knot, the code is prefixed by "K:".  When representing a knotoid with a Gauss code
 it is required that the segment component of the knotoid is the first component of the code and that the code starts at the leg of the knotoid.  There are no
@@ -333,6 +373,27 @@ requirements placed on the choice of numbering for the crossings.</p>
 <p>Thus, an example of a valid knotoid Gauss code is:</p>
 
 <p style="margin-left: 1cm"><kbd>K:5 6 -4 3 -2 -1 2 1, -3 -6 4 -5/ - - - - - -</kbd></p>
+
+<h5><a NAME="Multi-linkoid-Gauss-codes"></a>Gauss Codes for Multi-linkoids</h5>
+
+<p>To indicate that a Gauss code represents a multi-linkoid rather than a virtual knot, the code is prefixed by "K(<kbd> &lt;num-segment-components> </kbd>):", where <kbd> &lt;num-segment-components> </kbd> indicates
+the number of segment, that is open, rather than closed components.  When representing a multi-linkoid with a Gauss code
+it is required that the segment components of the multi-knotoid are listed first that the code starts at the leg of a segment component.  There are no
+requirements placed on the choice of numbering for the crossings.</p>
+
+<p>Multi-linkoids are described by Gauss codes by requiring that the open components are listed first and by indicating the number of open segments in parentheses, as in the following example:</p>
+ 
+<p style="margin-left: 1cm"><kbd>K(2):7 -8 5,-2 3, 1 -3 4 -7 6 -5 -1 2 -4 -6 8/+ - + - + + - -</kbd></p>
+
+<p style="margin-left: 2cm"><IMG SRC="braid-user-documentation-html-files/multi-linkoid-gauss.png"></p>
+ 
+<p>Here, there are two open components, one whose leg is the ingress over-arc at crossing 7 and whose head is the egress over-arc at crossing 5.  The other open segment leg is the ingress under arc at crossing
+2 and the head is the egress over arc at crossing 3.</p>
+
+<p>Multi-linkoid Gauss codes may be provided in either numeric or the under and over format, as in:</p>
+
+<p style="margin-left: 1cm"><kbd>K(2):O7-U8-O5+,U2-O3+,O1+U3+O4-U7-O6+U5+U1+O2-U4-U6+O8-</kbd></p>
+
 
 <h4><a NAME="Planar Diagrams"></a>Planar Diagrams</h4>
 
@@ -795,7 +856,17 @@ here is separate and currently supports only braid input.  The reason for this i
 
 <p>The Dynnikov test uses the action defined by the braid group B<SUB>n</SUB> on Z<sup>2n</SUp> given by Dynnikov's formulae in [4] to determine whether the given braid is trivial.</p>
 
-<h2><a NAME="Knot-Link-Code-Tasks"></a>9. Knot and Link Code Conversion</h2>
+<h2><a NAME="Hamiltonian-circuits"></a>9. Hamiltonian Circuits</h2>
+
+<p>The <kbd>hamiltonian</kbd> task searches for Hamiltonian circuits in a classical or flat diagram of a knot or link.  By default the programme searches for a Hamiltonian circuit and stops as soon as one is found.
+If the <kbd>HC-list-all</kbd> option is provided it continues until it has found all possible circuits.  If the option <kbd>HC-count</kbd> is given, the programme simply counts the number of circuits in the 
+diagram.</p>
+
+<p>By default, Hamiltonian circuits are described as a sequence of crossing numbers, using the crossing numbers in the diagram's corresponding <a href="#Labelled Peer Code"> labelled peer code</a>.  If the input is 
+not a labelled peer code, the programme will have converted the given input to a labelled peer code internally.  If the option <kbd>HC-edges</kbd> is given, the programme will describe circuits as a sequence
+of edges, again corresponding to the labelled peer code.</p>
+
+<h2><a NAME="Knot-Link-Code-Tasks"></a>10. Knot and Link Code Conversion</h2>
 
 <p>There are several tasks in this category, used for converting one form of diagramatic representation into another, or calculating the result of some transformation performed on a diagram.  These tasks take their input either from the user or from an <a href="#Input-File-Format">input file</a>.</p>
 
@@ -964,7 +1035,7 @@ The shift vector is appended to the labelled peer code input in the form of a <i
    <a href="#_top">back to top</a>
 </p>
 
-<h2><a NAME="Command-Line-Options"></a>10. Command Line Options</h2>
+<h2><a NAME="Command-Line-Options"></a>11. Command Line Options</h2>
 
 <p>The programme may be started with a number of command line options that override the default operation and select a task directly, as follows:</p>
 
@@ -983,6 +1054,7 @@ The shift vector is appended to the labelled peer code input in the form of a <i
 <kbd>dynnikov</kbd>: carry out the Dynnikov test to determine whether the braid is trivial or not <br>
 <kbd>fixed-point</kbd>: evaluate the fixed-point invariant of a braid <br>
 <kbd>gauss</kbd>: evaluate a Gauss code of a <br>
+<kbd>hamiltonian</kbd>: determine a Hamiltonian circuit in the shadow of a knot or link<br>
 <kbd>homfly</kbd>: evaluate the HOMFLY polynomial for the closure of a braid<br>
 <kbd>info</kbd>: display status information (currently just the number of components) for the braid<br>
 <kbd>immersion</kbd>: evaluate a labelled immersion code<br>
@@ -1171,7 +1243,7 @@ the display of <a href="#Wait-information">wait information</a> with the wait th
    <a href="#_top">back to top</a>
 </p>
 
-<h2><a NAME="Input-File-Format"></a>11. Input File Format</h2>
+<h2><a NAME="Input-File-Format"></a>12. Input File Format</h2>
 
 <p>An input file may be specified on the command line to provide batched input to the braid programme.  An input 
 file is a normal text file that may contain 
@@ -1822,6 +1894,10 @@ diagram:</p>
 <kbd>flip-braid</kbd>: flip all the braids in the input file <br>
 <kbd>format</kbd>: format the output file so that it may be used as an input file later <br>
 <kbd>gauss</kbd>: evaluate the Gauss code of a braid<br>
+<kbd>hamiltonian</kbd>: determine a Hamiltonian circuit in the shadow of a knot or link<br> 
+<kbd>HC-count</kbd>: count the number of Hamiltonian circuits in a diagram<br>
+<kbd>HC-edges</kbd>: create Hamiltonian circuits from edges rather than crossings<br>
+<kbd>HC-list-all</kbd>: find all of the Hamiltonian circuits in a diagram<br>
 <kbd>homfly</kbd>: evaluate the HOMFLY polynomial for the closure of a braid<br> 
 <kbd>immersion</kbd>: evaluate labelled immersion code<br>
 <kbd>info</kbd>: display status information about a braid<br>
@@ -1986,7 +2062,7 @@ S = a, 0, 0, a/a-1, b, c, b^2+a-1/c-ca, b/1-a
    <a href="#_top">back to top</a>
 </p>
 
-<h2><a NAME="Version-History"></a>12. Version History</h2>
+<h2><a NAME="Version-History"></a>13. Version History</h2>
 <p>The first released version was 6.1.b1, supporting the Burau and quaternion matrix representations, calculation of Alexander polynomials, 0<SUp>th</SUp> and 1<SUp>st</SUp> ideal polynomials for quaternionic representations, 
 Dynnikov test and Dowker code calculation.</p>
 
@@ -2087,14 +2163,18 @@ parity bracket and parity arrow polynomial tasks.</p>
 
 <p>Version 25.1 (September 2022) Updated the handling of input files containing switches specifying the t-variable. Updated the behaviour of "satellite" to make it an option 
 rather than a task, this allowed the cabling of entries in an input file prior to carrying out the specified task.  Corrected an error in the Vogel algorithm, see bug tracker below.
-Documented the use of the Burau representation for calculating the Generalized Alexander polynomial.  Updated the sawollek implementation of matrix P to be more clearly aligned with Sawollek's paper.  Added draft mock Alexander option for knotoids.  Added the ability to read Dowker-Thistlethwaite codes for prime knots and convert them to labelled peer codes. 
+Documented the use of the Burau representation for calculating the Generalized Alexander polynomial.  Updated the sawollek implementation of matrix P to be more clearly aligned with Sawollek's paper.  
+Added draft mock Alexander option for knotoids.  Added the ability to read Dowker-Thistlethwaite codes for prime knots and convert them to labelled peer codes.  <br>
 </p>
 
+<p>Version 25.2 (April 2023) Added support for multi-linkoids to the peer code and Gauss code input and output functions and modified gauss_to_peer_code to convert multi-knotoid Gauss codes to peer codes.</p>
+
+<p>Version 26.0 (October 2023) Added Hamiltonian task to find Hamiltonian circuits in a diagram of a classical or flat knot or link. Removed the start menu.</p>
                   
    <a href="#_top">back to top</a>
 </p>
 
-<h2><a NAME="Bug-Tracker"></a>13. Bug Tracker</h2>
+<h2><a NAME="Bug-Tracker"></a>14. Bug Tracker</h2>
 
 <li>The braid word algebra of <a href="#Assignment-statements">assignment statements</a> and 
     <a href="#Braid-statements">braid statements</a> did not work in version 6.1.b1, since they were confused with 

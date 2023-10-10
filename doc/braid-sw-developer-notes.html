@@ -7,7 +7,7 @@
 <BODY LANG="en-GB">
 
 <P ALIGN=CENTER><A NAME="_top"></A>
-<FONT SIZE=6><B> Software Developer Notes for Braid version 25.0</B></FONT>
+<FONT SIZE=6><B> Software Developer Notes for Braid version 26.0</B></FONT>
 </P>
 
 <BR>
@@ -20,155 +20,13 @@ otherwise modify the code. It is not a detailed design spec, but contains variou
 following topics:</p>
 
 <P><OL START=2>
-<LI><A HREF="#Hidden-options">Hidden command line options</A>
 <LI><A HREF="#Debugging">Debugging information</A>
 <LI><A HREF="#Polynomials">Polynomial storage mechanism</A>
 <LI><A HREF="#Local-classes">Local classess</A>
 <LI><A HREF="#Comments">General source comments</A>
 </OL></P>
 
-<h2><a name="Hidden-options"></a>2. Hidden command line options</h2>
-
-<p>There are a number of options not documented in the standard user documentation that may be entered at the command line mostly relating to debugging information.  A full help screen can be displayed with the command</p>
-
-<P STYLE="margin-left: 1cm"><KBD>braid -H!</KBD></P>
-
-<p>where the H must be in upper case.  The full syntax for the programme is:</p>
-
-<p style="margin-left: 1cm"><kbd>braid --&lt;task&gt; [-&lt;short_options&gt;][--&lt;long_option&gt;][&lt;infile&gt;[&lt;outfile&gt;]]</kbd></p>
-
-<p>The <kbd>&lt;task&gt;</kbd> indicates the primary task of the programme, currently the following tasks are supported:</p>
-
-<p style="margin-left: 1cm">
-
-<kbd>affine-index</kbd>: evaluate the affine index polynomial invariant<br>
-<kbd>alexander</kbd>: evaluate Alexander switch polynomial invariants<br>
-<kbd>arrow-polynomial</kbd>: the arrow polynomial invariant of a classical or virtual knot, link, knotoid or multi-knotoid<br>
-<kbd>automorphism</kbd>: evaluate a commutative automorphism switch polynomial invariant<br>
-<kbd>burau</kbd>: evaluate Burau switch polynomial invariants<br>
-<kbd>dowker</kbd>: calculate the Dowker code for the closure of the braid, provided it is a knot <br>
-<kbd>dynnikov</kbd>: carry out the Dynnikov test to determine whether the braid is trivial or not <br>
-<kbd>fixed-point</kbd>: evaluate the fixed-point invariant of a braid <br>
-<kbd>gauss</kbd>: evaluate Gauss code of a braid<br>
-<kbd>homfly</kbd>: evaluate the HOMFLY polynomial for the closure of a braid<br>
-<kbd>info</kbd>: display status information (currently just the number of components) for the braid<br>
-<kbd>immersion</kbd>: evaluate labelled immersion code<br>
-<kbd>jones-polynomial</kbd>: evaluate the Jones polynomial for a classical or virtual link<br>
-<kbd>kauffman-bracket</kbd>: evaluate the Kauffman polynomial for a classical or virtual link<br>
-<kbd>knotoid-bracket</kbd>: evaluate the Turaev extended bracket polynomial for a knotoid<br>
-<kbd>matrix</kbd>: evaluate matrix switch polynomial invariants<br>
-<kbd>parity-bracket</kbd>: calculate the normalized Manturov parity bracket polynomial<br>
-<kbd>peer</kbd>: evaluate labelled peer code<br>
-<kbd>quaternion</kbd>: evaluate quaternionic switch polynomial invariants<br>
-<kbd>rack-polynomial</kbd>: evaluate the finite switch polynomial invariants<br>
-<kbd>satellite[=n]</kbd>: evaluate the peer code of the n-parallel cable satellite of a knot's peer code, n defaults to 2<br>
-<kbd>sawollek</kbd>: evaluate Sawollek's normalized Conway polynomial <br>
-<kbd>vogel</kbd>: apply the vogel algorithm to a labelled peer code<br>
-<kbd>weyl</kbd>: evaluate Weyl algebra switch polynomial invariants<br>
-</p>
-
-	
-<p>In fact, a <kbd>&lt;task&gt;</kbd> is just an example of a <kbd>&lt;long_option&gt;</kbd>.  Any of the programme option keywords that may appear as an
-<a href="#Options-In-Input-Files">input file programme option</a> may be used as a <kbd>&lt;long_option&gt;</kbd>.</p>
-
-<p style="margin-left: 1cm">
-
-<kbd>complex-delta1</kbd>:       calculate Delta_1^C rather than Delta_1^H for quaternionic switches<br>
-<kbd>delta1-only</kbd>:          display polynomial output for Delta_1 only<br>
-<kbd>double-braid</kbd>:         calculate the Kamada double covering of all the braids in the input file<br>
-<kbd>equality</kbd>:             test for A=D or B=C in switch when calculating switch polynomial invariants<br>
-<kbd>extra-output</kbd>:         display additional polynomial invariant output<br>
-<kbd>fixed-point</kbd>:          finite biquandle fixed point invariant<br>
-<kbd>flat</kbd>:                 create flat Reidemeister II moves when executing the Vogel algorithm<br>
-<kbd>flip-braid</kbd>:           flip all the braids in the input file<br>
-<kbd>format</kbd>:               format the output file so that it may be used as an input file later<br>
-<kbd>invert-braid</kbd>:         invert all the braids in the input file<br>
-<kbd>line-reflect</kbd>:         reflect all the braids in the file in a horizontal line drawn south of the braid<br>
-<kbd>lpgc</kbd>:                 calculate the left preferred Gauss code, rather than a standard gauss code<br>
-<kbd>mod-p=n</kbd>:              calculate mod p with p=n (only used for non-Weyl algebra switches)<br>
-<kbd>no-auto-delta1</kbd>:       only calculate Delta_1 if Delta_0 is zero<br>
-<kbd>no-even-writhe</kbd>:       normalize the parity bracket polynomial with the full writhe rather than the even writhe<br>
-<kbd>no-expanded-bracket</kbd>:  do not expand D=(-A^2-A^{-2}) in bracket polynomials<br>
-<kbd>normalize-quaternions</kbd>:normalize quaternionic polynomial invariants<br>
-<kbd>no-normalize-bracket</kbd>: do not normalize bracket polynomial invariants<br>
-<kbd>plane-reflect</kbd>:        reflect all the braids in the file in the plane of the page<br>
-<kbd>power=n</kbd>:              evaluate the nth power of the switch when calculating switch polynomial invariants<br>
-<kbd>rack-terms=k</kbd>:         set the global value k for the number of terms to consider for rack-polynomials<br>
-<kbd>raw-output</kbd>:           produce raw output, that is the result only without descriptive text<br>
-<kbd>remove=n</kbd>:             remove the n-th component from a peer code<br>
-<kbd>rho</kbd>:                  use the Study rho mapping for calculating Study determinants<br>
-<kbd>show-parity-peer-codes</KBD>: show peer codes in addition to unoriented left preferred Gauss codes in parity bracket polynomial output<br>
-<kbd>show-varmaps</kbd>:         show variable mappings instead of substituting mapped variables in polynomial output<br>
-<kbd>silent</kbd>:               do not generate any output to the command line (stdout)<br>
-<kbd>TeX-polynomials</kbd>:      display output polynomials in TeX format<br>
-<kbd>ulpgc</kbd>:                calculate the unoriented left preferred Gauss code, rather than a standard gauss code<br>
-<kbd>wait[=n]</kbd>:             display determinant wait information, (based on nxn minors, so larger n produces less frequent output)<br>
-<kbd>zig-zag-delta</kbd>:        include delta with K_i and Lambda_i variables when calculating the arrow polynomial<br>
-</p>
-  
-<p>The public short options are:</p>
-
-<P STYLE="margin-left: 1cm">
-<KBD>c[{2}]</KBD>:   calculate Delta<sub>i</sub><sup>C</sup> rather than Delta<sub>i</sub><sup>H</sup> for quaternionic switches<BR>
-<KBD> - {2}</KBD>  always calculate codimension 2 determinant from complex Study Delta_1<br>
-<KBD>d</KBD>:   evaluate the Kamada double covering for braids (used only by the fixed-point task)<br>
-<KBD>e</KBD>:   test for the switch equality condition A=D and B=C<BR>
-<KBD>h</KBD>:   display help information<BR>
-<KBD>I</KBD>:   format programme output as a valid input file<BR>
-<KBD>M</KBD>:   do not remove Reidemeister II moves when calculating labelled peer codes from braid words<BR>
-<KBD>N</KBD>:   normalize quaternionic polynomial invariants<BR>
-<KBD>o</KBD>:   display the matrix representation, M, of the braid and the elements of the adjoint adj(M-I) for the <A HREF="#Active-switch">active switch</A><BR>
-<KBD>O</KBD>:   produce raw output (values only, no descriptive text)<BR>
-<KBD>p=n</KBD>: calculate mod p using the given prime (no checking for primality is included)<BR>
-<KBD>P</KBD>:   display the polynomial wait indicator<BR>
-<KBD>R</KBD>:   use the rho-mapping for Study determinants<br>
-<KBD>S</KBD>:   silent operation<br>
-<KBD>t=n</KBD>:   set the global number of terms for finite switch polynomial invariants.<br>
-<KBD>V</KBD>:   Do not use the t-variable with the default quaternionic switch<BR>
-<KBD>W[=n]</KBD>:   force <A HREF="#Wait-information">wait information</A> to be displayed, if <KBD>n</KBD> is supplied, set the wait threshold to <KBD>n</KBD><BR>
-<KBD>z</KBD>:   do not calculate Delta<sub>1</sub> when Delta<sub>0</sub> is non-zero<BR>
-<KBD>Z</KBD>:   display Delta<sub>1</sub> polynomials only<br>
-</P>
-
-<p>The additional short options are:</p>
-
-<P STYLE="margin-left: 1cm">
-<KBD>#</KBD>: debug, see the section <a href="#Debugging">Debugging</a> below<BR>
-<KBD>0</KBD>: calculate Delta<sub>0</sub> only<BR>
-<KBD>D</KBD>: verify Delta<sub>0</sub> = 0 for the classical case<BR>
-<KBD>F</KBD>: bypass the fundamental equation test for linear switches<BR>
-<KBD>H!</KBD>: display full usage information<BR>
-<KBD>#H!</KBD>: display debug help information, see the section <a href="#Debugging">Debugging</a> below<BR>
-<KBD>T</KBD>: store output in /tmp rather than the current directory<BR>
-<KBD>U</KBD>: do not test for units in calculation of Delta_1<BR>
-</P>
-
-<p>If required (for example when running the braid programme from a system call in another programme) it is possible to specify multiple independent
-sets of options on the command line, each set preceeded by the short option indicator '<kbd>-</kbd>'.  Similarly any of the options that may be specified in an 
-input file may be supplied via the command line preceeded by the long option indicator '<kbd>--</kbd>'.  The programme simply scans the command
-line arguments and calls the function <kbd>set_programme_short_options</kbd> or <kbd>set_programme_long_options</kbd> if the argument begins with 
-<kbd>-</kbd> or <kbd>--</kbd> respectively.  Multiple short options may be set within each command line argument, only one long option may be set in each 
-command line argument.</p>
-
-<p>If multiple command line arguments are used as described above for options they may preceed or follow the arguments specifying, the 
-infile and outfile.  The programme assumes the first argument it receives with out an option indicator to be the infile and the second such option 
-to be the outfile.</p>
-
-<P>
-   <A HREF="#_top">back to top</A>
-</P>
-
-<h3><a name="Command line sub-options"></a>2.1 Command line sub-options</h3>
-
-<p>The command line syntax <KBD>c{2}</KBD> was introduced in version 12.2 to allow for command line sub-options.  This was necessary in order to avoid a conflict between the use of the character <kbd>2</kbd> to indicate that the codimension 2 determinant from complex Study Delta_1 should be calculated and the use of the number 2 with the <kbd>W</kbd> and <kbd>p</kbd> options.</p>
-
-<p>The syntax chosen mimics that for debugging parameters (see below), so that it becomes an extensible part of the command syntax.</p>
-
-<P>
-   <A HREF="#_top">back to top</A>
-</P>
-
-<h2><a name="Debugging"></a>3. Debugging information</h2>
+<h2><a name="Debugging"></a>2. Debugging information</h2>
 
 <p>Version 11.1 introduced a structured debug subsystem across classes and the main braid function.  Prior to this, various booleans controlled debug output but only a subset of them were accessible from the command line.  The debug subsystem allows full debugging control as well as default debug options in a flexible and extensible manner.
 </p>
@@ -323,7 +181,7 @@ pterm.pl = 2    pterm.prev = 0x8cd2670  pterm.next = NULL
    <A HREF="#_top">back to top</A>
 </P>
 
-<h2><a name="Polynomials"></a>4. Polynomial storage mechanism</h2>
+<h2><a name="Polynomials"></a>3. Polynomial storage mechanism</h2>
 
 <p>Polynomials are defined here to be doubly-linked lists of pterm structures, headed by a polynomial structure 
 that points at the start of the list.  Each pterm structure corresponds to one term of the polynomial, with only
@@ -527,7 +385,7 @@ work backwards through this calculation.</P>
    <A HREF="#_top">back to top</A>
 </P>
 
-<h2><a name="Local-classes"></a>5. Local classes</h2>
+<h2><a name="Local-classes"></a>4. Local classes</h2>
 
 <p>As the code has evolved, local classes for things like quaternions, rationals, matrices  big integers and  big-rationals have been developed.  These have been written 
 because "standard" implementations were not available, to ensure I had control over the code, or just as an exercice.  However, I have made no attempt to replace them with "standard" implementations as they have become available, to minimize risk in making code changes.</p>
