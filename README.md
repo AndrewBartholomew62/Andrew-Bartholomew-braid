@@ -6,28 +6,36 @@ in the absence of anything better, the name 'braid' has been retained for the pr
 
 The tools provided by the programme support the following:
 
-    The Alexander and Burau polynomial invariants of a classical or virtual knot or link
-    The Alexander-like polynomial invariant of a classical doodle
-    Various quaternionic polynomial invariants of a classical or virtual knot or link
-    Various matrix-switch polynomial invariants of a classical or virtual knot or link
-    Various Weyl algebra switch polynomial invariants of a classical or virtual knot or link
-    Various finite-switch polynomial invariants (also known as rack polynomials) of a classical or virtual knot or link
-    The fixed-point invariant of the braid representation of a knot or doodle
-    Various commutative automorphism switch invariants of a classical or virtual knot or link
-    Vogel's algorithm for determining a braid word from a classical or virtual knot or link diagram
-    The HOMFLY polynomial for the closure of a classical braid
-    The Kauffman bracket polynomial of a classical or virtual knot, link, knotoid or multi-knotoid
-    The Jones polynomial of a classical or virtual knot, link, knotoid or multi-knotoid
-    Turaev's extended bracket polynomial of a clasical or virtual knotoid or multi-knotoid
-    The arrow polynomial of a classical or virtual knot, link, long knot, long virtual knot, knotoid or multi-knotoid
-    Manturov's parity bracket polynomial of a classical or virtual knot or knotoid
-    Kaestner and Kauffman's parity arrow polynomial for classical and virtual knots or knotoids
-    Kauffman's Affine Index Polynomial for virtual knots or knotoids
+    Alexander and Burau polynomial invariant
+    Alexander-like polynomial invariant of a classical doodle
+    Burau, or generalized Alexander, polynomial invariant
+    Commutative automorphism switch invariants
+    Finite-switch polynomial invariants (also known as rack polynomials)
+    Fixed-point invariant of the braid representation of a knot or doodle
+    Matrix-switch polynomial invariants
+    Quaternionic polynomial invariants
     Sawollek's normalized Conway polynomial for a braid word
-    The Dynnikov test for the trivial braid
-    The Dowker(-Thistlethwaite) code for the braid
-    The Gauss code, or the oriented or unoriented left preferred Gauss data for a labelled peer code, labelled immersion code or a braid word
-    The labelled immersion code for a braid word
-    The labelled peer code for a braid word or a labelled immersion code
-    The labelled peer code for the Gauss code of a classical link
-    The labelled peer code for the r-parallel cable satellite of a knot's peer code
+    Weyl algebra switch polynomial invariants
+
+    Arrow polynomial of a classical or virtual knot, link, long knot, long virtual knot, knotoid or multi-knotoid
+    HOMFLY polynomial
+    Jones polynomial of a classical or virtual knot, link, knotoid or multi-knotoid
+    Kauffman's Affine Index Polynomial for virtual knots or knotoids
+    Kauffman bracket polynomial of a classical or virtual knot, link, knotoid or multi-knotoid
+    Turaev's extended bracket polynomial of a classical or virtual knotoid or multi-knotoid
+    Parity arrow polynomial of a classical or virtual knot or knotoid
+    Parity bracket polynomial of a classical or virtual knot or knotoid
+
+    Dynnikov test for the trivial braid
+    Hamiltonian circuits within classical or flat knot or link diagram
+    Vogel's algorithm for determining a braid word from a knot or link diagram
+
+    Dowker(-Thistlethwaite) code for a braid or labelled peer code
+    Gauss code for a labelled peer code or the closure of a braid word
+    Labelled immersion code for a braid word
+    Labelled peer code for
+        braid word of a classical or virtual knot or link
+        labelled immersion code of a classical or virtual knot or link
+        Gauss code of a classical, virtual or flat link, knotoid, multi-knotoid or multi-linkoid
+        Labelled peer code for the planar diagram description (PD code) of a classical or virtual link
+        the n-parallel cable satellite of a knot's peer code
