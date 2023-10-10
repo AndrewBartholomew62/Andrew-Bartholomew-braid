@@ -94,6 +94,10 @@ documentation, available at www.layer8.co.uk/maths/braids
                   Updated the sawollek implementation of matrix P to be more clearly aligned with Sawollek's paper. (September 2022)
                   Added draft mock Alexander option for knotoids (November 2022)
                   Added the ability to read Dowker-Thistlethwaite codes for prime knots and convert them to labelled peer codes (December 2022).
+    Version 25.2  Added support for multi-linkoids to the peer code and Gauss code input and output functions and modified gauss_to_peer_code to convert
+                  multi-knotoid Gauss codes to peer codes.(April 2023)
+    Version 26.0  AAdded Hamiltonian task to find Hamiltonian circuits in a diagram of a classical or flat knot or link.  Removed the start menu. (October 2023)
+                  
 	
 ********************************************************************************************************************************************************/
 using namespace std;
@@ -125,7 +129,7 @@ ifstream    input;
 #include <gauss-orientation.h>
 
 /******************** Control Variables **********************/
-string braid_control::version  = "25.1";
+string braid_control::version  = "26.0";
 
 int braid_control::gcd_initializing;
 
@@ -157,6 +161,10 @@ bool braid_control::FLIP_BRAID = false;
 bool braid_control::FLAT_VOGEL_MOVES = false;
 bool braid_control::GAUSS_CODE = false;
 bool braid_control::GCD_BACK_SUBSTITUTING = false;
+bool braid_control::HAMILTONIAN = false;
+bool braid_control::HC_COUNT = false;
+bool braid_control::HC_EDGES = false;
+bool braid_control::HC_LIST_ALL = false;
 bool braid_control::HOMFLY = false;
 bool braid_control::IMMERSION_CODE = false;
 bool braid_control::INVERT_BRAID = false;
@@ -180,6 +188,7 @@ bool braid_control::PD_FORMAT = false;
 bool braid_control::PEER_CODE = false;
 bool braid_control::PLANE_REFLECT_BRAID = false;
 bool braid_control::PRIME_WEYL = false;
+bool braid_control::PRIME_TEST = false;
 bool braid_control::QUANTUM_WEYL = false;
 bool braid_control::QUATERNION = false;
 bool braid_control::RACK_POLYNOMIAL = false;
@@ -329,6 +338,17 @@ int main (int argc, char* argv[])
        come from the screen or a file */
     if (argc == 1)
 	{
+
+		cout << "\nbraid --<task> [-<short_options>][--<long_option>][<infile>[<outfile>]]" << endl;
+		cout << "  braid -h to view help file" << endl;
+		cout << "  braid -H! for detailed usage information" << endl;
+    	exit(0);
+
+#ifdef TAKEOUT		
+
+		/* Start menu deprecated as of version 26 */
+
+
 		/* Put up a menu for the user to decide what to do */
 		cout << "\nThis is A.Bartholomew's braid programme, v" << braid_control::version;	
 		cout << "\n\nPlease choose from the following options:\n";
@@ -458,6 +478,7 @@ int main (int argc, char* argv[])
 				invalid_input = true;
 			}
 		} while (invalid_input);
+#endif
 	}
 	else
     {
@@ -498,7 +519,10 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 }
 
 	if (braid_control::DEVELOPMENT_MODE)
-	{			
+	{
+
+bool gauss_to_peer_code(generic_code_data gauss_code_data, generic_code_data& peer_code_data, bool optimal=true, vector<int>* gauss_crossing_perm=0, bool evaluate_gauss_crossing_perm=false);		
+
 //		input_control::ACCEPT_MAP |= input_control::planar_diagram;
 //		input_control::ACCEPT_MAP |= input_control::gauss_code;
 
@@ -516,9 +540,60 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 		
 		while (getline(input,buffer))
 		{
-			polynomial<int> p(buffer);
-			cout << p << endl;
+			generic_code_data code_data;
+			read_code_data(code_data,buffer);
+			
+			bool connected_sum = non_prime_immersion(code_data,true);
+			
+			if (connected_sum)
+				cout << "non_prime" << endl;
+			else
+				cout << "prime" << endl;
+				
+			continue;
+			
+			
+			write_code_data(cout,code_data);
+			cout << endl;
+			generic_code_data peer_code_data;
+			gauss_to_peer_code(code_data, peer_code_data);			
+			write_code_data(cout,peer_code_data);
+//			print_code_data(cout,peer_code_data);
+			cout << endl;
+
+continue;			
+			int num_cycles;
+			int num_left_cycles;
+			matrix<int> cycle(code_data.num_crossings+2, 2*code_data.num_crossings+1);
+			calculate_turning_cycles(code_data, cycle, num_left_cycles, num_cycles);
+			vector<int> cycle_length_count(code_data.num_crossings+2);
+			
+			for (int i=0; i< num_cycles; i++)
+				cycle_length_count[cycle[i][0]]++;
+			
+			write_code_data(cout,code_data);
+			cout << " num_crossings = " << code_data.num_crossings << ": ";
 		
+			for (int i=3; i<code_data.num_crossings+2; i++)
+			{
+				cout << cycle_length_count[i];
+				
+				bool more = false;
+				for (int j=i+1; j< code_data.num_crossings+2; j++)
+				{
+					if (cycle_length_count[j] !=0)
+					{
+						more = true;
+						break;
+					}
+				}
+				
+				if (more)
+					cout << ',';
+				else
+					break;
+			}
+			cout << endl;
 		}
 		
 exit(0);
@@ -745,6 +820,11 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 		    cout << " evaluate the HOMFLY polynomial for the closure";
 	    	cout << "\nof the classical braid words that you enter.\n";
 		}
+		else if (braid_control::HAMILTONIAN)
+		{
+		    cout << " evaluate a Hamiltonian circuit for the shadow of the diagram specified";
+
+		}
 		else if (braid_control::RACK_POLYNOMIAL)
 		{
 		    cout << " evaluate the rack-polynomial invariant for the";
@@ -880,6 +960,10 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 			cout << "\nEnter the word in si";		
 			cout << "\nE.g. s1-s2-s3-s3";
 		}
+		else if (braid_control::HAMILTONIAN)
+		{
+			cout << "\nEnter a braid, peer code, Gauss code, planar diagram or braid of a classical knot or link";		
+		}
 		else if (braid_control::KAUFFMAN_BRACKET || braid_control::JONES_POLYNOMIAL || braid_control::ARROW_POLYNOMIAL 
 		         || braid_control::PARITY_BRACKET || braid_control::PARITY_ARROW)
 		{
@@ -903,9 +987,9 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 			cout << "\nEnter the word in s and t characters";		
 			
 			if (braid_control::WEYL)
-				cout << "\nE.g. s1s2t1s3s3" << endl;
+				cout << "\nE.g. s1s2t1s3s3";
 			else
-				cout << "\nE.g. s1-s2t1-s3-s3" << endl;
+				cout << "\nE.g. s1-s2t1-s3-s3";
 		}
     }
     
@@ -3453,6 +3537,30 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: GAUSS_CODE read from " << source << endl;
 	}
+	else if (!strcmp(loc_buf,"hamiltonian"))
+	{
+    	braid_control::HAMILTONIAN = true;
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+	debug << "set_programme_long_option: HAMILTONIAN read from " << source << endl;
+	}
+	else if (!strcmp(loc_buf,"HC-count"))
+	{
+    	braid_control::HC_COUNT = true;
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+	debug << "set_programme_long_option: HC_COUNT read from " << source << endl;
+	}
+	else if (!strcmp(loc_buf,"HC-edges"))
+	{
+    	braid_control::HC_EDGES = true;
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+	debug << "set_programme_long_option: HC_EDGES read from " << source << endl;
+	}
+	else if (!strcmp(loc_buf,"HC-list-all"))
+	{
+    	braid_control::HC_LIST_ALL = true;
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+	debug << "set_programme_long_option: HC_LIST_ALL read from " << source << endl;
+	}
 	else if (!strcmp(loc_buf,"homfly"))
 	{
     	braid_control::HOMFLY = true;
@@ -3643,6 +3751,12 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 		}
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: SWITCH_POWER=" << braid_control::SWITCH_POWER << " read from " << source << endl;
+	}
+	else if (!strcmp(loc_buf,"prime"))
+	{
+		braid_control::PRIME_TEST = true;
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+	debug << "set_programme_long_option: PRIME_TEST read from " << source << endl;
 	}
 	else if (!strcmp(loc_buf,"quaternion"))
 	{
@@ -3888,6 +4002,7 @@ void set_programme_short_option(char* cptr)
 			cout << "  dynnikov: Dynnikov test\n";
 			cout << "  fixed-point: Fixed-point invariant of a braid\n";
 	    	cout << "  gauss: Gauss code\n";
+			cout << "  hamiltonian: determine a Hamiltonian circuit in the shadow of a knot or link\n";
 			cout << "  homfly: HOMFLY polynomial of a braid\n";
 			cout << "  immersion: immersion code\n";
 			cout << "  info: display status information about the braid\n";
@@ -3919,6 +4034,9 @@ void set_programme_short_option(char* cptr)
 			cout << "  flip-braid             flip all the braids in the input file\n";
 			cout << "  format                 format the output file so that it may be used as an input file later\n";
 			cout << "  invert-braid           invert all the braids in the input file\n";
+			cout << "  HC-count               count the number of Hamiltonian circuits in a diagram\n";
+			cout << "  HC-edges               create Hamiltonian circuits from edges rather than crossings\n";
+			cout << "  HC-list-all            find all of the Hamiltonian circuits in a diagram\n";
 			cout << "  line-reflect           reflect all the braids in the file in a horizontal line drawn south of the braid\n";
 			cout << "  lpgd                   calculate the left preferred Gauss code, rather than a standard gauss code\n";
 			cout << "  mod-p=n                calculate mod p with p=n (only used for non-Weyl algebra switches)\n";
@@ -4397,7 +4515,7 @@ if(debug_control::DEBUG >= debug_control::SUMMARY)
 
 		/* check for a long knot */
 		
-		if (input_string.find('L') != string::npos)
+		if (input_string.find("L:") != string::npos)
 		{
 			braid_control::LONG_KNOT = true;
 			
@@ -6075,7 +6193,7 @@ void R_module_rep(matrix<T,St>*& Matrix_rep, const matrix<T,St>& switch_matrix, 
 
 	for (int i=0; i<num_crossings; i++)
 	{
-		if (code_table[LABEL][i] == generic_code_data::VIRTUAL)
+		if (code_table[generic_code_data::table::LABEL][i] == generic_code_data::VIRTUAL)
 			num_classical--;
 	}
 
@@ -6184,7 +6302,7 @@ if (debug_control::DEBUG >= debug_control::BASIC)
 	
 	for (int i=0; i<num_crossings; i++)
 	{
-		if (code_table[LABEL][i] == generic_code_data::VIRTUAL)
+		if (code_table[generic_code_data::table::LABEL][i] == generic_code_data::VIRTUAL)
 		{
 			/* The equations for this crossing state x_2i = x_{2i+1} and x_{2j-1} = x_2j, where the terminating
 			   edges at the crossing are 2i and 2j-1.  Thus, the variables corresponding to the incoming edges
@@ -6196,9 +6314,9 @@ if (debug_control::DEBUG >= debug_control::BASIC)
 //			trivial_variable_flags[2*i] = 1;
 //			trivial_variable_flags[twice_pi_minus1] = 1;
 if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
-	debug << "R_module_rep: crossing " << i << " trivial variables = " << 2*i << " and " << code_table[OPEER][i] << endl;
+	debug << "R_module_rep: crossing " << i << " trivial variables = " << 2*i << " and " << code_table[generic_code_data::table::OPEER][i] << endl;
 			trivial_variable_flags[2*i] = 1;
-			trivial_variable_flags[code_table[OPEER][i]] = 1;
+			trivial_variable_flags[code_table[generic_code_data::table::OPEER][i]] = 1;
 		}
 	}
 	
@@ -6298,19 +6416,19 @@ if (debug_control::DEBUG >= debug_control::BASIC)
 	for (int i=0; i<num_crossings; i++)
 	{
 		/* only consider classical crossings */
-		if (code_table[LABEL][i] == generic_code_data::VIRTUAL)
+		if (code_table[generic_code_data::table::LABEL][i] == generic_code_data::VIRTUAL)
 			continue;
 		
 //		/* first evaluate 2p(i)-1 = 2j-1 = 2*code_table[PERM][i]-1 modulo 2*num_crossings */
 //		int twice_pi_minus1 = ((2*code_table[PERM][i] -1)+(2*num_crossings))%(2*num_crossings);
 
 		/* identify the odd_numbered_peer of the naming edge */
-//		int odd_numbered_peer = code_table[OPEER][i];
+//		int odd_numbered_peer = code_table[generic_code_data::table::OPEER][i];
 	
 		/* now determine the braid crossing type, POSITIVE, NEGATIVE or VIRTUAL */
 		int crossing_type;		
-		if (  (code_table[TYPE][i] == generic_code_data::TYPE1 && code_table[LABEL][i] == generic_code_data::POSITIVE)
-				||(code_table[TYPE][i] == generic_code_data::TYPE2 && code_table[LABEL][i] == generic_code_data::NEGATIVE)
+		if (  (code_table[generic_code_data::table::TYPE][i] == generic_code_data::TYPE1 && code_table[generic_code_data::table::LABEL][i] == generic_code_data::POSITIVE)
+				||(code_table[generic_code_data::table::TYPE][i] == generic_code_data::TYPE2 && code_table[generic_code_data::table::LABEL][i] == generic_code_data::NEGATIVE)
    					)
 			crossing_type = braid_crossing_type::NEGATIVE;
 		else
@@ -6324,15 +6442,15 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 	else
 		debug << " positive";
 
-	debug <<  ", TYPE " << (code_table[TYPE][i] == generic_code_data::TYPE1? "I" : "II") << endl;
+	debug <<  ", generic_code_data::table::TYPE " << (code_table[generic_code_data::table::TYPE][i] == generic_code_data::TYPE1? "I" : "II") << endl;
 	debug << "R_module_rep: ic-variables\tp[i] = ";// << code_table[PERM][i];
 //	debug << "\t2i = " << 2*i << "\t\t2p[i]-1 = " << twice_pi_minus1;
-	debug << "\t2i = " << 2*i << "\t\t2j-1 = " << code_table[ODD_TERMINATING][i];
-	debug << "\t2i+1 = " << 2*i+1 << "\t2p[i] = " << code_table[EVEN_ORIGINATING][i] << endl;
+	debug << "\t2i = " << 2*i << "\t\t2j-1 = " << code_table[generic_code_data::table::ODD_TERMINATING][i];
+	debug << "\t2i+1 = " << 2*i+1 << "\t2p[i] = " << code_table[generic_code_data::table::EVEN_ORIGINATING][i] << endl;
 	
 	debug << "R_module_rep: mapped to\t\t\t";//v(p[i]) = " << variable[code_table[PERM][i]];
-	debug << "\tv(2i) = " << variable[2*i] << "\tv(2p[i]-1) = " << variable[code_table[ODD_TERMINATING][i]];
-	debug << "\tv(2i+1) = " << variable[2*i+1] << "\tv(2p[i]) = " << variable[code_table[EVEN_ORIGINATING][i]] << endl;
+	debug << "\tv(2i) = " << variable[2*i] << "\tv(2p[i]-1) = " << variable[code_table[generic_code_data::table::ODD_TERMINATING][i]];
+	debug << "\tv(2i+1) = " << variable[2*i+1] << "\tv(2p[i]) = " << variable[code_table[generic_code_data::table::EVEN_ORIGINATING][i]] << endl;
 
 	debug << "R_module_rep: row " << 2*row << "\nR_module_rep: \t\t";
 }		
@@ -6341,8 +6459,8 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 		*/
 		for (int j=0; j<2*num_classical; j++)  
     	{
-//			if (j == (code_table[TYPE][i] == (OLD_SWITCH_ACTION?generic_code_data::TYPE1:generic_code_data::TYPE2) ? variable[2*i] : variable[twice_pi_minus1]))
-			if (j == (code_table[TYPE][i] == (OLD_SWITCH_ACTION?generic_code_data::TYPE1:generic_code_data::TYPE2) ? variable[code_table[EVEN_TERMINATING][i]] : variable[code_table[ODD_TERMINATING][i]]))
+//			if (j == (code_table[generic_code_data::table::TYPE][i] == (OLD_SWITCH_ACTION?generic_code_data::TYPE1:generic_code_data::TYPE2) ? variable[2*i] : variable[twice_pi_minus1]))
+			if (j == (code_table[generic_code_data::table::TYPE][i] == (OLD_SWITCH_ACTION?generic_code_data::TYPE1:generic_code_data::TYPE2) ? variable[code_table[generic_code_data::table::EVEN_TERMINATING][i]] : variable[code_table[generic_code_data::table::ODD_TERMINATING][i]]))
 			{
 				/* Record the A entry at j*/
 				if (crossing_type == braid_crossing_type::POSITIVE)
@@ -6356,8 +6474,8 @@ if (debug_control::DEBUG >= debug_control::DETAIL) debug << j << ":iS00   ";
 					set_matrix_N_element(matrix_rep,2*row,j,switch_matrix_inverse,0,0,N);				
 				}
 			}
-//			else if (j == (code_table[TYPE][i] == (OLD_SWITCH_ACTION?generic_code_data::TYPE1:generic_code_data::TYPE2) ? variable[twice_pi_minus1] : variable[2*i]))
-			else if (j == (code_table[TYPE][i] == (OLD_SWITCH_ACTION?generic_code_data::TYPE1:generic_code_data::TYPE2) ? variable[code_table[ODD_TERMINATING][i]] : variable[code_table[EVEN_TERMINATING][i]]))
+//			else if (j == (code_table[generic_code_data::table::TYPE][i] == (OLD_SWITCH_ACTION?generic_code_data::TYPE1:generic_code_data::TYPE2) ? variable[twice_pi_minus1] : variable[2*i]))
+			else if (j == (code_table[generic_code_data::table::TYPE][i] == (OLD_SWITCH_ACTION?generic_code_data::TYPE1:generic_code_data::TYPE2) ? variable[code_table[generic_code_data::table::ODD_TERMINATING][i]] : variable[code_table[generic_code_data::table::EVEN_TERMINATING][i]]))
 			{
 				/* Record the B entry at j */
 				if (crossing_type == braid_crossing_type::POSITIVE)
@@ -6388,8 +6506,8 @@ if (debug_control::DEBUG >= debug_control::DETAIL) debug << j << ":iS01   ";
 				   following code...
 				*/
 				
-//				if (j == (code_table[TYPE][i] == (OLD_SWITCH_ACTION?generic_code_data::TYPE1:generic_code_data::TYPE2) ? variable[2*code_table[PERM][i]] : variable[2*i+1]))
-				if (j == (code_table[TYPE][i] == (OLD_SWITCH_ACTION?generic_code_data::TYPE1:generic_code_data::TYPE2) ? variable[code_table[EVEN_ORIGINATING][i]] : variable[code_table[ODD_ORIGINATING][i]]))
+//				if (j == (code_table[generic_code_data::table::TYPE][i] == (OLD_SWITCH_ACTION?generic_code_data::TYPE1:generic_code_data::TYPE2) ? variable[2*code_table[PERM][i]] : variable[2*i+1]))
+				if (j == (code_table[generic_code_data::table::TYPE][i] == (OLD_SWITCH_ACTION?generic_code_data::TYPE1:generic_code_data::TYPE2) ? variable[code_table[generic_code_data::table::EVEN_ORIGINATING][i]] : variable[code_table[generic_code_data::table::ODD_ORIGINATING][i]]))
 				{
 					/* The theoretical edge variables ignore virtual crossings and have been represented by variable[i] 
 					   so that all immersion-semi-arcs after the last real crossing have variable[i]=0.  If this is a
@@ -6427,8 +6545,8 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 		/* now row 2*row+1 */	
 		for (int j=0; j<2*num_classical; j++)  
     	{
-//			if (j == (code_table[TYPE][i] == (OLD_SWITCH_ACTION?generic_code_data::TYPE1:generic_code_data::TYPE2) ? variable[2*i] : variable[twice_pi_minus1]))
-			if (j == (code_table[TYPE][i] == (OLD_SWITCH_ACTION?generic_code_data::TYPE1:generic_code_data::TYPE2) ? variable[code_table[EVEN_TERMINATING][i]] : variable[code_table[ODD_TERMINATING][i]]))
+//			if (j == (code_table[generic_code_data::table::TYPE][i] == (OLD_SWITCH_ACTION?generic_code_data::TYPE1:generic_code_data::TYPE2) ? variable[2*i] : variable[twice_pi_minus1]))
+			if (j == (code_table[generic_code_data::table::TYPE][i] == (OLD_SWITCH_ACTION?generic_code_data::TYPE1:generic_code_data::TYPE2) ? variable[code_table[generic_code_data::table::EVEN_TERMINATING][i]] : variable[code_table[generic_code_data::table::ODD_TERMINATING][i]]))
 			{
 				/* Record the C entry at j */
 				if (crossing_type == braid_crossing_type::POSITIVE)
@@ -6442,8 +6560,8 @@ if (debug_control::DEBUG >= debug_control::DETAIL) debug << j << ":iS10   ";
 					set_matrix_N_element(matrix_rep,2*row+1,j,switch_matrix_inverse,1,0,N);				
 				}
 			}
-//			else if (j == (code_table[TYPE][i] == (OLD_SWITCH_ACTION?generic_code_data::TYPE1:generic_code_data::TYPE2) ? variable[twice_pi_minus1] : variable[2*i]))
-			else if (j == (code_table[TYPE][i] == (OLD_SWITCH_ACTION?generic_code_data::TYPE1:generic_code_data::TYPE2) ? variable[code_table[ODD_TERMINATING][i]] : variable[code_table[EVEN_TERMINATING][i]]))
+//			else if (j == (code_table[generic_code_data::table::TYPE][i] == (OLD_SWITCH_ACTION?generic_code_data::TYPE1:generic_code_data::TYPE2) ? variable[twice_pi_minus1] : variable[2*i]))
+			else if (j == (code_table[generic_code_data::table::TYPE][i] == (OLD_SWITCH_ACTION?generic_code_data::TYPE1:generic_code_data::TYPE2) ? variable[code_table[generic_code_data::table::ODD_TERMINATING][i]] : variable[code_table[generic_code_data::table::EVEN_TERMINATING][i]]))
 			{
 				/* Record the D entry at j */
 				if (crossing_type == braid_crossing_type::POSITIVE)
@@ -6459,8 +6577,8 @@ if (debug_control::DEBUG >= debug_control::DETAIL) debug << j << ":iS11   ";
 			}
 			else 
 			{				
-//				if (j == (code_table[TYPE][i] == (OLD_SWITCH_ACTION?generic_code_data::TYPE1:generic_code_data::TYPE2) ? variable[2*i+1] : variable[2*code_table[PERM][i]]))
-				if (j == (code_table[TYPE][i] == (OLD_SWITCH_ACTION?generic_code_data::TYPE1:generic_code_data::TYPE2) ? variable[code_table[ODD_ORIGINATING][i]] : variable[code_table[EVEN_ORIGINATING][i]]))
+//				if (j == (code_table[generic_code_data::table::TYPE][i] == (OLD_SWITCH_ACTION?generic_code_data::TYPE1:generic_code_data::TYPE2) ? variable[2*i+1] : variable[2*code_table[PERM][i]]))
+				if (j == (code_table[generic_code_data::table::TYPE][i] == (OLD_SWITCH_ACTION?generic_code_data::TYPE1:generic_code_data::TYPE2) ? variable[code_table[generic_code_data::table::ODD_ORIGINATING][i]] : variable[code_table[generic_code_data::table::EVEN_ORIGINATING][i]]))
 				{
 					/* see comment for corresponding clause above */
 					if (braid_control::LONG_KNOT && j == 0)
@@ -6672,7 +6790,7 @@ if(debug_control::DEBUG >= debug_control::INTERMEDIATE)
 			virtual_crossings_present = true;
 
 		/* check for a long knot */
-		if (input_string.find('L') != string::npos)
+		if (input_string.find("L:") != string::npos)
 		{
 			braid_control::LONG_KNOT = true;
 
@@ -7532,7 +7650,7 @@ void set_acceptable_input_type()
 			output << "Reading labelled peer codes from input.\n\n";
 		}
 	}
-	else if (braid_control::GAUSS_CODE)
+	else if (braid_control::GAUSS_CODE || braid_control::PEER_CODE || braid_control::HAMILTONIAN)
 	{
 		input_control::ACCEPT_MAP |= input_control::immersion_code;
 		input_control::ACCEPT_MAP |= input_control::peer_code;
@@ -7549,26 +7667,6 @@ void set_acceptable_input_type()
 			if (braid_control::OUTPUT_AS_INPUT)
 				output << ';';
 			output << "Reading braid words, labelled immersion codes, labelled peer codes and planar diagrams from input.\n\n";
-		}
-	}
-	else if (braid_control::PEER_CODE)
-	{
-		input_control::ACCEPT_MAP |= input_control::immersion_code;
-		input_control::ACCEPT_MAP |= input_control::peer_code;
-		input_control::ACCEPT_MAP |= input_control::gauss_code;
-		input_control::ACCEPT_MAP |= input_control::braid_word;
-		input_control::ACCEPT_MAP |= input_control::planar_diagram;
-		input_control::ACCEPT_MAP |= input_control::dowker_code;
-
-
-		if (!braid_control::SILENT_OPERATION)
-			cout << "\n\nReading braid words, labelled immersion codes and labelled peer codes from input.\n\n";
-		if (!braid_control::RAW_OUTPUT)
-		{
-			output << "\n\n";
-			if (braid_control::OUTPUT_AS_INPUT)
-				output << ';';
-			output << "Reading braid words, labelled immersion codes and labelled peer codes from input.\n\n";
 		}
 	}
 	else if (braid_control::DOWKER_CODE)
@@ -7640,6 +7738,22 @@ void set_acceptable_input_type()
 		}
 	}
 	else if (braid_control::MOCK_ALEXANDER)
+	{
+		input_control::ACCEPT_MAP |= input_control::peer_code;
+		input_control::ACCEPT_MAP |= input_control::gauss_code;
+		input_control::ACCEPT_MAP |= input_control::planar_diagram;		
+
+		if (!braid_control::SILENT_OPERATION)
+			cout << "\n\nReading labelled peer codes and Gauss codes from input.\n\n";
+		if (!braid_control::RAW_OUTPUT)
+		{
+			output << "\n\n";
+			if (braid_control::OUTPUT_AS_INPUT)
+				output << ';';
+			output << "Reading labelled peer codes and Gauss codes from input.\n\n";
+		}
+	}
+	else if (braid_control::PRIME_TEST)
 	{
 		input_control::ACCEPT_MAP |= input_control::peer_code;
 		input_control::ACCEPT_MAP |= input_control::gauss_code;

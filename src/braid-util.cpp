@@ -15,6 +15,7 @@ void parse_braid(string word, int num_terms, vector<int>& braid_num, vector<int>
 #include <iostream>
 #include <cstdlib>
 #include <cstring>
+#include <vector>
 #include <algorithm>
 #include <iomanip>
 
@@ -27,8 +28,6 @@ extern ofstream     debug;
 extern bool SIDEWAYS_SEARCH;
 
 #include <util.h>
-#include <quaternion-scalar.h>
-#include <polynomial.h>
 #include <matrix.h>
 #include <ctype.h>
 #include <debug-control.h>

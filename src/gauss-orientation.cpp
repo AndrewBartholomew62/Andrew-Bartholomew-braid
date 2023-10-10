@@ -41,8 +41,6 @@ extern ofstream     debug;
 
 
 #include <util.h>
-#include <quaternion-scalar.h>
-#include <polynomial.h>
 #include <matrix.h>
 #include <generic-code.h>
 #include <debug-control.h>
@@ -124,12 +122,12 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << ", next_crossing = " << next_crossing;
 
-				bool first_visit = (code_table[OPEER][next_crossing] == edge? true: false);
+				bool first_visit = (code_table[generic_code_data::table::OPEER][next_crossing] == edge? true: false);
 				int next_crossing_orientation_polarity;
 				
 	
-				if ((first_visit && code_table[TYPE][next_crossing] == generic_code_data::TYPE1) ||
-					(!first_visit && code_table[TYPE][next_crossing] == generic_code_data::TYPE2))						
+				if ((first_visit && code_table[generic_code_data::table::TYPE][next_crossing] == generic_code_data::TYPE1) ||
+					(!first_visit && code_table[generic_code_data::table::TYPE][next_crossing] == generic_code_data::TYPE2))						
 					next_crossing_orientation_polarity = gauss_orientation_data::RIGHT;
 				else
 					next_crossing_orientation_polarity = gauss_orientation_data::LEFT;	
@@ -140,8 +138,8 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 				orientation_matrix[0][index] = next_crossing_orientation_polarity;
 				orientation_matrix[1][index] = next_crossing+1;
 
-				if ((first_visit && code_table[LABEL][next_crossing] == generic_code_data::POSITIVE) ||
-					(!first_visit && code_table[LABEL][next_crossing] == generic_code_data::NEGATIVE))						
+				if ((first_visit && code_table[generic_code_data::table::LABEL][next_crossing] == generic_code_data::POSITIVE) ||
+					(!first_visit && code_table[generic_code_data::table::LABEL][next_crossing] == generic_code_data::NEGATIVE))						
 					classical_gauss_data[index] = (next_crossing+1)*-1;
 				else
 					classical_gauss_data[index] = next_crossing+1;	
@@ -149,20 +147,20 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 				index++;
 
 				if (first_visit)
-					edge = code_table[EVEN_ORIGINATING][next_crossing];
+					edge = code_table[generic_code_data::table::EVEN_ORIGINATING][next_crossing];
 				else
-					edge = code_table[ODD_ORIGINATING][next_crossing];
+					edge = code_table[generic_code_data::table::ODD_ORIGINATING][next_crossing];
 			} while (edge != start);				
 		}
 		
 		for (int i=0; i< code_data.num_crossings; i++)
 		{
-			if ( (code_table[LABEL][i] == generic_code_data::POSITIVE && code_table[TYPE][i] == generic_code_data::TYPE2) ||
-				 (code_table[LABEL][i] == generic_code_data::NEGATIVE && code_table[TYPE][i] == generic_code_data::TYPE1)
+			if ( (code_table[generic_code_data::table::LABEL][i] == generic_code_data::POSITIVE && code_table[generic_code_data::table::TYPE][i] == generic_code_data::TYPE2) ||
+				 (code_table[generic_code_data::table::LABEL][i] == generic_code_data::NEGATIVE && code_table[generic_code_data::table::TYPE][i] == generic_code_data::TYPE1)
 			   )
 				classical_crossing_sign[i] = 1;
-			else if ( (code_table[LABEL][i] == generic_code_data::POSITIVE && code_table[TYPE][i] == generic_code_data::TYPE1) ||
-					  (code_table[LABEL][i] == generic_code_data::NEGATIVE && code_table[TYPE][i] == generic_code_data::TYPE2)
+			else if ( (code_table[generic_code_data::table::LABEL][i] == generic_code_data::POSITIVE && code_table[generic_code_data::table::TYPE][i] == generic_code_data::TYPE1) ||
+					  (code_table[generic_code_data::table::LABEL][i] == generic_code_data::NEGATIVE && code_table[generic_code_data::table::TYPE][i] == generic_code_data::TYPE2)
 					)
 				classical_crossing_sign[i] = -1;
 		}	
@@ -207,7 +205,7 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 		{
 			for (int i=0; i< code_data.num_crossings; i++)
 			{
-				if (code_table[LABEL][i] == generic_code_data::VIRTUAL)
+				if (code_table[generic_code_data::table::LABEL][i] == generic_code_data::VIRTUAL)
 					num_classical_crossings--;
 			}
 if (debug_control::DEBUG >= debug_control::DETAIL)
@@ -293,7 +291,7 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 				int next_crossing_orientation_polarity;
 				int next_crossing_gauss_polarity;
 				
-				if (!extended_version && code_table[LABEL][next_crossing] == generic_code_data::VIRTUAL)
+				if (!extended_version && code_table[generic_code_data::table::LABEL][next_crossing] == generic_code_data::VIRTUAL)
 				{
 if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << ", is virtual" << endl;
@@ -309,20 +307,20 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << ", is a Gauss crossing" << endl;
 	
-				    if ((edge%2 == 0 && code_table[TYPE][next_crossing] == generic_code_data::TYPE1) ||
-				        (edge%2 != 0 && code_table[TYPE][next_crossing] == generic_code_data::TYPE2))						
+				    if ((edge%2 == 0 && code_table[generic_code_data::table::TYPE][next_crossing] == generic_code_data::TYPE1) ||
+				        (edge%2 != 0 && code_table[generic_code_data::table::TYPE][next_crossing] == generic_code_data::TYPE2))						
 						next_crossing_orientation_polarity = gauss_orientation_data::LEFT;
 					else
 						next_crossing_orientation_polarity = gauss_orientation_data::RIGHT;
 
-					if ((edge%2 == 1 && code_table[LABEL][next_crossing] == generic_code_data::POSITIVE) ||
-						(edge%2 == 0 && code_table[LABEL][next_crossing] == generic_code_data::NEGATIVE))						
+					if ((edge%2 == 1 && code_table[generic_code_data::table::LABEL][next_crossing] == generic_code_data::POSITIVE) ||
+						(edge%2 == 0 && code_table[generic_code_data::table::LABEL][next_crossing] == generic_code_data::NEGATIVE))						
 						next_crossing_gauss_polarity = generic_code_data::UNDER;
 					else
 						next_crossing_gauss_polarity = generic_code_data::OVER;	
 				}
 				
-				if (!extended_version && (code_table[LABEL][next_crossing] == generic_code_data::VIRTUAL || (pure_knotoid_code_data && shortcut_crossing[next_crossing])))
+				if (!extended_version && (code_table[generic_code_data::table::LABEL][next_crossing] == generic_code_data::VIRTUAL || (pure_knotoid_code_data && shortcut_crossing[next_crossing])))
 				{
 					
 if (debug_control::DEBUG >= debug_control::DETAIL)
@@ -330,9 +328,9 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 					
 					/* just move on around the component */				
 					if (edge%2)
-						edge = code_table[EVEN_ORIGINATING][next_crossing];
+						edge = code_table[generic_code_data::table::EVEN_ORIGINATING][next_crossing];
 					else
-						edge = code_table[ODD_ORIGINATING][next_crossing];
+						edge = code_table[generic_code_data::table::ODD_ORIGINATING][next_crossing];
 	
 				}				
 				else
@@ -346,7 +344,7 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 								orientation_matrix[0][index] = next_crossing_orientation_polarity;
 								orientation_matrix[1][index] = i+1;
 								
-								if (code_table[LABEL][next_crossing] == generic_code_data::VIRTUAL || (pure_knotoid_code_data && shortcut_crossing[next_crossing]))
+								if (code_table[generic_code_data::table::LABEL][next_crossing] == generic_code_data::VIRTUAL || (pure_knotoid_code_data && shortcut_crossing[next_crossing]))
 									orientation_matrix[1][index] *= -1;
 
 								classical_gauss_data[index] = (i+1)*next_crossing_gauss_polarity;	
@@ -374,7 +372,7 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 						orientation_matrix[0][index] = next_crossing_orientation_polarity;
 						orientation_matrix[1][index] = num_classical_crossings_visited+1;
 	
-						if (code_table[LABEL][next_crossing] == generic_code_data::VIRTUAL || (pure_knotoid_code_data && shortcut_crossing[next_crossing]))
+						if (code_table[generic_code_data::table::LABEL][next_crossing] == generic_code_data::VIRTUAL || (pure_knotoid_code_data && shortcut_crossing[next_crossing]))
 							orientation_matrix[1][index] *= -1;
 
 						classical_gauss_data[index] = (num_classical_crossings_visited+1)*next_crossing_gauss_polarity;	
@@ -395,9 +393,9 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 					}
 	
 					if (edge%2)
-						edge = code_table[EVEN_ORIGINATING][next_crossing];
+						edge = code_table[generic_code_data::table::EVEN_ORIGINATING][next_crossing];
 					else
-						edge = code_table[ODD_ORIGINATING][next_crossing];
+						edge = code_table[generic_code_data::table::ODD_ORIGINATING][next_crossing];
 				}
 			} while (edge != start);
 	
@@ -422,10 +420,10 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 		{
 			int crossing = classical_crossing[i];
 			
-			if (code_table[LABEL][crossing] != generic_code_data::VIRTUAL && !(pure_knotoid_code_data && shortcut_crossing[crossing])) // it should never be!
+			if (code_table[generic_code_data::table::LABEL][crossing] != generic_code_data::VIRTUAL && !(pure_knotoid_code_data && shortcut_crossing[crossing])) // it should never be!
 			{
-				if ((code_table[TYPE][crossing] == generic_code_data::TYPE1 && code_table[LABEL][crossing] == generic_code_data::NEGATIVE) ||
-				    (code_table[TYPE][crossing] == generic_code_data::TYPE2 && code_table[LABEL][crossing] == generic_code_data::POSITIVE))
+				if ((code_table[generic_code_data::table::TYPE][crossing] == generic_code_data::TYPE1 && code_table[generic_code_data::table::LABEL][crossing] == generic_code_data::NEGATIVE) ||
+				    (code_table[generic_code_data::table::TYPE][crossing] == generic_code_data::TYPE2 && code_table[generic_code_data::table::LABEL][crossing] == generic_code_data::POSITIVE))
 					classical_crossing_sign[i] = 1;
 				else
 					classical_crossing_sign[i] = -1;

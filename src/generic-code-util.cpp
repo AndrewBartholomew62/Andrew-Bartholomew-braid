@@ -25,6 +25,7 @@ string over_preferred_gauss_code(generic_code_data& code_data, bool unoriented)
 vector<int> classical_gauss_data(generic_code_data& code_data)
 int amalgamate_zig_zag_counts(int a, int b)
 string read_dowker_code (string input_string)
+bool non_prime_immersion(generic_code_data& code_data, bool crossing_test)
 **************************************************************************/
 #include <fstream>
 #include <iostream>
@@ -41,8 +42,6 @@ extern ofstream     output;
 extern ifstream     input;
 
 #include <util.h>
-#include <quaternion-scalar.h>
-#include <polynomial.h>
 #include <matrix.h>
 #include <generic-code.h>
 #include <debug-control.h>
@@ -85,10 +84,10 @@ if (debug_control::DEBUG >= debug_control::BASIC)
 	first_edge_on_component[0]=0;
 	num_component_edges[0] = num_edges;
 	
-	matrix<int> code_table(CODE_TABLE_SIZE,num_crossings);
+	matrix<int> code_table(generic_code_data::table::CODE_TABLE_SIZE,num_crossings);
 	
 	for (int i=0; i< num_crossings; i++)
-		code_table[COMPONENT][i] = 0;
+		code_table[generic_code_data::table::COMPONENT][i] = 0;
 
 	vector<int> perm(num_crossings);
 	vector<int> type(num_crossings);
@@ -100,7 +99,7 @@ if (debug_control::DEBUG >= debug_control::BASIC)
 
 		/* We write the crossing numbers in the order they appear in the immersion code 
 		   into perm together with their corresponding type.  Then we unravel 
-		   the permuatation writing the PERM and TYPE rows from INVERSE and LABEL.
+		   the permuatation writing the PERM and generic_code_data::table::TYPE rows from INVERSE and generic_code_data::table::LABEL.
 		*/
 		
 		for (int i=0; i<num_crossings; i++)
@@ -152,13 +151,13 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 		/* work out this part of the permutation */
 		for (int i=0; i<count-1; i++)
 		{
-			code_table[OPEER][perm[i]] = (2*perm[i+1]-1+num_edges)%num_edges;
-			code_table[EPEER][(code_table[OPEER][perm[i]]-1)/2] = 2*perm[i];
-			code_table[TYPE][perm[i]] = type[i];
+			code_table[generic_code_data::table::OPEER][perm[i]] = (2*perm[i+1]-1+num_edges)%num_edges;
+			code_table[generic_code_data::table::EPEER][(code_table[generic_code_data::table::OPEER][perm[i]]-1)/2] = 2*perm[i];
+			code_table[generic_code_data::table::TYPE][perm[i]] = type[i];
 		}
-		code_table[OPEER][perm[count-1]] = (2*perm[0]-1+num_edges)%num_edges;
-		code_table[EPEER][(code_table[OPEER][perm[count-1]]-1)/2] = 2*perm[count-1];
-		code_table[TYPE][perm[count-1]] = type[count-1];
+		code_table[generic_code_data::table::OPEER][perm[count-1]] = (2*perm[0]-1+num_edges)%num_edges;
+		code_table[generic_code_data::table::EPEER][(code_table[generic_code_data::table::OPEER][perm[count-1]]-1)/2] = 2*perm[count-1];
+		code_table[generic_code_data::table::TYPE][perm[count-1]] = type[count-1];
 
 		cptr++; // move over ')'
 		while (*cptr == ' ') cptr++;
@@ -168,19 +167,19 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "read_immersion_code: interim code table produced from immersion code:" << endl;
 	debug << "read_immersion_code:   type:    ";	
 	for (int i=0; i< num_crossings; i++)
-		debug << code_table[TYPE][i] << ' ';
+		debug << code_table[generic_code_data::table::TYPE][i] << ' ';
 	debug << endl;
-	debug << "read_immersion_code:   OPEER: ";
+	debug << "read_immersion_code:   generic_code_data::table::OPEER: ";
 	for (int i=0; i< num_crossings; i++)
-		debug << code_table[OPEER][i] << ' ';
+		debug << code_table[generic_code_data::table::OPEER][i] << ' ';
 	debug << endl;
-	debug << "read_immersion_code:   EPEER: ";
+	debug << "read_immersion_code:   generic_code_data::table::EPEER: ";
 	for (int i=0; i< num_crossings; i++)
-		debug << code_table[EPEER][i] << ' ';
+		debug << code_table[generic_code_data::table::EPEER][i] << ' ';
 	debug << endl;
 	debug << "read_immersion_code:   label: ";
 	for (int i=0; i< num_crossings; i++)
-		debug << code_table[LABEL][i] << ' ';
+		debug << code_table[generic_code_data::table::LABEL][i] << ' ';
 	debug << endl;
 }
 
@@ -191,11 +190,11 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 	while (*cptr != '\0')
 	{
 		if (*cptr == '+')
-			code_table[LABEL][count++] = generic_code_data::POSITIVE;
+			code_table[generic_code_data::table::LABEL][count++] = generic_code_data::POSITIVE;
 		else if (*cptr == '-')
-			code_table[LABEL][count++] = generic_code_data::NEGATIVE;
+			code_table[generic_code_data::table::LABEL][count++] = generic_code_data::NEGATIVE;
 		else if (*cptr == '*')
-			code_table[LABEL][count++] = generic_code_data::VIRTUAL;
+			code_table[generic_code_data::table::LABEL][count++] = generic_code_data::VIRTUAL;
 		cptr++;	
 	}
 	
@@ -215,29 +214,29 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 		term_crossing[(2*code_table[PERM][i]-1 + num_edges) % num_edges] = i;
 		orig_crossing[(2*code_table[PERM][i]) % num_edges] = i;
 		
-		code_table[EVEN_TERMINATING][i] = 2*i;
-		code_table[ODD_ORIGINATING][i] = 2*i+1;
-		code_table[ODD_TERMINATING][i] = (2*code_table[PERM][i]-1 + num_edges) % num_edges;
-		code_table[EVEN_ORIGINATING][i] = (2*code_table[PERM][i]) % num_edges;
+		code_table[generic_code_data::table::EVEN_TERMINATING][i] = 2*i;
+		code_table[generic_code_data::table::ODD_ORIGINATING][i] = 2*i+1;
+		code_table[generic_code_data::table::ODD_TERMINATING][i] = (2*code_table[PERM][i]-1 + num_edges) % num_edges;
+		code_table[generic_code_data::table::EVEN_ORIGINATING][i] = (2*code_table[PERM][i]) % num_edges;
 	}
 */
 	for (int i=0; i< num_crossings; i++)
 	{
 		term_crossing[2*i] = i;
 		orig_crossing[2*i+1] = i;
-		term_crossing[code_table[OPEER][i]] = i;
+		term_crossing[code_table[generic_code_data::table::OPEER][i]] = i;
 		
 		/* we need to identify the edge following the naming edge's peer */
-		int component = code_table[COMPONENT][(code_table[OPEER][i]-1)/2];
-		int peer_successor = (code_table[OPEER][i]+1 - first_edge_on_component[component])%
+		int component = code_table[generic_code_data::table::COMPONENT][(code_table[generic_code_data::table::OPEER][i]-1)/2];
+		int peer_successor = (code_table[generic_code_data::table::OPEER][i]+1 - first_edge_on_component[component])%
 		                     num_component_edges[component] + first_edge_on_component[component];
 
 		orig_crossing[peer_successor] = i;
 		
-		code_table[EVEN_TERMINATING][i] = 2*i;
-		code_table[ODD_ORIGINATING][i] = 2*i+1;
-		code_table[ODD_TERMINATING][i] = code_table[OPEER][i];
-		code_table[EVEN_ORIGINATING][i] = peer_successor;
+		code_table[generic_code_data::table::EVEN_TERMINATING][i] = 2*i;
+		code_table[generic_code_data::table::ODD_ORIGINATING][i] = 2*i+1;
+		code_table[generic_code_data::table::ODD_TERMINATING][i] = code_table[generic_code_data::table::OPEER][i];
+		code_table[generic_code_data::table::EVEN_ORIGINATING][i] = peer_successor;
 	}
 	
 	code_data.code_table = code_table;
@@ -255,7 +254,7 @@ if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 	delete[] inbuf;
 }
 
-/* This function only uses head, num_crossings and the OPEER, TYPE, and LABEL rows 
+/* This function only uses head, num_crossings and the generic_code_data::table::OPEER, generic_code_data::table::TYPE, and generic_code_data::table::LABEL rows 
    of the code_table in the generic_code_data structure.
 */
 void write_immersion_code(ostream& s, generic_code_data& code_data)
@@ -275,7 +274,7 @@ void write_immersion_code(ostream& s, generic_code_data& code_data)
 	/* work out the permutation from the generic code data */
 	vector<int> perm(num_crossings);
 	for (int i=0; i< num_crossings; i++)
-		perm[i] = ((code_table[OPEER][i]+1)/2)%num_crossings;
+		perm[i] = ((code_table[generic_code_data::table::OPEER][i]+1)/2)%num_crossings;
 	
 	bool found;
 	do
@@ -299,7 +298,7 @@ void write_immersion_code(ostream& s, generic_code_data& code_data)
 		if (found)
 		{
 			s << "(";
-			if (code_table[TYPE][crossing] == generic_code_data::TYPE1)
+			if (code_table[generic_code_data::table::TYPE][crossing] == generic_code_data::TYPE1)
 				s << '-';
 			s << crossing;
 
@@ -308,7 +307,7 @@ void write_immersion_code(ostream& s, generic_code_data& code_data)
 			{
 				next_crossing = perm[crossing];
 				s << " ";
-				if (code_table[TYPE][next_crossing] == generic_code_data::TYPE1)
+				if (code_table[generic_code_data::table::TYPE][next_crossing] == generic_code_data::TYPE1)
 					s << '-';
 				s << next_crossing;
 
@@ -326,11 +325,11 @@ void write_immersion_code(ostream& s, generic_code_data& code_data)
 							
 	for (int i=0; i< num_crossings; i++)
 	{
-		if (code_table[LABEL][i] == generic_code_data::POSITIVE)
+		if (code_table[generic_code_data::table::LABEL][i] == generic_code_data::POSITIVE)
 			s << "+ ";
-		if (code_table[LABEL][i] == generic_code_data::NEGATIVE)
+		if (code_table[generic_code_data::table::LABEL][i] == generic_code_data::NEGATIVE)
 			s << "- ";
-		if (code_table[LABEL][i] == generic_code_data::VIRTUAL)
+		if (code_table[generic_code_data::table::LABEL][i] == generic_code_data::VIRTUAL)
 			s << "* ";
 	}	
 }
@@ -356,19 +355,41 @@ void print_code_data(ostream& s, generic_code_data& code_data, string prefix)
 		case (generic_code_data::character::LONG_KNOT): s << "LONG_KNOT"; break;
 		case (generic_code_data::character::PURE_KNOTOID): s << "PURE_KNOTOID"; break;
 		case (generic_code_data::character::KNOTOID): s << "KNOTOID"; break;		
+		case (generic_code_data::character::MULTI_LINKOID): s << "MULTI_LINKOID"; break;		
 		default: s << "unknown";
 	};	
 	s << endl;
 	
 	s << prefix << "head = " << code_data.head << endl;
+	s << prefix << "num_open_components = " << code_data.num_open_components << endl;
 	s << prefix << "head_zig_zag_count = " << code_data.head_zig_zag_count << endl;
 	s << prefix << "num_crossings = " << num_crossings << endl;
 	s << prefix << "num_components = " << code_data.num_components << endl;
+	
+	if (code_data.immersion == generic_code_data::character::MULTI_LINKOID)
+	{
+		s << prefix << "component_type = ";
+		for (int i=0; i< code_data.num_components; i++)
+		{
+			s << i << ":(";
+			switch (code_data.component_type[i].type)
+			{
+				case(component_character::CLOSED): s << "CLOSED, "; break;
+				case(component_character::PURE_START_LEG): s << "PURE_START_LEG," << code_data.component_type[i].head; break;
+				case(component_character::PURE_END_LEG): s << "PURE_END_LEG," << code_data.component_type[i].head; break;
+				case(component_character::KNOT_TYPE_START_LEG): s << "KNOT_TYPE_START_LEG,"; break;
+				case(component_character::KNOT_TYPE_END_LEG): s << "KNOT_TYPE_END_LEG,"; break;
+			};
+			s << ") ";
+		}
+		s << endl;
+	}
+	
 	s << prefix << "type:      ";	
 	matrix<int>& code_table = code_data.code_table;
 	
 	for (int i=0; i< num_crossings; i++)
-		s << code_table[TYPE][i] << ' ';
+		s << code_table[generic_code_data::table::TYPE][i] << ' ';
 	s << endl;
 	
 /*	if (code_data.type == generic_code_data::immersion_code)
@@ -387,37 +408,37 @@ void print_code_data(ostream& s, generic_code_data& code_data, string prefix)
 	{
 		s << prefix << "odd peer: ";
 		for (int i=0; i< num_crossings; i++)
-			s << code_table[OPEER][i] << ' ';
+			s << code_table[generic_code_data::table::OPEER][i] << ' ';
 		s << endl;
 		s << prefix << "even peer:  ";
 		for (int i=0; i< num_crossings; i++)
-			s << code_table[EPEER][i] << ' ';
+			s << code_table[generic_code_data::table::EPEER][i] << ' ';
 		s << endl;
 	}
 	
 	s << prefix << "even term: ";
 	for (int i=0; i< num_crossings; i++)
-		s << code_table[EVEN_TERMINATING][i] << ' ';
+		s << code_table[generic_code_data::table::EVEN_TERMINATING][i] << ' ';
 	s << endl;
 	s << prefix << "odd term:  ";
 	for (int i=0; i< num_crossings; i++)
-		s << code_table[ODD_TERMINATING][i] << ' ';
+		s << code_table[generic_code_data::table::ODD_TERMINATING][i] << ' ';
 	s << endl;
 	s << prefix << "even orig: ";
 	for (int i=0; i< num_crossings; i++)
-		s << code_table[EVEN_ORIGINATING][i] << ' ';
+		s << code_table[generic_code_data::table::EVEN_ORIGINATING][i] << ' ';
 	s << endl;
 	s << prefix << "odd orig:  ";
 	for (int i=0; i< num_crossings; i++)
-		s << code_table[ODD_ORIGINATING][i] << ' ';
+		s << code_table[generic_code_data::table::ODD_ORIGINATING][i] << ' ';
 	s << endl;
 	s << prefix << "label:     ";
 	for (int i=0; i< num_crossings; i++)
-		s << code_table[LABEL][i] << ' ';
+		s << code_table[generic_code_data::table::LABEL][i] << ' ';
 	s << endl;	
 	s << prefix << "component: ";
 	for (int i=0; i< num_crossings; i++)
-		s << code_table[COMPONENT][i] << ' ';
+		s << code_table[generic_code_data::table::COMPONENT][i] << ' ';
 	s << endl;	
 
 //	if (code_data.type == generic_code_data::peer_code)
@@ -457,8 +478,8 @@ void print_code_data(ostream& s, generic_code_data& code_data, string prefix)
    matrix the crossing type, the peers of the even and odd edges 
    that terminate at the crossing, the component to which the naming edge belongs and the crossing label. 
    For each crossing it also records the odd and even terminating and originating vertices.
-   It uses the #define TYPE, OPEER, EPEER, COMPONENT, LABEL, EVEN_TERMINATING, ODD_TERMINATING, 
-   EVEN_ORIGINATING, ODD_ORIGINATING to index the rows of the matrix.
+   It uses the #define generic_code_data::table::TYPE, generic_code_data::table::OPEER, generic_code_data::table::EPEER, generic_code_data::table::COMPONENT, generic_code_data::table::LABEL, generic_code_data::table::EVEN_TERMINATING, generic_code_data::table::ODD_TERMINATING, 
+   generic_code_data::table::EVEN_ORIGINATING, generic_code_data::table::ODD_ORIGINATING to index the rows of the matrix.
    If non-zero, the int* head is used to identify the first shortcut crossing in a knotoid (identified by 
    a '^' character after the crossing number).  This in turn identifies where in the peer code the head of 
    the knotoid is located. 
@@ -475,6 +496,16 @@ if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
 		code_data.immersion = generic_code_data::character::KNOTOID;
 	else if (input_string.find("L:") != string::npos)
 		code_data.immersion = generic_code_data::character::LONG_KNOT;
+	else if (input_string.find("$") != string::npos || input_string.find("@") != string::npos)
+	{
+		int num_components = count(input_string.begin(),input_string.end(),',')+1;
+		
+		code_data.immersion = generic_code_data::character::MULTI_LINKOID;
+		code_data.component_type = vector<component_character>(num_components);
+
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+	debug << "read_peer_code: input_string determined " << num_components << " components" << endl;
+	}
 	else
 		code_data.immersion = generic_code_data::character::CLOSED;
 
@@ -496,23 +527,24 @@ if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
 	
 	code_data.num_crossings = num_crossings;
 	
-	matrix<int> code_table(CODE_TABLE_SIZE,num_crossings);
+	matrix<int> code_table(generic_code_data::table::CODE_TABLE_SIZE,num_crossings);
 
 	int num_edges = 2*num_crossings;
 	int component = 0;
+	bool component_start = true; // used for multi-linkoid knot type components 
 
 	/* assume all crossings are generic_code_data::TYPE2 and set those 
 	   indicated as generic_code_data::TYPE1 accordingly.
 	*/
 	for (int i=0; i<num_crossings; i++)
-		code_table[TYPE][i] = generic_code_data::TYPE2;
+		code_table[generic_code_data::table::TYPE][i] = generic_code_data::TYPE2;
 		
 	cptr = strchr(inbuf,'[');
 	cptr++;
     for (int i=0; i< num_crossings; i++)
 	{
-		/* We write the odd-numbered peer of edge 2i in code_table[OPEER][i] and the 
-		   even-numbered peer of edge 2i+1 in code_table[EPEER][i] for i=0,...,num_crossings-1
+		/* We write the odd-numbered peer of edge 2i in code_table[generic_code_data::table::OPEER][i] and the 
+		   even-numbered peer of edge 2i+1 in code_table[generic_code_data::table::EPEER][i] for i=0,...,num_crossings-1
 		*/
 		bool crossing_complete = false;
 		do
@@ -528,7 +560,7 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 			}
 			if (*cptr == '-')
 			{
-				code_table[TYPE][i] = generic_code_data::TYPE1;
+				code_table[generic_code_data::table::TYPE][i] = generic_code_data::TYPE1;
 				cptr++;
 			}
 			else if (isdigit(*cptr))
@@ -536,31 +568,51 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 				char* mark = cptr;
 				while (isdigit(*cptr)) cptr++;
 
-				get_number (code_table[OPEER][i],mark);
+				get_number (code_table[generic_code_data::table::OPEER][i],mark);
 				
-				if (code_table[OPEER][i]%2 == 0)
+				if (code_table[generic_code_data::table::OPEER][i]%2 == 0)
 				{
-					cout << "\nError! Read even number " << code_table[OPEER][i] << " in peer code" << endl;
+					cout << "\nError! Read even number " << code_table[generic_code_data::table::OPEER][i] << " in peer code" << endl;
 
 if (debug_control::DEBUG >= debug_control::SUMMARY)
-	debug << "read_peer_code: Error!  Read even number " << code_table[OPEER][i] << " in a peer code" << endl;
+	debug << "read_peer_code: Error!  Read even number " << code_table[generic_code_data::table::OPEER][i] << " in a peer code" << endl;
 					
 					exit(0);
 				}
 				
-				code_table[EPEER][(code_table[OPEER][i]-1)/2] = 2*i;
-				code_table[COMPONENT][i] = component;
+				code_table[generic_code_data::table::EPEER][(code_table[generic_code_data::table::OPEER][i]-1)/2] = 2*i;
+				code_table[generic_code_data::table::COMPONENT][i] = component;
 				
 				if (*cptr == '^')
 				{
-					/* we've found the knotoid head, note the 
-					corresponding crossing number */
-					code_data.head = i;
-					code_data.immersion = generic_code_data::character::PURE_KNOTOID;
+					/* we've found the knotoid head, note the corresponding crossing number */
+					if (code_data.immersion == generic_code_data::character::MULTI_LINKOID)
+					{
+						code_data.component_type[component].type = component_character::PURE_START_LEG;
+						code_data.component_type[component].head = i;
+					}
+					else
+					{
+						code_data.head = i;
+						code_data.immersion = generic_code_data::character::PURE_KNOTOID;
+					}
 					cptr++;
 				}			
+				else if (*cptr == '$' && code_data.immersion == generic_code_data::character::MULTI_LINKOID)
+				{
+					code_data.component_type[component].type = component_character::PURE_END_LEG;
+					code_data.component_type[component].head = i;
+					cptr++;
+				}			
+				
 				crossing_complete = true;
+				component_start = false;
 			}
+			else if (*cptr == '@' && code_data.immersion == generic_code_data::character::MULTI_LINKOID)
+			{
+				code_data.component_type[component].type = (component_start? component_character::KNOT_TYPE_START_LEG:component_character::KNOT_TYPE_END_LEG) ;
+				cptr++;
+			}			
 			else if (*cptr == ',')
 			{
 				/* we've come to the end of a component and are about to 
@@ -568,6 +620,7 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 				*/
 				component++;
 				cptr++;
+				component_start = true;
 			}
 			else
 				cptr++;		
@@ -579,13 +632,13 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 	while (*cptr != '\0')
 	{
 		if (*cptr == '+')
-			code_table[LABEL][count++] = generic_code_data::POSITIVE;
+			code_table[generic_code_data::table::LABEL][count++] = generic_code_data::POSITIVE;
 		else if (*cptr == '-')
-			code_table[LABEL][count++] = generic_code_data::NEGATIVE;
+			code_table[generic_code_data::table::LABEL][count++] = generic_code_data::NEGATIVE;
 		else if (*cptr == '*')
-			code_table[LABEL][count++] = generic_code_data::VIRTUAL;
+			code_table[generic_code_data::table::LABEL][count++] = generic_code_data::VIRTUAL;
 		else if (*cptr == '#')
-			code_table[LABEL][count++] = generic_code_data::FLAT;
+			code_table[generic_code_data::table::LABEL][count++] = generic_code_data::FLAT;
 		cptr++;	
 	}
 
@@ -600,7 +653,7 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 	
 	for (int i=1; i< num_crossings; i++)
 	{
-		if (code_table[COMPONENT][i] != code_table[COMPONENT][i-1])
+		if (code_table[generic_code_data::table::COMPONENT][i] != code_table[generic_code_data::table::COMPONENT][i-1])
 		{
 			num_component_edges[component] = 2*i-first_edge_on_component[component];
 			component++;
@@ -618,11 +671,11 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 	{
 		term_crossing[2*i] = i;
 		orig_crossing[2*i+1] = i;
-		term_crossing[code_table[OPEER][i]] = i;
+		term_crossing[code_table[generic_code_data::table::OPEER][i]] = i;
 		
 		/* we need to identify the edge following the naming edge's peer */
-		int component = code_table[COMPONENT][(code_table[OPEER][i]-1)/2];
-		int peer_successor = (code_table[OPEER][i]+1 - first_edge_on_component[component])%
+		int component = code_table[generic_code_data::table::COMPONENT][(code_table[generic_code_data::table::OPEER][i]-1)/2];
+		int peer_successor = (code_table[generic_code_data::table::OPEER][i]+1 - first_edge_on_component[component])%
 		                     num_component_edges[component] + first_edge_on_component[component];
 
 if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
@@ -630,10 +683,10 @@ if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
 
 		orig_crossing[peer_successor] = i;
 		
-		code_table[EVEN_TERMINATING][i] = 2*i;
-		code_table[ODD_ORIGINATING][i] = 2*i+1;
-		code_table[ODD_TERMINATING][i] = code_table[OPEER][i];
-		code_table[EVEN_ORIGINATING][i] = peer_successor;
+		code_table[generic_code_data::table::EVEN_TERMINATING][i] = 2*i;
+		code_table[generic_code_data::table::ODD_ORIGINATING][i] = 2*i+1;
+		code_table[generic_code_data::table::ODD_TERMINATING][i] = code_table[generic_code_data::table::OPEER][i];
+		code_table[generic_code_data::table::EVEN_ORIGINATING][i] = peer_successor;
 	}
 	
 	code_data.code_table = code_table;
@@ -651,8 +704,9 @@ if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
 	delete[] inbuf;
 }
 
-/* This function uses head, num_crossings and the OPEER, TYPE, LABEL 
-   and COMPONENT rows of the code_table in the generic_code_data structure.
+/* This function uses head, num_crossings and the generic_code_data::table::OPEER, generic_code_data::table::TYPE, generic_code_data::table::LABEL 
+   and generic_code_data::table::COMPONENT rows of the code_table in the generic_code_data structure.
+   It also requires code_data.num_component_edges
 */
 void write_peer_code(ostream& s, const generic_code_data& code_data, bool zig_zags, bool labelled)
 {
@@ -673,43 +727,83 @@ void write_peer_code(ostream& s, const generic_code_data& code_data, bool zig_za
 	
 	s << '[';
 	
-	if (code_table[TYPE][0] == generic_code_data::TYPE1)
+	int crossing = 0;
+	
+	if (code_data.num_crossings > 0)
+	{
+		for (int i=0; i< code_data.num_components; i++)
+		{
+
+			if (crossing > 0 && code_table[generic_code_data::table::COMPONENT][crossing] != code_table[generic_code_data::table::COMPONENT][crossing-1])
+				s << ", ";
+			
+			if (code_data.immersion == generic_code_data::character::MULTI_LINKOID && code_data.component_type[i].type == component_character::KNOT_TYPE_START_LEG)
+				s << '@';
+			
+			for (int j = 0; j< code_data.num_component_edges[i]/2; j++)
+			{
+				if (code_table[generic_code_data::table::TYPE][crossing] == generic_code_data::TYPE1)
+					s << '-';
+				s << code_table[generic_code_data::table::OPEER][crossing];
+				
+				if ((code_data.immersion == generic_code_data::character::PURE_KNOTOID && code_data.head == crossing) || 
+				    (code_data.immersion == generic_code_data::character::MULTI_LINKOID && code_data.component_type[i].type == component_character::PURE_START_LEG && code_data.component_type[i].head == crossing)
+				   )
+					s << '^';
+				else if (code_data.immersion == generic_code_data::character::MULTI_LINKOID && code_data.component_type[i].type == component_character::PURE_END_LEG && code_data.component_type[i].head == crossing)
+					s << '$';
+				
+				if ( crossing < num_crossings-1 && code_table[generic_code_data::table::COMPONENT][crossing] == code_table[generic_code_data::table::COMPONENT][crossing+1])
+					s << ' ';
+
+				crossing++;
+			}
+	
+			if (code_data.immersion == generic_code_data::character::MULTI_LINKOID && code_data.component_type[i].type == component_character::KNOT_TYPE_END_LEG)
+				s << '@';
+		}
+	}
+	
+/*	
+	if (code_table[generic_code_data::table::TYPE][0] == generic_code_data::TYPE1)
 		s << '-';
 	if (code_data.num_crossings >0)
-		s << code_table[OPEER][0];
+		s << code_table[generic_code_data::table::OPEER][0];
 		
 	if (code_data.head == 0)
 		s << "^ ";
-	else if (num_crossings > 1 && code_table[COMPONENT][0] == code_table[COMPONENT][1])
+	else if (num_crossings > 1 && code_table[generic_code_data::table::COMPONENT][0] == code_table[generic_code_data::table::COMPONENT][1])
 		s << ' ';
 		
 	for (int i=1; i<num_crossings; i++)
 	{
-		if (code_table[COMPONENT][i] != code_table[COMPONENT][i-1])
+		if (code_table[generic_code_data::table::COMPONENT][i] != code_table[generic_code_data::table::COMPONENT][i-1])
 			s << ", ";
 			
-		if (code_table[TYPE][i] == generic_code_data::TYPE1)
+		if (code_table[generic_code_data::table::TYPE][i] == generic_code_data::TYPE1)
 			s << '-';
-		s << code_table[OPEER][i];
+		s << code_table[generic_code_data::table::OPEER][i];
 		if (code_data.head == i)
 			s << '^';
 			
-		if ( i < num_crossings-1 && code_table[COMPONENT][i] == code_table[COMPONENT][i+1])
+		if ( i < num_crossings-1 && code_table[generic_code_data::table::COMPONENT][i] == code_table[generic_code_data::table::COMPONENT][i+1])
 			s << ' ';
 	}
+*/
+	
 	s << "]";
 	if (labelled)
 	{
 		s << "/";
 		for (int i=0; i< num_crossings; i++)
 		{
-			if (code_table[LABEL][i] == generic_code_data::POSITIVE)
+			if (code_table[generic_code_data::table::LABEL][i] == generic_code_data::POSITIVE)
 				s << "+";
-			else if (code_table[LABEL][i] == generic_code_data::NEGATIVE)
+			else if (code_table[generic_code_data::table::LABEL][i] == generic_code_data::NEGATIVE)
 				s << "-";
-			else if (code_table[LABEL][i] == generic_code_data::VIRTUAL)
+			else if (code_table[generic_code_data::table::LABEL][i] == generic_code_data::VIRTUAL)
 				s << "*";
-			else // (code_table[LABEL][i] == generic_code_data::FLAT)
+			else // (code_table[generic_code_data::table::LABEL][i] == generic_code_data::FLAT)
 				s << "#";
 			
 			if (i< num_crossings-1)
@@ -819,11 +913,22 @@ if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 	}
 	
 	bool knotoid_or_long_indicator = false;
+	int num_components = (int) count(input_string.begin(),input_string.end(),',') + 1;
 	
 	if (input_string.find("K:") != string::npos)
 	{
 		code_data.immersion = generic_code_data::character::KNOTOID;
 		knotoid_or_long_indicator = true;
+	}
+	else if (input_string.find("K(") != string::npos)
+	{
+		code_data.immersion = generic_code_data::character::MULTI_LINKOID;
+		get_number(code_data.num_open_components,input_string,input_string.find('(')+1);
+		knotoid_or_long_indicator = true;		
+		code_data.component_type = vector<component_character>(num_components);
+		
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
+	debug << "read_gauss_code: num_open_components determined from gauss code " << input_string << " is " << code_data.num_open_components << endl;
 	}
 	else if (input_string.find("L:") != string::npos)
 	{
@@ -837,7 +942,7 @@ if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 	code_data.head = -1;
 //	code_data.immersion = generic_code_data::character::CLOSED;
 	
-	int num_components = (int) count(input_string.begin(),input_string.end(),',') + 1;
+//	int num_components = (int) count(input_string.begin(),input_string.end(),',') + 1;
 
 	char* inbuf = c_string(input_string);
 	int num_crossings = 0;
@@ -856,14 +961,14 @@ if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 	
 	code_data.num_crossings = num_crossings;
 	
-	matrix<int> code_table(CODE_TABLE_SIZE,num_crossings);
+	matrix<int> code_table(generic_code_data::table::CODE_TABLE_SIZE,num_crossings);
 	
 	int num_edges = 2*num_crossings;
 	int component = 0;
 
-	/* 	write the OPEER row of the code table as -1 to act as flags	*/
+	/* 	write the generic_code_data::table::OPEER row of the code table as -1 to act as flags	*/
 	for (int i=0; i<num_crossings; i++)
-		code_table[OPEER][i] = -1;
+		code_table[generic_code_data::table::OPEER][i] = -1;
 		
 	cptr = inbuf;
 	
@@ -885,8 +990,8 @@ if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 	
     for (int i=0; i< 2 * num_crossings; i++)
 	{
-		/* We write the edge on which we arrive at crossing i for the first time in code_table[OPEER][i] and
-		   the edge on which we arrive at the crossing for the second time in code_table[EPEER][i].
+		/* We write the edge on which we arrive at crossing i for the first time in code_table[generic_code_data::table::OPEER][i] and
+		   the edge on which we arrive at the crossing for the second time in code_table[generic_code_data::table::EPEER][i].
 		*/
 		bool crossing_complete = false;
 		int arc_type = generic_code_data::VIRTUAL; // initialized to this as we never use this value with Gauss codes
@@ -930,7 +1035,7 @@ if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "read_gauss_code: crossings = " << crossing << ", edge = " << edge << endl;
 	
-				if (code_table[OPEER][crossing] == -1)
+				if (code_table[generic_code_data::table::OPEER][crossing] == -1)
 				{
 					/* this is our first visit to this crossing */
 					
@@ -954,28 +1059,28 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << endl;
 }
 					
-					code_table[OPEER][crossing] = edge;						
-					code_table[COMPONENT][crossing] = component;
+					code_table[generic_code_data::table::OPEER][crossing] = edge;						
+					code_table[generic_code_data::table::COMPONENT][crossing] = component;
 					
 					/* If we are at a classical crossing we can assign the crossing label as we now know whether 
 					   the second visit (our "even" edge) will arrive on the over-arc or under-arc.  If the crossing 
-					   is flat we can use the arc_type to set the TYPE of the crossing as well as the label.
+					   is flat we can use the arc_type to set the generic_code_data::table::TYPE of the crossing as well as the label.
 					*/
 					if (arc_type == generic_code_data::POSITIVE)
-						code_table[LABEL][crossing] = generic_code_data::NEGATIVE;
+						code_table[generic_code_data::table::LABEL][crossing] = generic_code_data::NEGATIVE;
 					else if (arc_type == generic_code_data::NEGATIVE)
-						code_table[LABEL][crossing] = generic_code_data::POSITIVE;
+						code_table[generic_code_data::table::LABEL][crossing] = generic_code_data::POSITIVE;
 					else
 					{
-						code_table[LABEL][crossing] = generic_code_data::FLAT;
+						code_table[generic_code_data::table::LABEL][crossing] = generic_code_data::FLAT;
 						
 						if (arc_type == generic_code_data::LEFT)
-							code_table[TYPE][crossing] = generic_code_data::TYPE2;
+							code_table[generic_code_data::table::TYPE][crossing] = generic_code_data::TYPE2;
 						else
-							code_table[TYPE][crossing] = generic_code_data::TYPE1;
+							code_table[generic_code_data::table::TYPE][crossing] = generic_code_data::TYPE1;
 							
 if (debug_control::DEBUG >= debug_control::DETAIL)
-	debug << "read_gauss_code:   set type = " << (code_table[TYPE][crossing] == generic_code_data::TYPE1? "TYPE1":"TYPE2") << endl;
+	debug << "read_gauss_code:   set type = " << (code_table[generic_code_data::table::TYPE][crossing] == generic_code_data::TYPE1? "TYPE1":"TYPE2") << endl;
 					}
 				}
 				else
@@ -1000,7 +1105,7 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << endl;
 }
 					/* this is the second visit to this crossing */
-					code_table[EPEER][crossing] = edge;
+					code_table[generic_code_data::table::EPEER][crossing] = edge;
 				}
 								
 				edge++;
@@ -1032,38 +1137,38 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << endl;
 }
 
-	/* now we can identify the TYPE of each clasical crossing from the sign of the 
-	   crossing in the Gauss code and the LABEL assignment.  Flat crossing have
-	   had their TYPE set already.
+	/* now we can identify the generic_code_data::table::TYPE of each clasical crossing from the sign of the 
+	   crossing in the Gauss code and the generic_code_data::table::LABEL assignment.  Flat crossing have
+	   had their generic_code_data::table::TYPE set already.
 	*/
 	int count = 0;
 	while (*cptr != '\0')
 	{
 		if (*cptr == '+')
 		{
-			if (code_table[LABEL][count] == generic_code_data::POSITIVE)
-				code_table[TYPE][count] = generic_code_data::TYPE2;
+			if (code_table[generic_code_data::table::LABEL][count] == generic_code_data::POSITIVE)
+				code_table[generic_code_data::table::TYPE][count] = generic_code_data::TYPE2;
 			else
-				code_table[TYPE][count] = generic_code_data::TYPE1;
+				code_table[generic_code_data::table::TYPE][count] = generic_code_data::TYPE1;
 				
 if (debug_control::DEBUG >= debug_control::DETAIL)
 {
-	debug << "read_gauss_code:   set type for crossing " << count << ": positive crossing, second visit " << (code_table[LABEL][count] == generic_code_data::POSITIVE? "over": "under")
-	      << " type is " << (code_table[TYPE][count] == generic_code_data::TYPE1? "TYPE1":"TYPE2") << endl;
+	debug << "read_gauss_code:   set type for crossing " << count << ": positive crossing, second visit " << (code_table[generic_code_data::table::LABEL][count] == generic_code_data::POSITIVE? "over": "under")
+	      << " type is " << (code_table[generic_code_data::table::TYPE][count] == generic_code_data::TYPE1? "TYPE1":"TYPE2") << endl;
 }
 			count++;
 		}
 		else if (*cptr == '-')
 		{
-			if (code_table[LABEL][count] == generic_code_data::POSITIVE)
-				code_table[TYPE][count] = generic_code_data::TYPE1;
+			if (code_table[generic_code_data::table::LABEL][count] == generic_code_data::POSITIVE)
+				code_table[generic_code_data::table::TYPE][count] = generic_code_data::TYPE1;
 			else
-				code_table[TYPE][count] = generic_code_data::TYPE2;
+				code_table[generic_code_data::table::TYPE][count] = generic_code_data::TYPE2;
 
 if (debug_control::DEBUG >= debug_control::DETAIL)
 {
-	debug << "read_gauss_code:   set type for crossing " << count << ": negative crossing, second visit " << (code_table[LABEL][count] == generic_code_data::POSITIVE? "over": "under")
-	      << " type is " << (code_table[TYPE][count] == generic_code_data::TYPE1? "TYPE1":"TYPE2") << endl;
+	debug << "read_gauss_code:   set type for crossing " << count << ": negative crossing, second visit " << (code_table[generic_code_data::table::LABEL][count] == generic_code_data::POSITIVE? "over": "under")
+	      << " type is " << (code_table[generic_code_data::table::TYPE][count] == generic_code_data::TYPE1? "TYPE1":"TYPE2") << endl;
 }
 
 			count++;
@@ -1095,14 +1200,14 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 			int crossing = gauss_code_crossing[edge++];
 			if (first_visit_to_crossing[crossing])
 			{
-				code_table[ODD_TERMINATING][crossing] = first_edge_on_component[i] + j;
-				code_table[EVEN_ORIGINATING][crossing] = first_edge_on_component[i] + (j+1)%num_component_edges[i];
+				code_table[generic_code_data::table::ODD_TERMINATING][crossing] = first_edge_on_component[i] + j;
+				code_table[generic_code_data::table::EVEN_ORIGINATING][crossing] = first_edge_on_component[i] + (j+1)%num_component_edges[i];
 				first_visit_to_crossing[crossing] = false;
 			}
 			else
 			{				
-				code_table[EVEN_TERMINATING][crossing] = first_edge_on_component[i] + j;
-				code_table[ODD_ORIGINATING][crossing] = first_edge_on_component[i] + (j+1)%num_component_edges[i];
+				code_table[generic_code_data::table::EVEN_TERMINATING][crossing] = first_edge_on_component[i] + j;
+				code_table[generic_code_data::table::ODD_ORIGINATING][crossing] = first_edge_on_component[i] + (j+1)%num_component_edges[i];
 			}
 			term_crossing[first_edge_on_component[i] + j] = crossing;
 			orig_crossing[first_edge_on_component[i] + (j+1)%num_component_edges[i]] = crossing;
@@ -1131,8 +1236,14 @@ if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 */
 void write_gauss_code(ostream& s, generic_code_data& code_data, bool OU_FORMAT)
 {	
+if (debug_control::DEBUG >= debug_control::DETAIL)
+{
+	debug << "write_gauss_code: OU_FORMAT = " << OU_FORMAT << endl;
+	print_code_data(debug,code_data,"write_gauss_code: ");
+}
+
 	int debug_save = debug_control::DEBUG;
-	debug_control::DEBUG = debug_control::OFF;
+//	debug_control::DEBUG = debug_control::OFF;
 
 	matrix<int>& code_table = code_data.code_table;
 	int num_crossings = code_data.num_crossings;
@@ -1144,7 +1255,7 @@ void write_gauss_code(ostream& s, generic_code_data& code_data, bool OU_FORMAT)
 		
 		/* we have to follow the edges around the Gauss code noting each crossing
 		   we encounter as we do so.  Since Gauss codes record the comonent of the first
-		   visit in the COMPONENT row of the code table, we cannot use this row to output
+		   visit in the generic_code_data::table::COMPONENT row of the code table, we cannot use this row to output
 		   the ',' between components accurately, since there may be two or more additional 
 		   components in the diagram that are not recorded in that row.  Instead, we have to use
 		   the edges recorded in first_edge_on_component to determine when we reach the end of a
@@ -1153,6 +1264,8 @@ void write_gauss_code(ostream& s, generic_code_data& code_data, bool OU_FORMAT)
 
 		if (code_data.immersion == generic_code_data::character::KNOTOID)
 			s << "K:";
+		else if (code_data.immersion == generic_code_data::character::MULTI_LINKOID)
+			s << "K(" << code_data.num_open_components << "):";
 		else if (code_data.immersion == generic_code_data::character::LONG_KNOT)
 			s << "L:";
 
@@ -1173,12 +1286,19 @@ void write_gauss_code(ostream& s, generic_code_data& code_data, bool OU_FORMAT)
 			/* locate the edge in the code table */
 			for (int j=0; j< num_crossings; j++)
 			{
-				if (code_table[OPEER][j] == i)
+				if (code_table[generic_code_data::table::OPEER][j] == i)
 				{
 					if (!OU_FORMAT && add_space)
 						s << ' ';
 	
-					if (code_table[LABEL][j] == generic_code_data::POSITIVE)
+					if (code_table[generic_code_data::table::LABEL][j] == generic_code_data::FLAT)
+					{
+						if (code_table[generic_code_data::table::TYPE][j] == generic_code_data::TYPE1)
+							s << "R";
+						else
+							s << "L";						
+					}
+					else if (code_table[generic_code_data::table::LABEL][j] == generic_code_data::POSITIVE)
 					{	
 						if (OU_FORMAT)
 							s << 'U'; // we're going under the crossing						
@@ -1194,25 +1314,30 @@ void write_gauss_code(ostream& s, generic_code_data& code_data, bool OU_FORMAT)
 					
 					if (OU_FORMAT)
 					{
-						if ( (code_table[LABEL][j] == generic_code_data::POSITIVE && code_table[TYPE][j] == generic_code_data::TYPE2) ||
-						     (code_table[LABEL][j] == generic_code_data::NEGATIVE && code_table[TYPE][j] == generic_code_data::TYPE1)
+						if ( (code_table[generic_code_data::table::LABEL][j] == generic_code_data::POSITIVE && code_table[generic_code_data::table::TYPE][j] == generic_code_data::TYPE2) ||
+						     (code_table[generic_code_data::table::LABEL][j] == generic_code_data::NEGATIVE && code_table[generic_code_data::table::TYPE][j] == generic_code_data::TYPE1)
 						   )
 							s << "+";
-						else if ( (code_table[LABEL][j] == generic_code_data::POSITIVE && code_table[TYPE][j] == generic_code_data::TYPE1) ||
-						          (code_table[LABEL][j] == generic_code_data::NEGATIVE && code_table[TYPE][j] == generic_code_data::TYPE2)
+						else if ( (code_table[generic_code_data::table::LABEL][j] == generic_code_data::POSITIVE && code_table[generic_code_data::table::TYPE][j] == generic_code_data::TYPE1) ||
+						          (code_table[generic_code_data::table::LABEL][j] == generic_code_data::NEGATIVE && code_table[generic_code_data::table::TYPE][j] == generic_code_data::TYPE2)
 								)
 							s << "-";
-						else
-							s << "!"; // shouldn't get here
 					}
 					break;
 				}
-				else if (code_table[EPEER][j] == i)
+				else if (code_table[generic_code_data::table::EPEER][j] == i)
 				{					
 					if (!OU_FORMAT && add_space)
 						s << ' ';
 	
-					if (code_table[LABEL][j] == generic_code_data::NEGATIVE)
+					if (code_table[generic_code_data::table::LABEL][j] == generic_code_data::FLAT)
+					{
+						if (code_table[generic_code_data::table::TYPE][j] == generic_code_data::TYPE1)
+							s << "L";						
+						else
+							s << "R";
+					}
+					else if (code_table[generic_code_data::table::LABEL][j] == generic_code_data::NEGATIVE)
 					{	
 						if (OU_FORMAT)
 							s << 'U'; // we're going under the crossing						
@@ -1228,16 +1353,14 @@ void write_gauss_code(ostream& s, generic_code_data& code_data, bool OU_FORMAT)
 
 					if (OU_FORMAT)
 					{
-						if ( (code_table[LABEL][j] == generic_code_data::POSITIVE && code_table[TYPE][j] == generic_code_data::TYPE2) ||
-						     (code_table[LABEL][j] == generic_code_data::NEGATIVE && code_table[TYPE][j] == generic_code_data::TYPE1)
+						if ( (code_table[generic_code_data::table::LABEL][j] == generic_code_data::POSITIVE && code_table[generic_code_data::table::TYPE][j] == generic_code_data::TYPE2) ||
+						     (code_table[generic_code_data::table::LABEL][j] == generic_code_data::NEGATIVE && code_table[generic_code_data::table::TYPE][j] == generic_code_data::TYPE1)
 						   )
 							s << "+";
-						else if ( (code_table[LABEL][j] == generic_code_data::POSITIVE && code_table[TYPE][j] == generic_code_data::TYPE1) ||
-						          (code_table[LABEL][j] == generic_code_data::NEGATIVE && code_table[TYPE][j] == generic_code_data::TYPE2)
+						else if ( (code_table[generic_code_data::table::LABEL][j] == generic_code_data::POSITIVE && code_table[generic_code_data::table::TYPE][j] == generic_code_data::TYPE1) ||
+						          (code_table[generic_code_data::table::LABEL][j] == generic_code_data::NEGATIVE && code_table[generic_code_data::table::TYPE][j] == generic_code_data::TYPE2)
 								)
 							s << "-";
-						else
-							s << "!"; // shouldn't get here
 					}
 					
 					break;
@@ -1254,12 +1377,14 @@ void write_gauss_code(ostream& s, generic_code_data& code_data, bool OU_FORMAT)
 			s << '/';
 			for (int i=0; i< num_crossings; i++)
 			{
-				if ( (code_table[LABEL][i] == generic_code_data::POSITIVE && code_table[TYPE][i] == generic_code_data::TYPE2) ||
-				     (code_table[LABEL][i] == generic_code_data::NEGATIVE && code_table[TYPE][i] == generic_code_data::TYPE1)
+				if (code_table[generic_code_data::table::LABEL][i] == generic_code_data::FLAT)
+					s << "#";
+				else if ( (code_table[generic_code_data::table::LABEL][i] == generic_code_data::POSITIVE && code_table[generic_code_data::table::TYPE][i] == generic_code_data::TYPE2) ||
+				     (code_table[generic_code_data::table::LABEL][i] == generic_code_data::NEGATIVE && code_table[generic_code_data::table::TYPE][i] == generic_code_data::TYPE1)
 				   )
 					s << "+";
-				else if ( (code_table[LABEL][i] == generic_code_data::POSITIVE && code_table[TYPE][i] == generic_code_data::TYPE1) ||
-				          (code_table[LABEL][i] == generic_code_data::NEGATIVE && code_table[TYPE][i] == generic_code_data::TYPE2)
+				else if ( (code_table[generic_code_data::table::LABEL][i] == generic_code_data::POSITIVE && code_table[generic_code_data::table::TYPE][i] == generic_code_data::TYPE1) ||
+				          (code_table[generic_code_data::table::LABEL][i] == generic_code_data::NEGATIVE && code_table[generic_code_data::table::TYPE][i] == generic_code_data::TYPE2)
 						)
 					s << "-";
 				else
@@ -1289,7 +1414,7 @@ void write_gauss_code(ostream& s, generic_code_data& code_data, bool OU_FORMAT)
 		
 		for (int i=0; i< num_crossings; i++)
 		{
-			if (code_table[LABEL][i] == generic_code_data::VIRTUAL)
+			if (code_table[generic_code_data::table::LABEL][i] == generic_code_data::VIRTUAL)
 				num_classical_crossings--;
 		}
 if (debug_control::DEBUG >= debug_control::DETAIL)
@@ -1348,7 +1473,7 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << ", next_crossing = " << next_crossing;
 		
-				if (code_table[LABEL][next_crossing] == generic_code_data::VIRTUAL)
+				if (code_table[generic_code_data::table::LABEL][next_crossing] == generic_code_data::VIRTUAL)
 				{
 if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << ", is virtual" << endl;
@@ -1358,8 +1483,22 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << ", is a shortcut crossing" << endl;
 				}
-				else if ((edge%2 != 0 && code_table[LABEL][next_crossing] == generic_code_data::POSITIVE) ||
-				    (edge%2 == 0 && code_table[LABEL][next_crossing] == generic_code_data::NEGATIVE))
+				else if (code_table[generic_code_data::table::LABEL][next_crossing] == generic_code_data::FLAT)
+				{
+if (debug_control::DEBUG >= debug_control::DETAIL)
+	debug << ", is flat" << endl;
+
+					if (!OU_FORMAT && add_space)
+						oss << ' ';					
+	
+					if ((edge%2 != 0 && code_table[generic_code_data::table::TYPE][next_crossing] == generic_code_data::TYPE1) ||
+					    (edge%2 == 0 && code_table[generic_code_data::table::TYPE][next_crossing] == generic_code_data::TYPE2))
+						oss << "R";
+					else
+						oss << "L";						
+				}
+				else if ((edge%2 != 0 && code_table[generic_code_data::table::LABEL][next_crossing] == generic_code_data::POSITIVE) ||
+				    (edge%2 == 0 && code_table[generic_code_data::table::LABEL][next_crossing] == generic_code_data::NEGATIVE))
 				{
 if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << ", going under" << endl;
@@ -1384,7 +1523,7 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 						oss << ' ';					
 				}
 				
-				if (code_table[LABEL][next_crossing] != generic_code_data::VIRTUAL && !(pure_knotoid_code_data && shortcut_crossing[next_crossing]))
+				if (code_table[generic_code_data::table::LABEL][next_crossing] != generic_code_data::VIRTUAL && !(pure_knotoid_code_data && shortcut_crossing[next_crossing]))
 				{
 					if(crossing_visited[next_crossing])
 					{
@@ -1414,24 +1553,22 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 
 					if (OU_FORMAT)
 					{
-						if ( (code_table[LABEL][next_crossing] == generic_code_data::POSITIVE && code_table[TYPE][next_crossing] == generic_code_data::TYPE2) ||
-						     (code_table[LABEL][next_crossing] == generic_code_data::NEGATIVE && code_table[TYPE][next_crossing] == generic_code_data::TYPE1)
+						if ( (code_table[generic_code_data::table::LABEL][next_crossing] == generic_code_data::POSITIVE && code_table[generic_code_data::table::TYPE][next_crossing] == generic_code_data::TYPE2) ||
+						     (code_table[generic_code_data::table::LABEL][next_crossing] == generic_code_data::NEGATIVE && code_table[generic_code_data::table::TYPE][next_crossing] == generic_code_data::TYPE1)
 						   )
 							oss << "+";
-						else if ( (code_table[LABEL][next_crossing] == generic_code_data::POSITIVE && code_table[TYPE][next_crossing] == generic_code_data::TYPE1) ||
-						          (code_table[LABEL][next_crossing] == generic_code_data::NEGATIVE && code_table[TYPE][next_crossing] == generic_code_data::TYPE2)
+						else if ( (code_table[generic_code_data::table::LABEL][next_crossing] == generic_code_data::POSITIVE && code_table[generic_code_data::table::TYPE][next_crossing] == generic_code_data::TYPE1) ||
+						          (code_table[generic_code_data::table::LABEL][next_crossing] == generic_code_data::NEGATIVE && code_table[generic_code_data::table::TYPE][next_crossing] == generic_code_data::TYPE2)
 								)
 							oss << "-";
-						else
-							oss << "!"; // shouldn't get here
 					}
 
 
 
 					if (edge%2)
-						edge = code_table[EVEN_ORIGINATING][next_crossing];
+						edge = code_table[generic_code_data::table::EVEN_ORIGINATING][next_crossing];
 					else
-						edge = code_table[ODD_ORIGINATING][next_crossing];
+						edge = code_table[generic_code_data::table::ODD_ORIGINATING][next_crossing];
 	
 					add_space = true;
 					
@@ -1443,9 +1580,9 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 				{
 					/* just move on around the component */				
 					if (edge%2)
-						edge = code_table[EVEN_ORIGINATING][next_crossing];
+						edge = code_table[generic_code_data::table::EVEN_ORIGINATING][next_crossing];
 					else
-						edge = code_table[ODD_ORIGINATING][next_crossing];
+						edge = code_table[generic_code_data::table::ODD_ORIGINATING][next_crossing];
 
 if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "write_gauss_code:   doing nothing" << endl;
@@ -1479,10 +1616,12 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 			{
 				int crossing = classical_crossing[i];
 				
-				if (code_table[LABEL][crossing] != generic_code_data::VIRTUAL && !(pure_knotoid_code_data && shortcut_crossing[crossing])) // it should never be!
+				if (code_table[generic_code_data::table::LABEL][crossing] != generic_code_data::VIRTUAL && !(pure_knotoid_code_data && shortcut_crossing[crossing])) // it should never be!
 				{
-					if ((code_table[TYPE][crossing] == generic_code_data::TYPE1 && code_table[LABEL][crossing] == generic_code_data::NEGATIVE) ||
-					    (code_table[TYPE][crossing] == generic_code_data::TYPE2 && code_table[LABEL][crossing] == generic_code_data::POSITIVE))
+					if (code_table[generic_code_data::table::LABEL][crossing] == generic_code_data::FLAT)
+						oss << '#';
+					else if ((code_table[generic_code_data::table::TYPE][crossing] == generic_code_data::TYPE1 && code_table[generic_code_data::table::LABEL][crossing] == generic_code_data::NEGATIVE) ||
+					    (code_table[generic_code_data::table::TYPE][crossing] == generic_code_data::TYPE2 && code_table[generic_code_data::table::LABEL][crossing] == generic_code_data::POSITIVE))
 						oss << '+';
 					else
 						oss << '-';
@@ -1793,38 +1932,38 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 		
 		for (int i=0; i< num_crossings; i++)
 		{
-			if (gauss_code_table[LABEL][i] == generic_code_data::POSITIVE)
+			if (gauss_code_table[generic_code_data::table::LABEL][i] == generic_code_data::POSITIVE)
 			{
-				PD_data[i][0] = gauss_code_table[ODD_TERMINATING][i];
+				PD_data[i][0] = gauss_code_table[generic_code_data::table::ODD_TERMINATING][i];
 	
-				if (gauss_code_table[TYPE][i] == generic_code_data::TYPE1)
+				if (gauss_code_table[generic_code_data::table::TYPE][i] == generic_code_data::TYPE1)
 				{
-					PD_data[i][1] = gauss_code_table[EVEN_TERMINATING][i];
-					PD_data[i][2] = gauss_code_table[EVEN_ORIGINATING][i];
-					PD_data[i][3] = gauss_code_table[ODD_ORIGINATING][i];
+					PD_data[i][1] = gauss_code_table[generic_code_data::table::EVEN_TERMINATING][i];
+					PD_data[i][2] = gauss_code_table[generic_code_data::table::EVEN_ORIGINATING][i];
+					PD_data[i][3] = gauss_code_table[generic_code_data::table::ODD_ORIGINATING][i];
 				}
 				else
 				{
-					PD_data[i][1] = gauss_code_table[ODD_ORIGINATING][i];
-					PD_data[i][2] = gauss_code_table[EVEN_ORIGINATING][i];
-					PD_data[i][3] = gauss_code_table[EVEN_TERMINATING][i];
+					PD_data[i][1] = gauss_code_table[generic_code_data::table::ODD_ORIGINATING][i];
+					PD_data[i][2] = gauss_code_table[generic_code_data::table::EVEN_ORIGINATING][i];
+					PD_data[i][3] = gauss_code_table[generic_code_data::table::EVEN_TERMINATING][i];
 				}			
 			}
 			else // generic_code_data::NEGAITIVE or generic_code_data::FLAT
 			{
-				PD_data[i][0] = gauss_code_table[EVEN_TERMINATING][i];
+				PD_data[i][0] = gauss_code_table[generic_code_data::table::EVEN_TERMINATING][i];
 	
-				if (gauss_code_table[TYPE][i] == generic_code_data::TYPE1)
+				if (gauss_code_table[generic_code_data::table::TYPE][i] == generic_code_data::TYPE1)
 				{
-					PD_data[i][1] = gauss_code_table[EVEN_ORIGINATING][i];
-					PD_data[i][2] = gauss_code_table[ODD_ORIGINATING][i];
-					PD_data[i][3] = gauss_code_table[ODD_TERMINATING][i];
+					PD_data[i][1] = gauss_code_table[generic_code_data::table::EVEN_ORIGINATING][i];
+					PD_data[i][2] = gauss_code_table[generic_code_data::table::ODD_ORIGINATING][i];
+					PD_data[i][3] = gauss_code_table[generic_code_data::table::ODD_TERMINATING][i];
 				}
 				else
 				{
-					PD_data[i][1] = gauss_code_table[ODD_TERMINATING][i];
-					PD_data[i][2] = gauss_code_table[ODD_ORIGINATING][i];
-					PD_data[i][3] = gauss_code_table[EVEN_ORIGINATING][i];
+					PD_data[i][1] = gauss_code_table[generic_code_data::table::ODD_TERMINATING][i];
+					PD_data[i][2] = gauss_code_table[generic_code_data::table::ODD_ORIGINATING][i];
+					PD_data[i][3] = gauss_code_table[generic_code_data::table::EVEN_ORIGINATING][i];
 				}			
 			}
 		}
@@ -1859,7 +1998,7 @@ void read_code_data (generic_code_data& code_data, string input_string)
 		read_planar_diagram(code_data, input_string);
 	else if (input_string.find('[') != string::npos)
 		read_peer_code(code_data, input_string);
-	else if (input_string.find('(') != string::npos)
+	else if (input_string.find("K(") == string::npos && input_string.find('(') != string::npos)
 		read_immersion_code(code_data, input_string);
 	else if (input_string.find("DT:") != string::npos)
 	{
@@ -1879,6 +2018,12 @@ if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 
 	if (OU_gauss_code.find("K:") != string::npos)
 		oss << "K:";
+	else if (OU_gauss_code.find("K(") != string::npos)
+	{
+		int num_open_components;
+		get_number(num_open_components,OU_gauss_code,OU_gauss_code.find('(')+1);
+		oss << "K(" << num_open_components << "):";
+	}
 	else if (OU_gauss_code.find("L:") != string::npos)
 		oss << "L:";
 
@@ -1979,9 +2124,9 @@ void renumber_peer_code(generic_code_data& code_data, vector<int> shift)
     int head_semi_arc;
     if (code_data.head !=-1)
     {	
-		if (code_data.code_table[LABEL][code_data.head] == generic_code_data::POSITIVE)
-			head_semi_arc = code_data.code_table[OPEER][code_data.head];
-		else if (code_data.code_table[LABEL][code_data.head] == generic_code_data::NEGATIVE)
+		if (code_data.code_table[generic_code_data::table::LABEL][code_data.head] == generic_code_data::POSITIVE)
+			head_semi_arc = code_data.code_table[generic_code_data::table::OPEER][code_data.head];
+		else if (code_data.code_table[generic_code_data::table::LABEL][code_data.head] == generic_code_data::NEGATIVE)
 			head_semi_arc = 2*code_data.head;
 		else
 		{
@@ -2023,7 +2168,7 @@ if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 	
 	for (int i=0; i< num_crossings; i++)
 	{
-		int component = code_table[COMPONENT][i];
+		int component = code_table[generic_code_data::table::COMPONENT][i];
 		initial_edge_map[2*i] = (2*i - first_edge_on_component[component] - abs(shift[component]) + num_component_edges[component])%
 		                num_component_edges[component] + first_edge_on_component[component];
 
@@ -2094,10 +2239,10 @@ if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 		
 	for (int i=0; i< num_crossings; i++)
 	{
-		int component = code_table[COMPONENT][i];
+		int component = code_table[generic_code_data::table::COMPONENT][i];
 		int component_edges = num_component_edges[component];
 		int first_edge = first_edge_on_component[component];
-		int peer_component = code_table[COMPONENT][(code_table[OPEER][i]-1)/2];
+		int peer_component = code_table[generic_code_data::table::COMPONENT][(code_table[generic_code_data::table::OPEER][i]-1)/2];
 		int peer_component_edges = num_component_edges[peer_component];
 		int peer_first_edge = first_edge_on_component[peer_component];
 		
@@ -2121,13 +2266,13 @@ if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 }
 
 				even_edge = (edge_map[2*i]-first_edge-1+component_edges)%component_edges + first_edge;
-				odd_edge = (edge_map[code_table[OPEER][i]]-peer_first_edge-1+peer_component_edges)%peer_component_edges + peer_first_edge;
+				odd_edge = (edge_map[code_table[generic_code_data::table::OPEER][i]]-peer_first_edge-1+peer_component_edges)%peer_component_edges + peer_first_edge;
 
 				/* the new naming edge is on the same strand as the old naming edge */
-				new_code_table[LABEL][even_edge/2] = code_table[LABEL][i];
+				new_code_table[generic_code_data::table::LABEL][even_edge/2] = code_table[generic_code_data::table::LABEL][i];
 
 				/* since the old naming edge is now odd, reversing both strands leaves the crossing type unchanged */
-				new_code_table[TYPE][even_edge/2] = code_table[TYPE][i];
+				new_code_table[generic_code_data::table::TYPE][even_edge/2] = code_table[generic_code_data::table::TYPE][i];
 
 
 			}
@@ -2142,16 +2287,16 @@ if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 }
 
 				even_edge = (edge_map[2*i]-first_edge-1+component_edges)%component_edges + first_edge;
-				odd_edge = edge_map[code_table[OPEER][i]];
+				odd_edge = edge_map[code_table[generic_code_data::table::OPEER][i]];
 
 				/* the new naming edge is on the same strand as the old naming edge */
-				new_code_table[LABEL][even_edge/2] = code_table[LABEL][i];
+				new_code_table[generic_code_data::table::LABEL][even_edge/2] = code_table[generic_code_data::table::LABEL][i];
 
 				/* since the old naming edge is now odd, reversing the old naming strand reverses crossing type */
-				if (code_table[TYPE][i] == generic_code_data::TYPE1)
-					new_code_table[TYPE][even_edge/2] = generic_code_data::TYPE2;
+				if (code_table[generic_code_data::table::TYPE][i] == generic_code_data::TYPE1)
+					new_code_table[generic_code_data::table::TYPE][even_edge/2] = generic_code_data::TYPE2;
 				else
-					new_code_table[TYPE][even_edge/2] = generic_code_data::TYPE1;
+					new_code_table[generic_code_data::table::TYPE][even_edge/2] = generic_code_data::TYPE1;
 			}
 			else if (shift[peer_component] < 0)
 			{
@@ -2164,21 +2309,21 @@ if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 }
 
 				odd_edge = edge_map[2*i];
-				even_edge = (edge_map[code_table[OPEER][i]]-peer_first_edge-1+peer_component_edges)%peer_component_edges + peer_first_edge;
+				even_edge = (edge_map[code_table[generic_code_data::table::OPEER][i]]-peer_first_edge-1+peer_component_edges)%peer_component_edges + peer_first_edge;
 
 				/* the new naming edge is on the opposite strand to the old naming edge */
-				if (code_table[LABEL][i] == generic_code_data::POSITIVE)
-					new_code_table[LABEL][even_edge/2] = generic_code_data::NEGATIVE;
-				else if (code_table[LABEL][i] == generic_code_data::NEGATIVE)
-					new_code_table[LABEL][even_edge/2] = generic_code_data::POSITIVE;
-				else if (code_table[LABEL][i] == generic_code_data::FLAT)
-					new_code_table[LABEL][even_edge/2] = generic_code_data::FLAT;
+				if (code_table[generic_code_data::table::LABEL][i] == generic_code_data::POSITIVE)
+					new_code_table[generic_code_data::table::LABEL][even_edge/2] = generic_code_data::NEGATIVE;
+				else if (code_table[generic_code_data::table::LABEL][i] == generic_code_data::NEGATIVE)
+					new_code_table[generic_code_data::table::LABEL][even_edge/2] = generic_code_data::POSITIVE;
+				else if (code_table[generic_code_data::table::LABEL][i] == generic_code_data::FLAT)
+					new_code_table[generic_code_data::table::LABEL][even_edge/2] = generic_code_data::FLAT;
 				else
-					new_code_table[LABEL][even_edge/2] = generic_code_data::VIRTUAL;
+					new_code_table[generic_code_data::table::LABEL][even_edge/2] = generic_code_data::VIRTUAL;
 
 				/* since the old naming edge is now odd, reversing the peer of the old naming 
 				   strand leaves the crossing type unchanged*/
-				new_code_table[TYPE][even_edge/2] = code_table[TYPE][i];
+				new_code_table[generic_code_data::table::TYPE][even_edge/2] = code_table[generic_code_data::table::TYPE][i];
 			}
 			else
 			{
@@ -2190,23 +2335,23 @@ if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 }
 
 				odd_edge = edge_map[2*i];
-				even_edge = edge_map[code_table[OPEER][i]];
+				even_edge = edge_map[code_table[generic_code_data::table::OPEER][i]];
 
 				/* the new naming edge is on the opposite strand to the old naming edge */
-				if (code_table[LABEL][i] == generic_code_data::POSITIVE)
-					new_code_table[LABEL][even_edge/2] = generic_code_data::NEGATIVE;
-				else if (code_table[LABEL][i] == generic_code_data::NEGATIVE)
-					new_code_table[LABEL][even_edge/2] = generic_code_data::POSITIVE;
-				else if (code_table[LABEL][i] == generic_code_data::FLAT)
-					new_code_table[LABEL][even_edge/2] = generic_code_data::FLAT;
+				if (code_table[generic_code_data::table::LABEL][i] == generic_code_data::POSITIVE)
+					new_code_table[generic_code_data::table::LABEL][even_edge/2] = generic_code_data::NEGATIVE;
+				else if (code_table[generic_code_data::table::LABEL][i] == generic_code_data::NEGATIVE)
+					new_code_table[generic_code_data::table::LABEL][even_edge/2] = generic_code_data::POSITIVE;
+				else if (code_table[generic_code_data::table::LABEL][i] == generic_code_data::FLAT)
+					new_code_table[generic_code_data::table::LABEL][even_edge/2] = generic_code_data::FLAT;
 				else
-					new_code_table[LABEL][even_edge/2] = generic_code_data::VIRTUAL;
+					new_code_table[generic_code_data::table::LABEL][even_edge/2] = generic_code_data::VIRTUAL;
 
 				/* since the old naming edge is now odd the crossing type is reversed */
-				if (code_table[TYPE][i] == generic_code_data::TYPE1)
-					new_code_table[TYPE][even_edge/2] = generic_code_data::TYPE2;
+				if (code_table[generic_code_data::table::TYPE][i] == generic_code_data::TYPE1)
+					new_code_table[generic_code_data::table::TYPE][even_edge/2] = generic_code_data::TYPE2;
 				else
-					new_code_table[TYPE][even_edge/2] = generic_code_data::TYPE1;
+					new_code_table[generic_code_data::table::TYPE][even_edge/2] = generic_code_data::TYPE1;
 			}			
 		}
 		else
@@ -2220,7 +2365,7 @@ if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 	print_code_data(debug,code_data,"renumber_peer_code: ");	
 	debug << "renumber_peer_code: current code_table:" << endl;
 	print(code_table,debug, 3, "renumber_peer_code: ");	
-	debug << "renumber_peer_code: code_table[LABEL][" << i << "] = " << code_table[LABEL][i] << endl;
+	debug << "renumber_peer_code: code_table[generic_code_data::table::LABEL][" << i << "] = " << code_table[generic_code_data::table::LABEL][i] << endl;
 	
 	debug << "renumber_peer_code:   naming edge of old crossing " << i << " still even" << endl;
 	debug << "renumber_peer_code:   both components at crossing " << i << " reversed" << endl;
@@ -2228,23 +2373,23 @@ if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 }
 
 				odd_edge = (edge_map[2*i]-first_edge-1+component_edges)%component_edges + first_edge;
-				even_edge = (edge_map[code_table[OPEER][i]]-peer_first_edge-1+peer_component_edges)%peer_component_edges + peer_first_edge;
+				even_edge = (edge_map[code_table[generic_code_data::table::OPEER][i]]-peer_first_edge-1+peer_component_edges)%peer_component_edges + peer_first_edge;
 
 				/* the new naming edge is on the opposite strand to the old naming edge */
-				if (code_table[LABEL][i] == generic_code_data::POSITIVE)
-					new_code_table[LABEL][even_edge/2] = generic_code_data::NEGATIVE;
-				else if (code_table[LABEL][i] == generic_code_data::NEGATIVE)
-					new_code_table[LABEL][even_edge/2] = generic_code_data::POSITIVE;
-				else if (code_table[LABEL][i] == generic_code_data::FLAT)
-					new_code_table[LABEL][even_edge/2] = generic_code_data::FLAT;
+				if (code_table[generic_code_data::table::LABEL][i] == generic_code_data::POSITIVE)
+					new_code_table[generic_code_data::table::LABEL][even_edge/2] = generic_code_data::NEGATIVE;
+				else if (code_table[generic_code_data::table::LABEL][i] == generic_code_data::NEGATIVE)
+					new_code_table[generic_code_data::table::LABEL][even_edge/2] = generic_code_data::POSITIVE;
+				else if (code_table[generic_code_data::table::LABEL][i] == generic_code_data::FLAT)
+					new_code_table[generic_code_data::table::LABEL][even_edge/2] = generic_code_data::FLAT;
 				else
-					new_code_table[LABEL][even_edge/2] = generic_code_data::VIRTUAL;
+					new_code_table[generic_code_data::table::LABEL][even_edge/2] = generic_code_data::VIRTUAL;
 
 				/* since the old naming edge is still even, reversing both strands reverses the crossing type */
-				if (code_table[TYPE][i] == generic_code_data::TYPE1)
-					new_code_table[TYPE][even_edge/2] = generic_code_data::TYPE2;
+				if (code_table[generic_code_data::table::TYPE][i] == generic_code_data::TYPE1)
+					new_code_table[generic_code_data::table::TYPE][even_edge/2] = generic_code_data::TYPE2;
 				else
-					new_code_table[TYPE][even_edge/2] = generic_code_data::TYPE1;
+					new_code_table[generic_code_data::table::TYPE][even_edge/2] = generic_code_data::TYPE1;
 			}
 			else if (shift[component] < 0)
 			{
@@ -2257,21 +2402,21 @@ if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 }
 
 				odd_edge = (edge_map[2*i]-first_edge-1+component_edges)%component_edges + first_edge;
-				even_edge = edge_map[code_table[OPEER][i]];
+				even_edge = edge_map[code_table[generic_code_data::table::OPEER][i]];
 
 				/* the new naming edge is on the opposite strand to the old naming edge */
-				if (code_table[LABEL][i] == generic_code_data::POSITIVE)
-					new_code_table[LABEL][even_edge/2] = generic_code_data::NEGATIVE;
-				else if (code_table[LABEL][i] == generic_code_data::NEGATIVE)
-					new_code_table[LABEL][even_edge/2] = generic_code_data::POSITIVE;
-				else if (code_table[LABEL][i] == generic_code_data::FLAT)
-					new_code_table[LABEL][even_edge/2] = generic_code_data::FLAT;
+				if (code_table[generic_code_data::table::LABEL][i] == generic_code_data::POSITIVE)
+					new_code_table[generic_code_data::table::LABEL][even_edge/2] = generic_code_data::NEGATIVE;
+				else if (code_table[generic_code_data::table::LABEL][i] == generic_code_data::NEGATIVE)
+					new_code_table[generic_code_data::table::LABEL][even_edge/2] = generic_code_data::POSITIVE;
+				else if (code_table[generic_code_data::table::LABEL][i] == generic_code_data::FLAT)
+					new_code_table[generic_code_data::table::LABEL][even_edge/2] = generic_code_data::FLAT;
 				else
-					new_code_table[LABEL][even_edge/2] = generic_code_data::VIRTUAL;
+					new_code_table[generic_code_data::table::LABEL][even_edge/2] = generic_code_data::VIRTUAL;
 
 				/* since the old naming edge is still even, reversing the old naming 
 				   strand leaves the crossing type unchanged */
-				new_code_table[TYPE][even_edge/2] = code_table[TYPE][i];
+				new_code_table[generic_code_data::table::TYPE][even_edge/2] = code_table[generic_code_data::table::TYPE][i];
 			}
 			else if (shift[peer_component] < 0)
 			{
@@ -2284,17 +2429,17 @@ if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 }
 
 				even_edge = edge_map[2*i];
-				odd_edge = (edge_map[code_table[OPEER][i]]-peer_first_edge-1+peer_component_edges)%peer_component_edges + peer_first_edge;
+				odd_edge = (edge_map[code_table[generic_code_data::table::OPEER][i]]-peer_first_edge-1+peer_component_edges)%peer_component_edges + peer_first_edge;
 
 				/* the new naming edge is on the same strand as the old naming edge */
-				new_code_table[LABEL][even_edge/2] = code_table[LABEL][i];
+				new_code_table[generic_code_data::table::LABEL][even_edge/2] = code_table[generic_code_data::table::LABEL][i];
 
 				/* since the old naming edge is still even, reversing the peer of the old naming 
 				   strand reverses the crossing type */
-				if (code_table[TYPE][i] == generic_code_data::TYPE1)
-					new_code_table[TYPE][even_edge/2] = generic_code_data::TYPE2;
+				if (code_table[generic_code_data::table::TYPE][i] == generic_code_data::TYPE1)
+					new_code_table[generic_code_data::table::TYPE][even_edge/2] = generic_code_data::TYPE2;
 				else
-					new_code_table[TYPE][even_edge/2] = generic_code_data::TYPE1;
+					new_code_table[generic_code_data::table::TYPE][even_edge/2] = generic_code_data::TYPE1;
 			}
 			else
 			{
@@ -2307,34 +2452,34 @@ if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 }
 
 				even_edge = edge_map[2*i];
-				odd_edge = edge_map[code_table[OPEER][i]];
+				odd_edge = edge_map[code_table[generic_code_data::table::OPEER][i]];
 
 				/* the new naming edge is on the same strand as the old naming edge */
-				new_code_table[LABEL][even_edge/2] = code_table[LABEL][i];
+				new_code_table[generic_code_data::table::LABEL][even_edge/2] = code_table[generic_code_data::table::LABEL][i];
 
 				/* since the old naming edge is still even the crossing type is unchanged */
-				new_code_table[TYPE][even_edge/2] = code_table[TYPE][i];
+				new_code_table[generic_code_data::table::TYPE][even_edge/2] = code_table[generic_code_data::table::TYPE][i];
 			}			
 		}
 		
-		new_code_table[OPEER][even_edge/2] = odd_edge;
-		new_code_table[EPEER][(odd_edge-1)/2] = even_edge;
+		new_code_table[generic_code_data::table::OPEER][even_edge/2] = odd_edge;
+		new_code_table[generic_code_data::table::EPEER][(odd_edge-1)/2] = even_edge;
 
 if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 {
 	debug << "renumber_peer_code: renumbered as odd_edge = " << odd_edge << ", even_edge = " << even_edge << endl;
 	debug << "renumber_peer_code: new type =  ";
-	if (new_code_table[TYPE][even_edge/2] == generic_code_data::TYPE1)
+	if (new_code_table[generic_code_data::table::TYPE][even_edge/2] == generic_code_data::TYPE1)
 		debug << "generic_code_data::TYPE1";
 	else
 		debug << "generic_code_data::TYPE2";
 	
 	debug << ", new label = ";
-	if (new_code_table[LABEL][even_edge/2] == generic_code_data::POSITIVE)
+	if (new_code_table[generic_code_data::table::LABEL][even_edge/2] == generic_code_data::POSITIVE)
 		debug << "generic_code_data::POSITIVE";
-	else if (new_code_table[LABEL][even_edge/2] == generic_code_data::NEGATIVE)
+	else if (new_code_table[generic_code_data::table::LABEL][even_edge/2] == generic_code_data::NEGATIVE)
 		debug << "generic_code_data::NEGATIVE";
-	else if (new_code_table[LABEL][even_edge/2] == generic_code_data::VIRTUAL)
+	else if (new_code_table[generic_code_data::table::LABEL][even_edge/2] == generic_code_data::VIRTUAL)
 		debug << "generic_code_data::VIRTUAL";
 	else
 		debug << "generic_code_data::FLAT";
@@ -2350,19 +2495,19 @@ if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 	{
 		term_crossing[2*i] = i;
 		orig_crossing[2*i+1] = i;
-		term_crossing[new_code_table[OPEER][i]] = i;
+		term_crossing[new_code_table[generic_code_data::table::OPEER][i]] = i;
 		
 		/* we need to identify the edge following the naming edge's peer */
-		int component = new_code_table[COMPONENT][(new_code_table[OPEER][i]-1)/2];
-		int peer_successor = (new_code_table[OPEER][i]+1 - first_edge_on_component[component])%
+		int component = new_code_table[generic_code_data::table::COMPONENT][(new_code_table[generic_code_data::table::OPEER][i]-1)/2];
+		int peer_successor = (new_code_table[generic_code_data::table::OPEER][i]+1 - first_edge_on_component[component])%
 		                     num_component_edges[component] + first_edge_on_component[component];
 
 		orig_crossing[peer_successor] = i;
 		
-		new_code_table[EVEN_TERMINATING][i] = 2*i;
-		new_code_table[ODD_ORIGINATING][i] = 2*i+1;
-		new_code_table[ODD_TERMINATING][i] = new_code_table[OPEER][i];
-		new_code_table[EVEN_ORIGINATING][i] = peer_successor;
+		new_code_table[generic_code_data::table::EVEN_TERMINATING][i] = 2*i;
+		new_code_table[generic_code_data::table::ODD_ORIGINATING][i] = 2*i+1;
+		new_code_table[generic_code_data::table::ODD_TERMINATING][i] = new_code_table[generic_code_data::table::OPEER][i];
+		new_code_table[generic_code_data::table::EVEN_ORIGINATING][i] = peer_successor;
 	}
 	
 	code_data.code_table = new_code_table;
@@ -2374,12 +2519,14 @@ if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
    */
 	if (code_data.head !=-1 && head_semi_arc %2)
     {	
-		code_data.head = code_data.code_table[EPEER][(head_semi_arc-1)/2]/2;
+		code_data.head = code_data.code_table[generic_code_data::table::EPEER][(head_semi_arc-1)/2]/2;
     }
 
 if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 {
-	debug << "renumber_peer_code: renumbered code data:" << endl;
+	debug << "renumber_peer_code: renumbered code data: ";
+	write_peer_code(debug,code_data);
+	debug << endl;	
 	print_code_data(debug,code_data,"renumber_peer_code: ");	
 }
 
@@ -2407,8 +2554,8 @@ if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 		for (int i= code_data.first_edge_on_component[component]; i < code_data.first_edge_on_component[component]+code_data.num_component_edges[component]; i++ )
 		{
 			int crossing = code_data.term_crossing[i];
-			edge_flag[code_data.code_table[ODD_TERMINATING][crossing]] = 1;
-			edge_flag[code_data.code_table[EVEN_TERMINATING][crossing]] = 1;
+			edge_flag[code_data.code_table[generic_code_data::table::ODD_TERMINATING][crossing]] = 1;
+			edge_flag[code_data.code_table[generic_code_data::table::EVEN_TERMINATING][crossing]] = 1;
 		}
 		
 if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
@@ -2448,7 +2595,7 @@ if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 		bool virtual_component = true;
 		for (int j=code_data.first_edge_on_component[i]; j< code_data.first_edge_on_component[i]+code_data.num_component_edges[i]; j++)
 		{
-			if (code_data.code_table[LABEL][code_data.term_crossing[j]] != generic_code_data::VIRTUAL)
+			if (code_data.code_table[generic_code_data::table::LABEL][code_data.term_crossing[j]] != generic_code_data::VIRTUAL)
 			{
 				virtual_component = false;
 				break;
@@ -2518,9 +2665,9 @@ if (debug_control::DEBUG >= debug_control::BASIC)
 	{
 		pure_knotoid_code_data = true;
 		
-		if (code_data.code_table[LABEL][code_data.head] == generic_code_data::POSITIVE)
-			head_semi_arc = code_data.code_table[OPEER][code_data.head];
-		else if (code_data.code_table[LABEL][code_data.head] == generic_code_data::NEGATIVE)
+		if (code_data.code_table[generic_code_data::table::LABEL][code_data.head] == generic_code_data::POSITIVE)
+			head_semi_arc = code_data.code_table[generic_code_data::table::OPEER][code_data.head];
+		else if (code_data.code_table[generic_code_data::table::LABEL][code_data.head] == generic_code_data::NEGATIVE)
 			head_semi_arc = 2*code_data.head;
 		else
 		{
@@ -2566,7 +2713,7 @@ if (debug_control::DEBUG >= debug_control::BASIC)
 		list<int>::iterator lptr=span_list.begin();
 		while (lptr != span_list.end())
 		{
-			f_components[code_data.code_table[COMPONENT][*lptr]] = 1;
+			f_components[code_data.code_table[generic_code_data::table::COMPONENT][*lptr]] = 1;
 			lptr++;
 		}
 		
@@ -2591,7 +2738,7 @@ if (debug_control::DEBUG >= debug_control::BASIC)
 		/* evaluate the peer code for each partition by creating a generic code object with enough information to write the 
 		   partition's peer code to an ostringstream and then read it back again.
 		   
-		   We need the head, num_crossings and the OPEER, TYPE, LABEL and COMPONENT rows of the code_table in the generic_code_data 
+		   We need the head, num_crossings and the generic_code_data::table::OPEER, generic_code_data::table::TYPE, generic_code_data::table::LABEL and generic_code_data::table::COMPONENT rows of the code_table in the generic_code_data 
 		   structure to do this.		
 		*/				
 		int num_s_crossings = code_data.num_crossings - num_f_crossings;
@@ -2607,13 +2754,13 @@ if (debug_control::DEBUG >= debug_control::BASIC)
 	
 			int num_partition_crossings = (i==0? num_f_crossings: num_s_crossings);
 			int num_partition_components = (i==0? num_f_components: num_s_components);
-			matrix<int> partition_code_table(CODE_TABLE_SIZE,num_partition_crossings,-1);
+			matrix<int> partition_code_table(generic_code_data::table::CODE_TABLE_SIZE,num_partition_crossings,-1);
 			matrix<int> partition_zig_zag_count(2,num_partition_crossings);
 			vector<int> first_edge_on_partition_cpt(num_partition_components); // used for writing Gauss codes
 
 			
 			/* write new edge labels into the even (row 0)  and odd (row 1) rows of new_partition_labels, 
-			   in the location corresponding to the old edge labels in the EVEN_TERMINATING and ODD_TERMINATING
+			   in the location corresponding to the old edge labels in the generic_code_data::table::EVEN_TERMINATING and generic_code_data::table::ODD_TERMINATING
 			   rows of code_data.code_table.  In row 2 of new_partition_labels we record the component number
 			   of the unicursal component in the partition.
 			   
@@ -2658,7 +2805,7 @@ if (debug_control::DEBUG >= debug_control::BASIC)
 					if (code_data.type == generic_code_data::gauss_code)
 					{
 						column = code_data.term_crossing[old_edge];
-						if (code_data.code_table[EVEN_TERMINATING][column] == old_edge)
+						if (code_data.code_table[generic_code_data::table::EVEN_TERMINATING][column] == old_edge)
 						{
 							row = 0;
 						}
@@ -2682,13 +2829,13 @@ if (debug_control::DEBUG >= debug_control::BASIC)
 						else
 						{
 							row = 1; // odd
-							column = code_data.code_table[EPEER][(old_edge-1)/2]/2;
+							column = code_data.code_table[generic_code_data::table::EPEER][(old_edge-1)/2]/2;
 						}
 					}
 					
 if (debug_control::DEBUG >= debug_control::BASIC)
 {
-	debug << "partition_peer_code:     old_edge " << old_edge << " is (row) " << (row == 0? "EVEN_TERMINATING": "ODD_TERMINATING") 
+	debug << "partition_peer_code:     old_edge " << old_edge << " is (row) " << (row == 0? "generic_code_data::table::EVEN_TERMINATING": "generic_code_data::table::ODD_TERMINATING") 
 	      <<  " edge at old crossing (column) " << column << endl;
 	debug << "partition_peer_code:     new edge = " << edge;
 	if (old_edge % 2 == 0)
@@ -2709,8 +2856,8 @@ if (debug_control::DEBUG >= debug_control::BASIC)
 	debug << endl;
 }					
 			
-			/* write the new edge labels into the correct location in the EPEER and OPEER rows of the partition code table, 
-			   and set the TYPE LABEL and COMPONENT rows 
+			/* write the new edge labels into the correct location in the generic_code_data::table::EPEER and generic_code_data::table::OPEER rows of the partition code table, 
+			   and set the generic_code_data::table::TYPE generic_code_data::table::LABEL and generic_code_data::table::COMPONENT rows 
 			*/
 			for (int j=0; j < code_data.num_crossings; j++)
 			{
@@ -2723,11 +2870,11 @@ if (debug_control::DEBUG >= debug_control::BASIC)
 					else
 						crossing = new_partition_labels[0][j]/2;
 						
-					partition_code_table[EPEER][crossing] = new_partition_labels[0][j];
-					partition_code_table[OPEER][crossing] = new_partition_labels[1][j];
-					partition_code_table[COMPONENT][crossing] = new_partition_labels[2][j];
-					partition_code_table[TYPE][crossing] = code_data.code_table[TYPE][j];
-					partition_code_table[LABEL][crossing] = code_data.code_table[LABEL][j];
+					partition_code_table[generic_code_data::table::EPEER][crossing] = new_partition_labels[0][j];
+					partition_code_table[generic_code_data::table::OPEER][crossing] = new_partition_labels[1][j];
+					partition_code_table[generic_code_data::table::COMPONENT][crossing] = new_partition_labels[2][j];
+					partition_code_table[generic_code_data::table::TYPE][crossing] = code_data.code_table[generic_code_data::table::TYPE][j];
+					partition_code_table[generic_code_data::table::LABEL][crossing] = code_data.code_table[generic_code_data::table::LABEL][j];
 					
 					if (track_zig_zag_counts)
 					{
@@ -2758,19 +2905,19 @@ if (debug_control::DEBUG >= debug_control::BASIC)
 	debug << "partition_peer_code: partition_code_table" << endl;
 	debug << "partition_peer_code:  odd peer: ";
 	for (int j=0; j< num_partition_crossings; j++)
-		debug << partition_code_table[OPEER][j] << ' ';
+		debug << partition_code_table[generic_code_data::table::OPEER][j] << ' ';
 	debug << endl;
 	debug << "partition_peer_code:  component: ";
 	for (int j=0; j< num_partition_crossings; j++)
-		debug << partition_code_table[COMPONENT][j] << ' ';
+		debug << partition_code_table[generic_code_data::table::COMPONENT][j] << ' ';
 	debug << endl;
 	debug << "partition_peer_code:  type: ";
 	for (int j=0; j< num_partition_crossings; j++)
-		debug << partition_code_table[TYPE][j] << ' ';
+		debug << partition_code_table[generic_code_data::table::TYPE][j] << ' ';
 	debug << endl;
 	debug << "partition_peer_code:  label: ";
 	for (int j=0; j< num_partition_crossings; j++)
-		debug << partition_code_table[LABEL][j] << ' ';
+		debug << partition_code_table[generic_code_data::table::LABEL][j] << ' ';
 	debug << endl;
 	
 	if (track_zig_zag_counts)
@@ -2808,7 +2955,7 @@ if (debug_control::DEBUG >= debug_control::BASIC)
 					first_code_data.head = new_head;
 					
 					if (head_semi_arc % 2)
-						first_code_data.head = first_code_data.code_table[EPEER][(head_semi_arc-1)/2]/2;
+						first_code_data.head = first_code_data.code_table[generic_code_data::table::EPEER][(head_semi_arc-1)/2]/2;
 					else
 						first_code_data.head = head_semi_arc/2;
 						
@@ -2914,8 +3061,8 @@ if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
     
     for (int i=0; i< num_crossings; i++)
     {
-		opeer[i] = gauss_table[OPEER][i];
-		epeer[i] = gauss_table[EPEER][i];
+		opeer[i] = gauss_table[generic_code_data::table::OPEER][i];
+		epeer[i] = gauss_table[generic_code_data::table::EPEER][i];
 	}
 
 	/* cycle the labels in opeer and epeer belonging to the identified component */
@@ -2924,25 +3071,25 @@ if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
 		/* find edge i in the code table */
 		for (int j=0; j< num_crossings; j++)
 		{
-			if (gauss_table[EPEER][j] == i)
+			if (gauss_table[generic_code_data::table::EPEER][j] == i)
 			{
 				if (i == last)
 					epeer[j] = first;
 				else
 					epeer[j]++;
 					
-				gauss_table[ODD_ORIGINATING][j] = (epeer[j]+1-first)%num_component_edges[component] + first;
+				gauss_table[generic_code_data::table::ODD_ORIGINATING][j] = (epeer[j]+1-first)%num_component_edges[component] + first;
 				
 				break;
 			}
-			else if (gauss_table[OPEER][j] == i)
+			else if (gauss_table[generic_code_data::table::OPEER][j] == i)
 			{
 				if (i == last)
 					opeer[j] = first;
 				else
 					opeer[j]++;
 					
-				gauss_table[EVEN_ORIGINATING][j] = (epeer[j]+1-first)%num_component_edges[component] + first;
+				gauss_table[generic_code_data::table::EVEN_ORIGINATING][j] = (epeer[j]+1-first)%num_component_edges[component] + first;
 
 				break;
 			}
@@ -2951,10 +3098,10 @@ if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
 
     for (int i=0; i< num_crossings; i++)
     {
-		gauss_table[OPEER][i] = opeer[i];
-		gauss_table[ODD_TERMINATING][i] = opeer[i];
-		gauss_table[EPEER][i] = epeer[i];
-		gauss_table[EVEN_TERMINATING][i] = epeer[i];
+		gauss_table[generic_code_data::table::OPEER][i] = opeer[i];
+		gauss_table[generic_code_data::table::ODD_TERMINATING][i] = opeer[i];
+		gauss_table[generic_code_data::table::EPEER][i] = epeer[i];
+		gauss_table[generic_code_data::table::EVEN_TERMINATING][i] = epeer[i];
 	}
 
 
@@ -3088,7 +3235,7 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 if (debug_control::DEBUG >= debug_control::DETAIL)
     debug << "vertex_span:   from crossing " << *lptr << endl;
 
-		int edge = code_table[EVEN_TERMINATING][*lptr];
+		int edge = code_table[generic_code_data::table::EVEN_TERMINATING][*lptr];
 		int crossing;
 		
 		if (edge_flag[edge] == 0)
@@ -3119,14 +3266,14 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
     debug << "vertex_span:     don't need to consider edge " << edge << endl;
 		}
 		
-		edge = code_table[ODD_TERMINATING][*lptr];
+		edge = code_table[generic_code_data::table::ODD_TERMINATING][*lptr];
 		
 		if (edge_flag[edge] == 0)
 		{
 			crossing = orig_crossing[edge];
 
 if (debug_control::DEBUG >= debug_control::DETAIL)
-    debug << "vertex_span:     going back along " << code_table[ODD_TERMINATING][*lptr] << " takes us to " << crossing;
+    debug << "vertex_span:     going back along " << code_table[generic_code_data::table::ODD_TERMINATING][*lptr] << " takes us to " << crossing;
 
 		    if(crossing_flag[crossing] == 0)
 		    {
@@ -3149,14 +3296,14 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
     debug << "vertex_span:     don't need to consider edge " << edge << endl;
 		}
 		
-		edge = code_table[EVEN_ORIGINATING][*lptr];
+		edge = code_table[generic_code_data::table::EVEN_ORIGINATING][*lptr];
 
 		if (edge_flag[edge] == 0)
 		{
 			crossing = term_crossing[edge];
 
 if (debug_control::DEBUG >= debug_control::DETAIL)
-    debug << "vertex_span:     going forwards along " << code_table[EVEN_ORIGINATING][*lptr] << " takes us to " << crossing;
+    debug << "vertex_span:     going forwards along " << code_table[generic_code_data::table::EVEN_ORIGINATING][*lptr] << " takes us to " << crossing;
 
 		    if(crossing_flag[crossing] == 0)
 		    {
@@ -3179,13 +3326,13 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
     debug << "vertex_span:     don't need to consider edge " << edge << endl;
 		}
 		
-		edge = code_table[ODD_ORIGINATING][*lptr];
+		edge = code_table[generic_code_data::table::ODD_ORIGINATING][*lptr];
 		if (edge_flag[edge] == 0)
 		{
 			crossing = term_crossing[edge];
 
 if (debug_control::DEBUG >= debug_control::DETAIL)
-    debug << "vertex_span:     going forwards along " << code_table[ODD_ORIGINATING][*lptr] << " takes us to " << crossing;
+    debug << "vertex_span:     going forwards along " << code_table[generic_code_data::table::ODD_ORIGINATING][*lptr] << " takes us to " << crossing;
 
 		    if(crossing_flag[crossing] == 0)
 		    {
@@ -3255,7 +3402,6 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 			for (int k=1; k<= cycle[j][0]; k++)
 			{
 				if (abs(cycle[j][k]) == i)
-//				if (cycle[j][k] == i)
 				{
 
 if (debug_control::DEBUG >= debug_control::DETAIL)
@@ -3278,7 +3424,6 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 
 			/* we always traverse odd edges backwards */
 			int edge = (i%2? -i: i);
-//			int edge = i;
 			cycle [num_cycles][column++] = edge;
 			bool complete = false;
 
@@ -3296,12 +3441,10 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 				if (edge % 2) // edge is odd (and negative)
 				{
 					int vertex = orig_crossing[-edge];
-//					int vertex = orig_crossing[edge];
-					if (code_table[TYPE][vertex] == generic_code_data::TYPE1)
-		    			edge = code_table[EVEN_ORIGINATING][vertex];
+					if (code_table[generic_code_data::table::TYPE][vertex] == generic_code_data::TYPE1)
+		    			edge = code_table[generic_code_data::table::EVEN_ORIGINATING][vertex];
 					else
-						edge = -code_table[ODD_TERMINATING][vertex];
-//						edge = code_table[ODD_TERMINATING][vertex];
+						edge = -code_table[generic_code_data::table::ODD_TERMINATING][vertex];
 
 if (debug_control::DEBUG >= debug_control::DETAIL)
     debug << "calculate_turning_cycles:   takes us to crossing " << vertex << " next edge = " << edge << endl;
@@ -3310,11 +3453,10 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 				else // edge is even (and positive)
 				{
 					int vertex = term_crossing[edge];
-					if (code_table[TYPE][vertex] == generic_code_data::TYPE1)
-						edge = -code_table[ODD_TERMINATING][vertex];
-//						edge = code_table[ODD_TERMINATING][vertex];
+					if (code_table[generic_code_data::table::TYPE][vertex] == generic_code_data::TYPE1)
+						edge = -code_table[generic_code_data::table::ODD_TERMINATING][vertex];
 					else
-		    			edge = code_table[EVEN_ORIGINATING][vertex];
+		    			edge = code_table[generic_code_data::table::EVEN_ORIGINATING][vertex];
 
 if (debug_control::DEBUG >= debug_control::DETAIL)
     debug << "calculate_turning_cycles:   takes us to crossing " << vertex << " next edge = " << edge << endl;
@@ -3373,7 +3515,6 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 			for (int k=1; k<= cycle[j][0]; k++)
 			{
 				if (abs(cycle[j][k]) == i)
-//				if (cycle[j][k] == i)
 				{
 					
 if (debug_control::DEBUG >= debug_control::DETAIL)
@@ -3404,7 +3545,6 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 			
 			/* we always traverse odd edges backwards */
 			int edge = (i%2? -i: i);
-//			int edge = i;
 			cycle [num_cycles][column++] = edge;
 			bool complete = false;
 
@@ -3415,12 +3555,10 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 				if (edge % 2) // edge is odd (and negative)
 				{
 					int vertex = orig_crossing[-edge];
-//					int vertex = orig_crossing[edge];
-					if (code_table[TYPE][vertex] == generic_code_data::TYPE1)
-						edge = -code_table[ODD_TERMINATING][vertex];
-//						edge = code_table[ODD_TERMINATING][vertex];
+					if (code_table[generic_code_data::table::TYPE][vertex] == generic_code_data::TYPE1)
+						edge = -code_table[generic_code_data::table::ODD_TERMINATING][vertex];
 					else
-		    			edge = code_table[EVEN_ORIGINATING][vertex];
+		    			edge = code_table[generic_code_data::table::EVEN_ORIGINATING][vertex];
 
 if (debug_control::DEBUG >= debug_control::DETAIL)
     debug << "calculate_turning_cycles:   takes us to crossing " << vertex << " next edge = " << edge << endl;
@@ -3429,11 +3567,10 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 				else // edge is even (and positive)
 				{
 					int vertex = term_crossing[edge];
-					if (code_table[TYPE][vertex] == generic_code_data::TYPE1)
-		    			edge = code_table[EVEN_ORIGINATING][vertex];
+					if (code_table[generic_code_data::table::TYPE][vertex] == generic_code_data::TYPE1)
+		    			edge = code_table[generic_code_data::table::EVEN_ORIGINATING][vertex];
 					else
-						edge = -code_table[ODD_TERMINATING][vertex];
-//						edge = code_table[ODD_TERMINATING][vertex];
+						edge = -code_table[generic_code_data::table::ODD_TERMINATING][vertex];
 
 if (debug_control::DEBUG >= debug_control::DETAIL)
     debug << "calculate_turning_cycles:   takes us to crossing " << vertex << " next edge = " << edge << endl;
@@ -3468,152 +3605,19 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 	return true;
 }
 
-/* in the case of links it is possible that the code data we have been given is disconnected, as in 
-   [-3 -5 -1, -9 -11 7]/# # # # # #, therefore we first check that the code is connected, then check
-   the Euler characteristic.  In the process of this check we return a set of turning cycles to the call.
-*/
+
 bool realizable_code_data(generic_code_data& code_data, matrix<int>& cycle, int& num_left_cycles, int& num_cycles)
 {
 	int num_crossings = code_data.num_crossings;
-	int num_edges = 2* num_crossings;
-	
-	/* first check that the code is connected by calling vertex_span starting at crossing 0 
-	   and not excluding any edges.  If we cannot reach every crossing, the code cannot be
-	   realized by a connected immersion.
-	*/
-	int crossing_span = vertex_span(code_data,0).size();
-	if (crossing_span != num_crossings)
-	{		
-if (debug_control::DEBUG >= debug_control::DETAIL)
-{
-    debug << "realizable_code_data: vertex span is only " << crossing_span
-         << " crossings, code cannot be realized by a connected immersion" << endl;
-}   
-		return false;
-	}
-	else
-	{
-if (debug_control::DEBUG >= debug_control::DETAIL)
-    debug << "realizable_code_data: vertex span includes all the crossings, code can be realized by a connected immersion" << endl;
-	}
-	
-	/* now calculate the turning cycles, this includes additional checks on the realizable nature of the code */	
+
 	if (!calculate_turning_cycles(code_data, cycle, num_left_cycles, num_cycles))
 		return false;
 
-	/* next check each edge appears once in a left handed
-	   and once in a right handed cycle */
-	   
-if (debug_control::DEBUG >= debug_control::DETAIL)
-    debug << "realizable_code_data: check edges appear exactly once in left and right turning cycles" << endl;
-
-	bool realizable = true;
-	for (int i=0; i<num_edges; i++)
-	{
-if (debug_control::DEBUG >= debug_control::DETAIL)
-    debug << "realizable_code_data:   edge " << i;
-    
-		int count = 0;
-		for (int j=0; j<num_left_cycles; j++)
-		{
-			for (int k=1; k<= cycle[j][0]; k++)
-			{
-				if (abs(cycle[j][k]) == i)
-				{
-					if (++count == 2)
-					{
-if (debug_control::DEBUG >= debug_control::DETAIL)
-    debug << " appears twice in left turning cycle " << j << endl;
-						realizable = false;
-						break;
-					}
-				}
-			}
-			if (!realizable)
-				break;
-		}
-		
-		if (!count)
-		{
-if (debug_control::DEBUG >= debug_control::DETAIL)
-    debug << " does not appear at all in left turning cycles";
-			realizable = false;
-		}
-
-		if (!realizable)
-		{
-			break;
-		}
-		else
-		{
-if (debug_control::DEBUG >= debug_control::DETAIL)
-    debug << " appears exactly once in left turning cycles";
-		}
-
-		/* we're only still here if count = 1, so now check the right
-		   turning cycles */
-
-		count = 0;
-		for (int j=num_left_cycles; j<num_cycles; j++)
-		{
-			for (int k=1; k<= cycle[j][0]; k++)
-			{
-				if (abs(cycle[j][k]) == i)
-				{
-					if (++count == 2)
-					{
-if (debug_control::DEBUG >= debug_control::DETAIL)
-    debug << " but twice in right turning cycle " << j << endl;
-						realizable = false;
-						break;
-					}
-				}
-			}
-			if (!realizable)
-				break;
-		}
-		
-		if (!count)
-		{
-if (debug_control::DEBUG >= debug_control::DETAIL)
-    debug << " but not at all in right turning cycles";
-			realizable = false;
-		}
-
-		if (!realizable)
-		{
-			break;
-		}
-		else
-		{
-if (debug_control::DEBUG >= debug_control::DETAIL)
-    debug << " and in right turning cycles" << endl;
-		}
-	}
-
-	/* Now check that the number of cycles is equal to num_crossings+2 */
 	if (num_cycles != num_crossings+2)
-	{
-		realizable = false;
-
-if (debug_control::DEBUG >= debug_control::DETAIL)
-    debug << "realizable_code_data: number of cycles != num_crossings+2" << endl;
-	}
+		return false;
 	
-	if (realizable)
-	{
-if (debug_control::DEBUG >= debug_control::DETAIL)
-    debug << "realizable_code_data: code is able to be realized by a connected immersion" << endl;
-	}
-	else
-	{
-if (debug_control::DEBUG >= debug_control::DETAIL)
-    debug << "realizable_code_data: code cannot be realized by a connected immersion" << endl;
-	}
-	
-	return realizable;
+	return true;
 }
-
 
 /* The generic code data code table and crossing number identify a valid knotoid if the
    specified crossing is the start of a shortcut.  A shortcut from the head
@@ -3675,17 +3679,17 @@ if (debug_control::DEBUG >= debug_control::BASIC)
 }
 
 	int component;
-	if (code_table[LABEL][head] == generic_code_data::POSITIVE)
+	if (code_table[generic_code_data::table::LABEL][head] == generic_code_data::POSITIVE)
 	{
-		semi_arc = code_table[OPEER][head];
+		semi_arc = code_table[generic_code_data::table::OPEER][head];
 		peer = 2*head;
-		component = code_table[COMPONENT][(semi_arc-1)/2];
+		component = code_table[generic_code_data::table::COMPONENT][(semi_arc-1)/2];
 	}
-	else if (code_table[LABEL][head] == generic_code_data::NEGATIVE)
+	else if (code_table[generic_code_data::table::LABEL][head] == generic_code_data::NEGATIVE)
 	{
 		semi_arc = 2*head;
-		peer = code_table[OPEER][head];
-		component = code_table[COMPONENT][head];
+		peer = code_table[generic_code_data::table::OPEER][head];
+		component = code_table[generic_code_data::table::COMPONENT][head];
 	}
 	else
 	{
@@ -3715,7 +3719,7 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
     /* set the shortcut crossing flag for the head crossing */
     if (semi_arc % 2)
     {
-		if (code_table[TYPE][head] == generic_code_data::TYPE1)				
+		if (code_table[generic_code_data::table::TYPE][head] == generic_code_data::TYPE1)				
 		{
 			shortcut_crossing[head] = -1; 
 if (debug_control::DEBUG >= debug_control::DETAIL)
@@ -3730,7 +3734,7 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 	}
 	else
 	{
-		if (code_table[TYPE][head] == generic_code_data::TYPE1)				
+		if (code_table[generic_code_data::table::TYPE][head] == generic_code_data::TYPE1)				
 		{
 			shortcut_crossing[head] = 1; 
 if (debug_control::DEBUG >= debug_control::DETAIL)
@@ -3756,7 +3760,7 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 		if (i%2)
 		{				
 			int crossing = code_data.term_crossing[i];
-			peer = code_table[EVEN_TERMINATING][crossing];
+			peer = code_table[generic_code_data::table::EVEN_TERMINATING][crossing];
 
 if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "valid_knotoid_input:   crossing " << crossing << ", peer " << peer << endl;
@@ -3769,7 +3773,7 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "valid_knotoid_input: invalid knotoid code, peer edge also lies in the shortcut, which may not self-intersect" << endl;
 				break;
 			}
-			else if (code_table[LABEL][crossing] != generic_code_data::POSITIVE)
+			else if (code_table[generic_code_data::table::LABEL][crossing] != generic_code_data::POSITIVE)
 			{
 				valid = false;
 if (debug_control::DEBUG >= debug_control::DETAIL)
@@ -3782,7 +3786,7 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 				   reverse direction.  Thus, we must view the knotoid from the perspective of 
 				   looking back at the crossing from the originating shortcut edge
 				*/
-				if (code_table[TYPE][crossing] == generic_code_data::TYPE1)				
+				if (code_table[generic_code_data::table::TYPE][crossing] == generic_code_data::TYPE1)				
 				{
 					shortcut_crossing[crossing] = -1; 
 if (debug_control::DEBUG >= debug_control::DETAIL)
@@ -3800,7 +3804,7 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 		else
 		{
 			int crossing = i/2 ;
-			peer = code_table[ODD_TERMINATING][crossing];
+			peer = code_table[generic_code_data::table::ODD_TERMINATING][crossing];
 
 if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "valid_knotoid_input:   crossing " << crossing << ", peer " << peer << endl;
@@ -3813,7 +3817,7 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "valid_knotoid_input: invalid knotoid code, peer edge also lies in the shortcut, which may not self-intersect" << endl;
 				break;
 			}
-			else if (code_table[LABEL][crossing] != generic_code_data::NEGATIVE)
+			else if (code_table[generic_code_data::table::LABEL][crossing] != generic_code_data::NEGATIVE)
 			{
 				valid = false;
 if (debug_control::DEBUG >= debug_control::DETAIL)
@@ -3823,7 +3827,7 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 			else
 			{
 			    /* see comment above for the odd case */
-				if (code_table[TYPE][crossing] == generic_code_data::TYPE1)				
+				if (code_table[generic_code_data::table::TYPE][crossing] == generic_code_data::TYPE1)				
 				{
 					shortcut_crossing[crossing] = 1; 
 if (debug_control::DEBUG >= debug_control::DETAIL)
@@ -3957,7 +3961,7 @@ if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
 		int component = 0;
 		for (int j=1; j< num_components; j++)
 		{
-			if (code_table[OPEER][i] >= g.first_edge_on_component[j])
+			if (code_table[generic_code_data::table::OPEER][i] >= g.first_edge_on_component[j])
 				component++;
 			else
 				break;
@@ -3967,7 +3971,7 @@ if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
 		component = 0;
 		for (int j=1; j< num_components; j++)
 		{
-			if (code_table[EPEER][i] >= g.first_edge_on_component[j])
+			if (code_table[generic_code_data::table::EPEER][i] >= g.first_edge_on_component[j])
 				component++;
 			else
 				break;
@@ -4111,17 +4115,17 @@ if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
 						
 if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
 {
-	debug << "over_preferred_gauss_code:         old_edge = " << old_edge << " code_table[OPEER][terminating_crossing] = " << code_table[OPEER][terminating_crossing] << " code_table[EPEER][terminating_crossing] = " << code_table[EPEER][terminating_crossing] << endl;
+	debug << "over_preferred_gauss_code:         old_edge = " << old_edge << " code_table[generic_code_data::table::OPEER][terminating_crossing] = " << code_table[generic_code_data::table::OPEER][terminating_crossing] << " code_table[generic_code_data::table::EPEER][terminating_crossing] = " << code_table[generic_code_data::table::EPEER][terminating_crossing] << endl;
 }
 
-						if (code_table[OPEER][terminating_crossing] == old_edge)
+						if (code_table[generic_code_data::table::OPEER][terminating_crossing] == old_edge)
 						{	
-							if (code_table[LABEL][terminating_crossing] == generic_code_data::POSITIVE)
+							if (code_table[generic_code_data::table::LABEL][terminating_crossing] == generic_code_data::POSITIVE)
 								over_arc = false;
 						}
-						else if (code_table[EPEER][terminating_crossing] == old_edge)
+						else if (code_table[generic_code_data::table::EPEER][terminating_crossing] == old_edge)
 						{					
-							if (code_table[LABEL][terminating_crossing] == generic_code_data::NEGATIVE)
+							if (code_table[generic_code_data::table::LABEL][terminating_crossing] == generic_code_data::NEGATIVE)
 								over_arc = false;
 						}
 
@@ -4170,14 +4174,14 @@ if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
 							old_edge =  old_cpt_edge + g.first_edge_on_component[component];
 						}
 
-						if (code_table[OPEER][terminating_crossing] == old_edge)
+						if (code_table[generic_code_data::table::OPEER][terminating_crossing] == old_edge)
 						{	
-							if (code_table[LABEL][terminating_crossing] == generic_code_data::POSITIVE)
+							if (code_table[generic_code_data::table::LABEL][terminating_crossing] == generic_code_data::POSITIVE)
 								over_arc = false;
 						}
-						else if (code_table[EPEER][terminating_crossing] == old_edge)
+						else if (code_table[generic_code_data::table::EPEER][terminating_crossing] == old_edge)
 						{					
-							if (code_table[LABEL][terminating_crossing] == generic_code_data::NEGATIVE)
+							if (code_table[generic_code_data::table::LABEL][terminating_crossing] == generic_code_data::NEGATIVE)
 								over_arc = false;
 						}
 	
@@ -4216,8 +4220,8 @@ if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
 if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "over_preferred_gauss_code:         reverse sign at crossing " << inv_perm[i] << ' ' << reverse_sign << endl;	
 									
-					if ( (code_table[LABEL][inv_perm[i]] == generic_code_data::POSITIVE && code_table[TYPE][inv_perm[i]] == generic_code_data::TYPE2) ||
-					     (code_table[LABEL][inv_perm[i]] == generic_code_data::NEGATIVE && code_table[TYPE][inv_perm[i]] == generic_code_data::TYPE1)
+					if ( (code_table[generic_code_data::table::LABEL][inv_perm[i]] == generic_code_data::POSITIVE && code_table[generic_code_data::table::TYPE][inv_perm[i]] == generic_code_data::TYPE2) ||
+					     (code_table[generic_code_data::table::LABEL][inv_perm[i]] == generic_code_data::NEGATIVE && code_table[generic_code_data::table::TYPE][inv_perm[i]] == generic_code_data::TYPE1)
 					   )
 					{
 						if (reverse_sign)
@@ -4225,8 +4229,8 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 						else
 							perm_sign[i] = '+';
 					}
-					else if ( (code_table[LABEL][inv_perm[i]] == generic_code_data::POSITIVE && code_table[TYPE][inv_perm[i]] == generic_code_data::TYPE1) ||
-					          (code_table[LABEL][inv_perm[i]] == generic_code_data::NEGATIVE && code_table[TYPE][inv_perm[i]] == generic_code_data::TYPE2)
+					else if ( (code_table[generic_code_data::table::LABEL][inv_perm[i]] == generic_code_data::POSITIVE && code_table[generic_code_data::table::TYPE][inv_perm[i]] == generic_code_data::TYPE1) ||
+					          (code_table[generic_code_data::table::LABEL][inv_perm[i]] == generic_code_data::NEGATIVE && code_table[generic_code_data::table::TYPE][inv_perm[i]] == generic_code_data::TYPE2)
 							)
 					{
 						if (reverse_sign)
@@ -4475,14 +4479,14 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 				old_edge =  old_cpt_edge + g.first_edge_on_component[component];
 			}
 
-			if (code_table[OPEER][terminating_crossing] == old_edge)
+			if (code_table[generic_code_data::table::OPEER][terminating_crossing] == old_edge)
 			{	
-				if (code_table[LABEL][terminating_crossing] == generic_code_data::POSITIVE)
+				if (code_table[generic_code_data::table::LABEL][terminating_crossing] == generic_code_data::POSITIVE)
 					over_arc = false;
 			}
-			else if (code_table[EPEER][terminating_crossing] == old_edge)
+			else if (code_table[generic_code_data::table::EPEER][terminating_crossing] == old_edge)
 			{					
-				if (code_table[LABEL][terminating_crossing] == generic_code_data::NEGATIVE)
+				if (code_table[generic_code_data::table::LABEL][terminating_crossing] == generic_code_data::NEGATIVE)
 					over_arc = false;
 			}
 			
@@ -4594,7 +4598,7 @@ int amalgamate_zig_zag_counts(int a, int b)
 /* read_dowker_code creates a labelled peer code string corresponding to the Dowker-Thistlethwaite code of a prime knot, based on the conventions used by knotscape, where 
    the first Dowker-Thistlethwaite label (label 1) is assigned to an over-arc. That means that for alternating knots all the terms of the Dowker-Thistlethwaite code are 
    positive, since the even labels are always allocated to under-arcs at a crossing.  Since Dowker-Thistlethwaite codes are invariant under reflection in a line in the 
-   plane disjoint from the diagram, knotscape fixes the TYPE of the crossing involving label 1 and evaluates the other crossings' TYPE using an algorithm based on 
+   plane disjoint from the diagram, knotscape fixes the generic_code_data::table::TYPE of the crossing involving label 1 and evaluates the other crossings' generic_code_data::table::TYPE using an algorithm based on 
    chess-board colouring that is reproduced here.
    
    Dowker-Thistlethwaite codes as used by knotscape allocate odd and even labels to shadow crossings but for the purposes of evaluating regions (i.e turning cycles)
@@ -4703,8 +4707,8 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 	   
 	                +                          +                         -                        -
 
-       The clockwise or anti-clockwise relationship between the ingress edges is used to set the crossing TYPE relative to the TYPE of the base point crossing.  Since the 
-       Dowker-Thistlethwaite code is invariant under reflection in a line of the plane, we may start by setting the TYPE of crossing zero arbitrarily, ase described in more 
+       The clockwise or anti-clockwise relationship between the ingress edges is used to set the crossing generic_code_data::table::TYPE relative to the generic_code_data::table::TYPE of the base point crossing.  Since the 
+       Dowker-Thistlethwaite code is invariant under reflection in a line of the plane, we may start by setting the generic_code_data::table::TYPE of crossing zero arbitrarily, ase described in more 
        detail below.  Note that in the above diagrams, for a sub-path edge, + indicates a black region lies to the left and - indicates white lies to the left.  For the remaining 
        edges + indicates that the edge lies in a white region and - that it lies in a black region.   We could have considered the colours to be reversed (+ meaning white to 
        the left of the subpath etc.), we would still have different cases describing the configuration of the crossing relative to the initial conditions.  In practice the
@@ -4738,7 +4742,7 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 
               
        The base-point diagrams above show a TYPE1 crossing on the left and a TYPE2 crossing on the right.  We set the type of crossing zero arbitrarily, thereby determining 
-       which of the mirror images descibed by the Dowker-Thistlethwaite code the resulting peer code will describe, and start setting the other crossings' TYPE using the 
+       which of the mirror images descibed by the Dowker-Thistlethwaite code the resulting peer code will describe, and start setting the other crossings' generic_code_data::table::TYPE using the 
        subpath starting at edge 1.  Once the type of crossing zero is set, the initialization of the polarity from the base point crossing means that the four cases a) through 
        d) above determine the type of crossing relative to that of the base point crossings.       
 	*/
@@ -4935,3 +4939,163 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 	
 	return oss.str();
 }
+
+/* An immersion diagram D  that does not contain any Reidemeister I loops is non-prime if there exist two edges e1 and e2 that are both members 
+   of the same two turning cycles c1 and c2.  To see this let v1 and v2 be points in the in the interior of e1 and e2 respectively and let R1 
+   and R2 be the regions of the immersion's complement bounded by c1 and c2.  Choose the point at infinity so that R1 is the infinite region.  
+   We may join v1 and v2 by paths p1 and p2 in the regions R1 and R2 so that p1 \cap D = p2 \cap D = v1 \cup v2.  Thus p1 \cup p2 is a simple 
+   closed curve that separates the crossings of D into two non-empty subsets, so that e1 and e2 realize D as a connected sum.   
+   
+   A Reidemeister I loop in a semi-arc creates two edges either side of the Reidemeister I crossing in the same two turning cycles.  Hence the 
+   requirement that there are no Reidemeister I loops.
+   
+   For doodles and flat knots we can look for crossing connected sums, when there may be a simple closed curve intersecting the diagram in two
+   crossings.  If crossing_test is true, the function looks for a pair of crossings in the same two turning cycles, such that the terminating 
+   and originating edges are distinct.  This ensures that we identify crossings where the two regions in whihc the simple closed curve may be 
+   constructed are opposite each other at the crossings and not adjacent (the Borromean rings is not prime but has two 'adjacent' crossings 
+   in the same two regions.)  
+*/
+bool non_prime_immersion(generic_code_data& code_data, bool crossing_test)
+{
+
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
+{
+	debug << "non_prime_immersion: code = ";
+	write_peer_code (debug, code_data);
+	debug << endl;
+	debug << "non_prime_immersion: code_data:" << endl;
+	print_code_data(debug, code_data, "non_prime_immersion: ");
+	debug << "non_prime_immersion: crossing_test = " << crossing_test << endl;
+}
+	int num_crossings = code_data.num_crossings;
+	int num_edges = 2*num_crossings;
+	int num_left_cycles=0;
+	int num_cycles=0;
+
+	matrix<int> cycle (num_crossings+2, num_edges+1);
+	calculate_turning_cycles(code_data, cycle, num_left_cycles, num_cycles);
+
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
+{
+    debug << "non_prime_immersion: number of turning cycles = " << num_cycles;
+	for (int i=0; i<num_cycles; i++)
+	{
+		debug << "\nnon_prime_immersion: cycle " << i << " length = " << cycle[i][0] << ": ";
+		for (int j=1; j<=cycle[i][0]; j++)
+			debug << cycle[i][j] << " "	;
+	}
+	debug << endl;
+}
+
+	for (int i=0; i< num_cycles; i++)
+	{
+
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
+	debug << "non_prime_immersion: turning cycle " << i << " length = " << cycle[i][0] << endl;
+	
+		vector<int> common_flag(cycle[i][0]);
+			
+		for (int j=0; j< num_cycles; j++)
+		{					
+			if (j==i)
+				continue;
+
+if (debug_control::DEBUG >= debug_control::DETAIL)
+	debug << "non_prime_immersion:   turning cycle " << j << endl;
+								
+			for (int k=0; k< cycle[i][0]; k++)
+				common_flag[k] = 0;
+
+			/* look for each edge of cycle i in cycle j */
+			for (int k=1; k<= cycle[i][0]; k++)
+			{
+				/* crossing_i and subseequent_i are only used when crossing_test is true */
+				int crossing_i;
+				int subsequent_i;  // the next edge in the turning cycle
+				if (cycle[i][k] < 0)
+					crossing_i = code_data.orig_crossing[abs(cycle[i][k])];
+				else
+					crossing_i = code_data.term_crossing[cycle[i][k]];
+				subsequent_i = (k==cycle[i][0]? cycle[i][1]: cycle[i][k+1]);
+
+if (debug_control::DEBUG >= debug_control::DETAIL)
+	debug << "non_prime_immersion:     edge_i " << cycle[i][k] << ", crossing_i = " << crossing_i << ", subsequent_i = " << subsequent_i << endl;
+				
+				for (int l=1; l<= cycle[j][0]; l++)
+				{
+//					if (cycle[i][k] == cycle[j][l])
+					if (crossing_test)
+					{
+						int crossing_j;
+						int subsequent_j;
+						if (cycle[j][l] < 0)
+							crossing_j = code_data.orig_crossing[abs(cycle[j][l])];
+						else
+							crossing_j = code_data.term_crossing[cycle[j][l]];
+						subsequent_j = (l==cycle[j][0]? cycle[j][1]: cycle[j][l+1]);
+
+if (debug_control::DEBUG >= debug_control::DETAIL)
+	debug << "non_prime_immersion:       edge_j " << cycle[j][l] << ", crossing_j = " << crossing_j << ", subsequent_j = " << subsequent_j << endl;
+						
+						if (crossing_i == crossing_j)
+						{
+							/* check whether the terminating and originating edges are all different */
+							vector<int> edge_flag(2*code_data.num_crossings);
+							edge_flag[abs(cycle[i][k])] = 1;
+							edge_flag[abs(subsequent_i)] = 1;
+							edge_flag[abs(cycle[j][l])] = 1;
+							edge_flag[abs(subsequent_j)] = 1;
+							int count=0;
+							for (int f=0; f< 2*code_data.num_crossings; f++)
+								count += edge_flag[f];
+								
+if (debug_control::DEBUG >= debug_control::DETAIL)
+{
+	debug << "non_prime_immersion:       found common crossing, edge_flag = ";
+	for (int f=0; f< 2*code_data.num_crossings; f++)
+		debug << edge_flag[f] << ' ';
+	debug << "count = " << count << endl;
+}
+
+							if (count == 4)
+							{
+								common_flag[k-1] = 1;  
+								break;
+							}
+						}
+					} 
+					else if (cycle[i][k] == cycle[j][l])
+					{
+						common_flag[k-1] = 1;
+						break;
+					}					
+				}
+			}
+				
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
+{
+	debug << "non_prime_immersion:   turning cycle " << j << " common_flag: ";
+	for (int k=0; k< cycle[i][0]; k++)
+		debug << common_flag[k] << ' ';
+	debug << endl;
+}
+
+			int count = 0;
+			for (int k=0; k< cycle[i][0]; k++)
+				count += common_flag[k];
+				
+			if (count >= 2)
+			{
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
+	debug << "non_prime_immersion: found region realizing a connected sum" << endl;
+				return true;
+			}								
+		}			
+	}
+
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
+	debug << "non_prime_immersion: no region realizing a connected sum found" << endl;
+
+	return false;
+}
+

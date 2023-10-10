@@ -82,6 +82,7 @@ bool distinguish_modified_string (matrix<int>& Su, matrix<int>& Sd, matrix<int>&
 void Kamada_double_covering(string& braid);
 void generic_code(string input_string, string title);
 //int remove_Reidemeister_II(generic_code_data& code_data, vector<int>& component_flags);
+list<vector<int> > hamiltonian_circuit(generic_code_data& code_data, bool list_all_circuits, bool count_circuits_only, bool edge_circuit);
 
 
 void braid(string input_string, string title)
@@ -255,6 +256,114 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 			output << oss.str() << endl;
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "\nbraid: Gauss code = " << oss.str() << endl;
+
+		}
+		else if (braid_control::HAMILTONIAN)
+		{
+			
+			string pcode = braid_to_generic_code(input_string, num_terms, generic_code_data::peer_code);
+
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+	debug << "braid: pcode from braid word is " << pcode << endl;
+
+			generic_code_data code_data;
+			read_peer_code (code_data, pcode);
+
+			if (code_data.immersion != generic_code_data::character::CLOSED)
+			{
+				if (!braid_control::SILENT_OPERATION)
+					cout << "\n\nHamiltonian circuits only defined for closed immersions, skipping";
+		
+				if (!braid_control::RAW_OUTPUT)
+				{
+					output << (braid_control::OUTPUT_AS_INPUT? "\n;" : "\n");
+					output << "\n\nHamiltonian circuits only defined for closed immersions, skipping";
+					if (braid_control::OUTPUT_AS_INPUT)
+						output << '\n';
+				}
+		
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+	debug << "braid: Hamiltonian circuits only defined for closed immersions, doing nothing" << endl;
+			}
+			else
+			{
+				list<vector<int> > circuit_list = hamiltonian_circuit(code_data, braid_control::HC_LIST_ALL, braid_control::HC_COUNT, braid_control::HC_EDGES);
+				
+				if (circuit_list.size() != 0)
+				{
+					list<vector<int> >::iterator cptr = circuit_list.begin();
+					while (cptr != circuit_list.end())
+					{
+						vector<int>& circuit = *cptr;
+						
+							if (!braid_control::HC_COUNT)
+							{
+								if (!braid_control::SILENT_OPERATION)
+								{
+									cout << "Hamiltonian circuit ";
+									for (int i=0; i< code_data.num_crossings; i++)
+										cout << circuit[i] << ' ';
+									cout << endl;
+								}
+								
+								if (!braid_control::RAW_OUTPUT)
+								{
+									output << (braid_control::OUTPUT_AS_INPUT? "\n;" : "\n");
+									output << "Hamiltonian circuit ";
+								}
+								if (braid_control::OUTPUT_AS_INPUT)
+									output << "\n";
+				
+								for (int i=0; i< code_data.num_crossings; i++)
+									output << circuit[i] << ' ';
+								output << endl;
+				
+								if (!braid_control::SILENT_OPERATION)
+									cout << "\n";
+									
+				
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+{
+		debug << "braid: hamiltonian_circuit: " << endl;
+		for (int i=0; i< code_data.num_crossings; i++)
+			debug << circuit[i] << ' ';
+		debug << endl;
+}
+							}
+							
+						cptr++;
+					}
+				}
+				else
+				{
+					if (!braid_control::SILENT_OPERATION)
+						cout << "No Hamiltonian circuit found" << endl;
+					
+					if (!braid_control::RAW_OUTPUT)
+					{
+						output << (braid_control::OUTPUT_AS_INPUT? "\n;" : "\n");
+						output << "No Hamiltonian circuit found" << endl;
+					}
+			
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+		debug << "braid: hamiltonian_circuit: no Hamiltonian circuit found" << endl;
+				}
+				
+				if (braid_control::HC_COUNT)
+				{
+					if (!braid_control::SILENT_OPERATION)
+						cout << "Found " << circuit_list.size() << " Hamiltonian circuits" << endl;
+					
+					if (!braid_control::RAW_OUTPUT)
+					{
+						output << (braid_control::OUTPUT_AS_INPUT? "\n;" : "\n");
+						output << "Found " << circuit_list.size() << " Hamiltonian circuits" << endl;
+					}
+			
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+		debug << "braid: hamiltonian_circuit: found " << circuit_list.size() << " Hamiltonian circuits" << endl;
+				}			
+			}
 
 		}
 		else if (braid_control::HOMFLY)
@@ -1751,7 +1860,7 @@ if (debug_control::DEBUG >= debug_control::BASIC)
 	debug << endl;
 }    
 
-     matrix<int> code_table(CODE_TABLE_SIZE,num_terms);
+     matrix<int> code_table(generic_code_data::table::CODE_TABLE_SIZE,num_terms);
 
 	/* trace through the braid writing the odd and even peers into the code table
 	   and noting the component for each naming edge.  We start the numbering of
@@ -1759,26 +1868,26 @@ if (debug_control::DEBUG >= debug_control::BASIC)
 	   being 0, to which 'edge' was initialized.
 	   
 	   Since we have to convert the numbering of the crosings from braid crosings to
-	   peer code crossings, we begin by writing the edge labels into the EVEN_TERMINATING
-	   and ODD_TERMINATING rows of the code table using braid crossing numbers, then we
-	   sort the odd and even numbered peers into the OPEER and EPEER rows based on peer
+	   peer code crossings, we begin by writing the edge labels into the generic_code_data::table::EVEN_TERMINATING
+	   and generic_code_data::table::ODD_TERMINATING rows of the code table using braid crossing numbers, then we
+	   sort the odd and even numbered peers into the generic_code_data::table::OPEER and generic_code_data::table::EPEER rows based on peer
 	   code crossing numbers.  We record the braid crossing number of the ith peer-code 
 	   crossing in braid_crossing_num.
 	   
-	   We initialize the EVEN_TERMINATING and ODD_TERMINATING rows of the code table to -1
+	   We initialize the generic_code_data::table::EVEN_TERMINATING and generic_code_data::table::ODD_TERMINATING rows of the code table to -1
 	   to determine the components of the braid.  Since each component of an immersed link contains 
 	   an even number of edges, when we complete a component we shall attempt
 	   to write an even edge to a location of the code_table that has already had an edge assigned
 	   (so the value will be positive).  We then need to find the start of another component, 
-	   if one exists.  We look along the EVEN_TERMINATING row of the code_table to see if there is
+	   if one exists.  We look along the generic_code_data::table::EVEN_TERMINATING row of the code_table to see if there is
 	   another crossing for which we have not assigned an even terminating peer (i.e one for which
 	   the entry is negative.  If there is one, we choose the first one for which we have already
 	   assigned an odd terminating peer (i.e whose ODD_TRMINATING entry is positive).  We are 
 	   guaranteed to be able to find such a crossing if there is another component to number. 
 	   
 	   To continue the numbering we need to understand on which strand the new component starts.
-	   To do this we record, as a negative number, the peer strand number in code_table[EVEN_TERMINATING][i]
-	   when we write a value to code_table[ODD_TERMINATING][i], if the even numbered peer is not yet known.
+	   To do this we record, as a negative number, the peer strand number in code_table[generic_code_data::table::EVEN_TERMINATING][i]
+	   when we write a value to code_table[generic_code_data::table::ODD_TERMINATING][i], if the even numbered peer is not yet known.
 	*/
     vector<int> braid_crossing_num(num_terms);
 	int edge=0;
@@ -1787,7 +1896,7 @@ if (debug_control::DEBUG >= debug_control::BASIC)
 	int component = 0;
 	
 	for (int i=0; i< num_terms; i++)
-		code_table[EVEN_TERMINATING][i] = code_table[ODD_TERMINATING][i] = -1;
+		code_table[generic_code_data::table::EVEN_TERMINATING][i] = code_table[generic_code_data::table::ODD_TERMINATING][i] = -1;
 
 	bool complete = false;
 	do
@@ -1828,13 +1937,13 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
     	}
 
 		/* so now braid_num[crossing] involves string_num. */
-		int row = (edge%2? ODD_TERMINATING: EVEN_TERMINATING);
+		int row = (edge%2? generic_code_data::table::ODD_TERMINATING: generic_code_data::table::EVEN_TERMINATING);
 		
 
 		if (code_table[row][crossing] >= 0)
 		{
 			/* we've reached the end of a component (and edge will therefore be even).  We
-		       look along the EVEN_TERMINATING row of the code_table to see if there is
+		       look along the generic_code_data::table::EVEN_TERMINATING row of the code_table to see if there is
 		       another crossing for which we have not assigned an even terminating peer.
 		       If there is one, we choose the first one for which we have already assigned
 		       an odd terminating peer.  We are guaranteed to be able to find such a crossing
@@ -1845,11 +1954,11 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 		    complete = true;
 			for (int i=0; i< num_terms; i++)
 		    {
-				if (code_table[EVEN_TERMINATING][i] < 0 && code_table[ODD_TERMINATING][i] >= 0)
+				if (code_table[generic_code_data::table::EVEN_TERMINATING][i] < 0 && code_table[generic_code_data::table::ODD_TERMINATING][i] >= 0)
 				{
 					component++;
 					crossing = i;
-					string_num = abs(code_table[EVEN_TERMINATING][i]);
+					string_num = abs(code_table[generic_code_data::table::EVEN_TERMINATING][i]);
 					complete = false;
 
 if (debug_control::DEBUG >= debug_control::DETAIL)
@@ -1866,7 +1975,7 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 			/* continue with the current component */
 			code_table[row][crossing] = edge;
 if (debug_control::DEBUG >= debug_control::DETAIL)
-	debug << "braid_to_generic_code:    setting code_table[" << (edge%2? "ODD_TERMINATING": "EVEN_TERMINATING") << "][" << crossing << "] = " << edge << endl;
+	debug << "braid_to_generic_code:    setting code_table[" << (edge%2? "generic_code_data::table::ODD_TERMINATING": "generic_code_data::table::EVEN_TERMINATING") << "][" << crossing << "] = " << edge << endl;
 			
 			if (edge%2 == 0)
 			{
@@ -1876,17 +1985,17 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "braid_to_generic_code:    setting braid_crossing_num[" << peer_code_crossing << "] = " << crossing << endl;
 	
 				/* record the component of the peer-code naming edge */
-				code_table[COMPONENT][peer_code_crossing] = component;
+				code_table[generic_code_data::table::COMPONENT][peer_code_crossing] = component;
 			}
 			else
 			{
 				/* write the string number on which the even numbered peer appears into 
-				   the EVEN_TERMINATING row if it has not yet been assigned an edge number
+				   the generic_code_data::table::EVEN_TERMINATING row if it has not yet been assigned an edge number
 				*/
-				if (code_table[EVEN_TERMINATING][crossing] < 0)
+				if (code_table[generic_code_data::table::EVEN_TERMINATING][crossing] < 0)
 				{
-					code_table[EVEN_TERMINATING][crossing] = (braid_num[crossing] == string_num? string_num+1: string_num-1);
-					code_table[EVEN_TERMINATING][crossing] *= -1;
+					code_table[generic_code_data::table::EVEN_TERMINATING][crossing] = (braid_num[crossing] == string_num? string_num+1: string_num-1);
+					code_table[generic_code_data::table::EVEN_TERMINATING][crossing] *= -1;
 				}
 			}
 	
@@ -1903,19 +2012,19 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 				if (edge%2 == 0)
 				{
 					int peer_code_crossing = edge/2;
-					code_table[TYPE][peer_code_crossing] = generic_code_data::TYPE1; 
+					code_table[generic_code_data::table::TYPE][peer_code_crossing] = generic_code_data::TYPE1; 
 	
 					if (braid_type[crossing] == braid_crossing_type::VIRTUAL)
-						code_table[LABEL][peer_code_crossing] = generic_code_data::VIRTUAL;
+						code_table[generic_code_data::table::LABEL][peer_code_crossing] = generic_code_data::VIRTUAL;
 					else if (braid_type[crossing] == braid_crossing_type::NEGATIVE)
-						code_table[LABEL][peer_code_crossing] = generic_code_data::POSITIVE; 
+						code_table[generic_code_data::table::LABEL][peer_code_crossing] = generic_code_data::POSITIVE; 
 					else
-						code_table[LABEL][peer_code_crossing] = generic_code_data::NEGATIVE; 
+						code_table[generic_code_data::table::LABEL][peer_code_crossing] = generic_code_data::NEGATIVE; 
 	
 if (debug_control::DEBUG >= debug_control::DETAIL)
 {
-	debug << "braid_to_generic_code:    crossing TYPE = TYPE1" << endl;
-	debug << "braid_to_generic_code:    crossing LABEL = " << code_table[LABEL][peer_code_crossing] << endl;
+	debug << "braid_to_generic_code:    crossing generic_code_data::table::TYPE = TYPE1" << endl;
+	debug << "braid_to_generic_code:    crossing generic_code_data::table::LABEL = " << code_table[generic_code_data::table::LABEL][peer_code_crossing] << endl;
 }
 				}
 			}
@@ -1927,19 +2036,19 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 				if (edge%2 == 0)
 				{
 					int peer_code_crossing = edge/2;
-					code_table[TYPE][peer_code_crossing] = generic_code_data::TYPE2;
+					code_table[generic_code_data::table::TYPE][peer_code_crossing] = generic_code_data::TYPE2;
 	
 					if (braid_type[crossing] == braid_crossing_type::VIRTUAL)
-						code_table[LABEL][peer_code_crossing] = braid_crossing_type::VIRTUAL;
+						code_table[generic_code_data::table::LABEL][peer_code_crossing] = braid_crossing_type::VIRTUAL;
 					else if (braid_type[crossing] == braid_crossing_type::POSITIVE)
-						code_table[LABEL][peer_code_crossing] = generic_code_data::POSITIVE;
+						code_table[generic_code_data::table::LABEL][peer_code_crossing] = generic_code_data::POSITIVE;
 					else
-						code_table[LABEL][peer_code_crossing] = generic_code_data::NEGATIVE;
+						code_table[generic_code_data::table::LABEL][peer_code_crossing] = generic_code_data::NEGATIVE;
 	
 if (debug_control::DEBUG >= debug_control::DETAIL)
 {
-	debug << "braid_to_generic_code:    crossing TYPE = TYPE1" << endl;
-	debug << "braid_to_generic_code:    crossing LABEL = " << code_table[LABEL][peer_code_crossing] << endl;
+	debug << "braid_to_generic_code:    crossing generic_code_data::table::TYPE = TYPE1" << endl;
+	debug << "braid_to_generic_code:    crossing generic_code_data::table::LABEL = " << code_table[generic_code_data::table::LABEL][peer_code_crossing] << endl;
 }
 				}
 			}
@@ -1958,29 +2067,49 @@ if (debug_control::DEBUG >= debug_control::BASIC)
 	debug << "braid_to_generic_code: braid_crossing_num (conversion from peer code numbers to braid numbers): ";
 	for (int i=0; i<num_terms; i++)
 		debug << braid_crossing_num[i] << ' ';
-	debug << "\nbraid_to_generic_code: EVEN_TERMINATING (braid order): ";
+	debug << "\nbraid_to_generic_code: generic_code_data::table::EVEN_TERMINATING (braid order): ";
 	for (int i=0; i<num_terms; i++)
-		debug << code_table[EVEN_TERMINATING][i] << ' ';
-	debug << "\nbraid_to_generic_code: ODD_TERMINATING  (braid order): ";
+		debug << code_table[generic_code_data::table::EVEN_TERMINATING][i] << ' ';
+	debug << "\nbraid_to_generic_code: generic_code_data::table::ODD_TERMINATING  (braid order): ";
 	for (int i=0; i<num_terms; i++)
-		debug << code_table[ODD_TERMINATING][i] << ' ';
+		debug << code_table[generic_code_data::table::ODD_TERMINATING][i] << ' ';
 	debug << "\nbraid_to_generic_code: crossing types (peer code order): ";
 	for (int i=0; i<num_terms; i++)
-		debug << code_table[TYPE][i] << ' ';
+		debug << code_table[generic_code_data::table::TYPE][i] << ' ';
 	debug << "\nbraid_to_generic_code: labels (peer code order): ";
 	for (int i=0; i<num_terms; i++)
-		debug << code_table[LABEL][i] << ' ';
+		debug << code_table[generic_code_data::table::LABEL][i] << ' ';
 	debug << "\nbraid_to_generic_code: component (peer code order): ";
 	for (int i=0; i<num_terms; i++)
-		debug << code_table[COMPONENT][i] << ' ';
+		debug << code_table[generic_code_data::table::COMPONENT][i] << ' ';
 	debug << endl;
 }
 
-	/* write the odd and even peers into the OPEER and EPEER rows */
+	/* write the component data into code_data */
+	int num_components = component+1;
+
+	vector<int> num_component_edges(num_components);
+	vector<int> first_edge_on_component(num_components);
+	first_edge_on_component[0]=0;
+	component=0;
+	
+	for (int i=1; i< num_terms; i++)
+	{
+		if (code_table[generic_code_data::table::COMPONENT][i] != code_table[generic_code_data::table::COMPONENT][i-1])
+		{
+			num_component_edges[component] = 2*i-first_edge_on_component[component];
+			component++;
+			first_edge_on_component[component] = 2*i;
+		}
+	}
+	
+	num_component_edges[component] = 2*num_terms - first_edge_on_component[component];
+
+	/* write the odd and even peers into the generic_code_data::table::OPEER and generic_code_data::table::EPEER rows */
 	for (int i=0; i< num_terms; i++)
 	{
-		code_table[OPEER][i] = code_table[ODD_TERMINATING][braid_crossing_num[i]];
-		code_table[EPEER][(code_table[OPEER][i]-1)/2] = 2*i;
+		code_table[generic_code_data::table::OPEER][i] = code_table[generic_code_data::table::ODD_TERMINATING][braid_crossing_num[i]];
+		code_table[generic_code_data::table::EPEER][(code_table[generic_code_data::table::OPEER][i]-1)/2] = 2*i;
 	}
 	
 	generic_code_data code_data;
@@ -1993,6 +2122,8 @@ if (debug_control::DEBUG >= debug_control::BASIC)
 	code_data.code_table = code_table;
 	code_data.num_crossings = num_terms;
 	code_data.num_components = component+1;
+	code_data.num_component_edges = num_component_edges;
+	code_data.first_edge_on_component = first_edge_on_component;
 	
 //if (debug_control::DEBUG >= debug_control::DETAIL)
 //	print (code_data, debug, "braid_to_generic_code: ");

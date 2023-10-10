@@ -55,6 +55,7 @@ void remove_fringe_edge(int edge, vector<int>& current_fringe);
 
 void mock_alexander(generic_code_data& code_data);
 int find_cycle(matrix<int>& cycle, int num_cycles, int num_left_cycles, int edge_1, int edge_2, bool left_cycle);
+list<vector<int> > hamiltonian_circuit(generic_code_data& code_data, bool list_all_circuits, bool count_circuits_only, bool edge_circuit);
 
 /* generic_code is the broker function for an input_string in the form of a labelled code, that is
    either a labelled immersion code or a labelled peer code.  It will do one of the following:
@@ -133,7 +134,7 @@ if (debug_control::DEBUG >= debug_control::BASIC)
 	   	output << input_string;		
 	}
 						
-	if (input_string.find('L') != string::npos)
+	if (input_string.find("L:") != string::npos)
 	{	
 		input_string = parse_long_knot_input_string(input_string);
 		
@@ -215,7 +216,7 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 		    
 		    for (int i=0; i<num_crossings; i++)
 		    {
-				if (code_table[LABEL][i] != generic_code_data::FLAT)
+				if (code_table[generic_code_data::table::LABEL][i] != generic_code_data::FLAT)
 				{
 					flat_crossings_only = false;
 					break;
@@ -577,6 +578,104 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "\ngeneric_code: Gauss code = " << oss.str() << endl;
 		
 	}
+	else if (braid_control::HAMILTONIAN)
+	{
+		if (code_data.immersion != generic_code_data::character::CLOSED)
+		{
+			if (!braid_control::SILENT_OPERATION)
+				cout << "\n\nHamiltonian circuits only defined for closed immersions, skipping";
+	
+			if (!braid_control::RAW_OUTPUT)
+			{
+				output << (braid_control::OUTPUT_AS_INPUT? "\n;" : "\n");
+				output << "\n\nHamiltonian circuits only defined for closed immersions, skipping";
+				if (braid_control::OUTPUT_AS_INPUT)
+					output << '\n';
+			}
+		
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+	debug << "generic_code: Hamiltonian circuits only defined for closed immersions, doing nothing" << endl;
+		}
+		else
+		{
+			list<vector<int> > circuit_list = hamiltonian_circuit(code_data, braid_control::HC_LIST_ALL, braid_control::HC_COUNT, braid_control::HC_EDGES);
+			
+			if (circuit_list.size() != 0)
+			{
+				list<vector<int> >::iterator cptr = circuit_list.begin();
+				while (cptr != circuit_list.end())
+				{
+					vector<int>& circuit = *cptr;
+					
+						if (!braid_control::HC_COUNT)
+						{
+							if (!braid_control::SILENT_OPERATION)
+							{
+								cout << "Hamiltonian circuit ";
+								for (int i=0; i< code_data.num_crossings; i++)
+									cout << circuit[i] << ' ';
+								cout << endl;
+							}
+							
+							if (!braid_control::RAW_OUTPUT)
+							{
+								output << (braid_control::OUTPUT_AS_INPUT? "\n;" : "\n");
+								output << "Hamiltonian circuit ";
+							}
+							if (braid_control::OUTPUT_AS_INPUT)
+								output << "\n";
+			
+							for (int i=0; i< code_data.num_crossings; i++)
+								output << circuit[i] << ' ';
+							output << endl;
+			
+							if (!braid_control::SILENT_OPERATION)
+								cout << "\n";
+								
+			
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+{
+		debug << "generic_code: hamiltonian_circuit: " << endl;
+		for (int i=0; i< code_data.num_crossings; i++)
+			debug << circuit[i] << ' ';
+		debug << endl;
+}
+						}
+						
+					cptr++;
+				}
+			}
+			else
+			{
+				if (!braid_control::SILENT_OPERATION)
+					cout << "No Hamiltonian circuit found" << endl;
+				
+				if (!braid_control::RAW_OUTPUT)
+				{
+					output << (braid_control::OUTPUT_AS_INPUT? "\n;" : "\n");
+					output << "No Hamiltonian circuit found" << endl;
+				}
+		
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+		debug << "generic_code: hamiltonian_circuit: no Hamiltonian circuit found" << endl;
+			}
+			
+			if (braid_control::HC_COUNT)
+			{
+				if (!braid_control::SILENT_OPERATION)
+					cout << "Found " << circuit_list.size() << " Hamiltonian circuits" << endl;
+				
+				if (!braid_control::RAW_OUTPUT)
+				{
+					output << (braid_control::OUTPUT_AS_INPUT? "\n;" : "\n");
+					output << "Found " << circuit_list.size() << " Hamiltonian circuits" << endl;
+				}
+		
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+		debug << "generic_code: hamiltonian_circuit: found " << circuit_list.size() << " Hamiltonian circuits" << endl;
+			}			
+		}
+	}
 	else if (braid_control::KAUFFMAN_BRACKET)
 	{
 		bracket_polynomial(code_data,KAUFFMAN_VARIANT);
@@ -740,6 +839,35 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 			mock_alexander(code_data);
 		}
 	}
+	else if (braid_control::PRIME_TEST)
+	{
+		/* should we extend support to Gauss codes using gauss_to_peer? */
+		
+		bool connected_sum = non_prime_immersion(code_data,false);
+		bool flat = true;
+		for (int i=0; i< code_data.num_crossings; i++)
+		{
+			if (code_data.code_table[generic_code_data::table::LABEL][i] != generic_code_data::label::FLAT)
+			{
+				flat = false;
+				break;
+			}
+		}
+		
+		if (flat && !connected_sum)
+			connected_sum = non_prime_immersion(code_data,true);
+				
+		if (!braid_control::SILENT_OPERATION)
+			cout << "\nInput is " << (connected_sum? "not prime": "prime")  << endl;
+		if (!braid_control::RAW_OUTPUT)
+		{
+			output << "\nInput is ";
+		}
+		output <<  (connected_sum? "not prime": "prime")  << endl;
+		
+//if (debug_control::DEBUG >= debug_control::SUMMARY)
+//	debug << "generic_code: Affine index polynomial = " << poly << endl;
+	}
 /*
 	else if (braid_control::SATELLITE)
 	{
@@ -797,7 +925,7 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
    returns false and leaves code unchanged.  Otherwise the code is set to a vector containing the dowker code and the function returns true.
 
    Given that we have a code table most of the work for the dowker code is done except that the dowker code numbers semi-arcs from 1 rather 
-   than zero.  (See comments to the function braid_to_dowker for a description of the dowker code).  Therefore the OPEER row of the 
+   than zero.  (See comments to the function braid_to_dowker for a description of the dowker code).  Therefore the generic_code_data::table::OPEER row of the 
    table gives the Dowker code once the odd-numbered peers have been incremented by one.   
    
    Note also that if we are given generic code data for an alternating knot then all the labels will be '+'.  Those crossings for which the label 
@@ -811,15 +939,15 @@ bool immersion_to_dowker (matrix<int>& code_table, vector<int>& code)
 	vector<int> dowker_code(num_crossings);
 	
 	for (int i=0; i<num_crossings; i++)
-		dowker_code[i] = code_table[OPEER][i]+1;
+		dowker_code[i] = code_table[generic_code_data::table::OPEER][i]+1;
 	
 	for (int i=0; i<num_crossings; i++)
 	{
-		if (code_table[LABEL][i] == generic_code_data::NEGATIVE)
+		if (code_table[generic_code_data::table::LABEL][i] == generic_code_data::NEGATIVE)
 		{
 			dowker_code[i] *= -1;
 		}
-		else if (code_table[LABEL][i] == generic_code_data::VIRTUAL)
+		else if (code_table[generic_code_data::table::LABEL][i] == generic_code_data::VIRTUAL)
 		{
 			classical = false;
 			break;
@@ -859,7 +987,7 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 	/* check we've not been given flat crossings */
 	for (int i=0; i< num_crossings; i++)
 	{
-		if (code_table[LABEL][i] == generic_code_data::FLAT)
+		if (code_table[generic_code_data::table::LABEL][i] == generic_code_data::FLAT)
 		{
 
 			if (!braid_control::SILENT_OPERATION)
@@ -911,17 +1039,17 @@ if (debug_control::DEBUG >= debug_control::BASIC)
 	{
 		int next_crossing = code_data.term_crossing[edge];
 		
-		if (code_table[LABEL][next_crossing] == generic_code_data::VIRTUAL || (pure_knotoid_code_data && code_data.shortcut_crossing[next_crossing]))
+		if (code_table[generic_code_data::table::LABEL][next_crossing] == generic_code_data::VIRTUAL || (pure_knotoid_code_data && code_data.shortcut_crossing[next_crossing]))
 		{
 			/* do nothing, just move around the diagram */
 			edge++;
 			continue;
 		}				
-		else if (code_table[LABEL][next_crossing] == generic_code_data::POSITIVE || code_table[LABEL][next_crossing] == generic_code_data::NEGATIVE)
+		else if (code_table[generic_code_data::table::LABEL][next_crossing] == generic_code_data::POSITIVE || code_table[generic_code_data::table::LABEL][next_crossing] == generic_code_data::NEGATIVE)
 		{
 			bool a_arc = false;
-			if ( (edge == code_table[ODD_TERMINATING][next_crossing] && code_table[TYPE][next_crossing] == generic_code_data::TYPE1)
-			   ||(edge == code_table[EVEN_TERMINATING][next_crossing] && code_table[TYPE][next_crossing] == generic_code_data::TYPE2)
+			if ( (edge == code_table[generic_code_data::table::ODD_TERMINATING][next_crossing] && code_table[generic_code_data::table::TYPE][next_crossing] == generic_code_data::TYPE1)
+			   ||(edge == code_table[generic_code_data::table::EVEN_TERMINATING][next_crossing] && code_table[generic_code_data::table::TYPE][next_crossing] == generic_code_data::TYPE2)
 			   )
 			{
 				a_arc = true;
@@ -967,7 +1095,7 @@ if (debug_control::DEBUG >= debug_control::BASIC)
 	
 	for (int i=0; i< num_crossings; i++)
 	{
-		if (code_table[LABEL][i] != generic_code_data::VIRTUAL && !(pure_knotoid_code_data && code_data.shortcut_crossing[i]))
+		if (code_table[generic_code_data::table::LABEL][i] != generic_code_data::VIRTUAL && !(pure_knotoid_code_data && code_data.shortcut_crossing[i]))
 			W_plus[i] = a_colour[i] - b_colour[i] -1;
 	}
 
@@ -990,15 +1118,15 @@ if (debug_control::DEBUG >= debug_control::BASIC)
 			/* regard shortcut crossings as virtual for the purposes of sign, so we ignore them */
 			sign[i] = braid_crossing_type::VIRTUAL;
 		}
-		else if (   (code_table[TYPE][i] == generic_code_data::TYPE1 && code_table[LABEL][i] == generic_code_data::NEGATIVE)
-		    || (code_table[TYPE][i] == generic_code_data::TYPE2 && code_table[LABEL][i] == generic_code_data::POSITIVE)
+		else if (   (code_table[generic_code_data::table::TYPE][i] == generic_code_data::TYPE1 && code_table[generic_code_data::table::LABEL][i] == generic_code_data::NEGATIVE)
+		    || (code_table[generic_code_data::table::TYPE][i] == generic_code_data::TYPE2 && code_table[generic_code_data::table::LABEL][i] == generic_code_data::POSITIVE)
 		   )
 		{
 			/* positive crossing */
 			sign[i]  = braid_crossing_type::POSITIVE;
 	    }
-		else if (   (code_table[TYPE][i] == generic_code_data::TYPE1 && code_table[LABEL][i] == generic_code_data::POSITIVE)
-		          || (code_table[TYPE][i] == generic_code_data::TYPE2 && code_table[LABEL][i] == generic_code_data::NEGATIVE)
+		else if (   (code_table[generic_code_data::table::TYPE][i] == generic_code_data::TYPE1 && code_table[generic_code_data::table::LABEL][i] == generic_code_data::POSITIVE)
+		          || (code_table[generic_code_data::table::TYPE][i] == generic_code_data::TYPE2 && code_table[generic_code_data::table::LABEL][i] == generic_code_data::NEGATIVE)
 		        )
 		{
 			/* negative crossing */
@@ -1038,7 +1166,7 @@ if (debug_control::DEBUG >= debug_control::BASIC)
 	
 	for (int i=0; i< num_crossings; i++)
 	{
-//		if (code_table[LABEL][i] != generic_code_data::VIRTUAL)
+//		if (code_table[generic_code_data::table::LABEL][i] != generic_code_data::VIRTUAL)
 		if (sign[i] != braid_crossing_type::VIRTUAL)
 		{
 			if (sign[i] == braid_crossing_type::POSITIVE)
@@ -1114,8 +1242,8 @@ if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 		
 		for (int i=0; i< num_kcrossings; i++)
 		{
-			if (kcode_table[LABEL][i] == generic_code_data::POSITIVE || kcode_table[LABEL][i] == generic_code_data::NEGATIVE)
-				writhe += kcode_table[LABEL][i];
+			if (kcode_table[generic_code_data::table::LABEL][i] == generic_code_data::POSITIVE || kcode_table[generic_code_data::table::LABEL][i] == generic_code_data::NEGATIVE)
+				writhe += kcode_table[generic_code_data::table::LABEL][i];
 		}
 
 if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
@@ -1200,8 +1328,8 @@ if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
         for (int i=0; i< num_kcrossings; i++)
         {
 	
-			int odd_peer = kcode_table[OPEER][i];
-			bool type_1_crossing = (kcode_table[TYPE][i] == generic_code_data::TYPE1? true: false);
+			int odd_peer = kcode_table[generic_code_data::table::OPEER][i];
+			bool type_1_crossing = (kcode_table[generic_code_data::table::TYPE][i] == generic_code_data::TYPE1? true: false);
 			
 if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 {
@@ -1235,14 +1363,14 @@ if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 						required_type = generic_code_data::TYPE2;
 						
 					int required_crossing;
-					if ((kcode_table[LABEL][i] == generic_code_data::POSITIVE && kcode_table[TYPE][i] == generic_code_data::TYPE2) ||
-					     (kcode_table[LABEL][i] == generic_code_data::NEGATIVE && kcode_table[TYPE][i] == generic_code_data::TYPE1))
+					if ((kcode_table[generic_code_data::table::LABEL][i] == generic_code_data::POSITIVE && kcode_table[generic_code_data::table::TYPE][i] == generic_code_data::TYPE2) ||
+					     (kcode_table[generic_code_data::table::LABEL][i] == generic_code_data::NEGATIVE && kcode_table[generic_code_data::table::TYPE][i] == generic_code_data::TYPE1))
 					    required_crossing = generic_code_data::POSITIVE;
-					else if ((kcode_table[LABEL][i] == generic_code_data::POSITIVE && kcode_table[TYPE][i] == generic_code_data::TYPE1) ||
-					     (kcode_table[LABEL][i] == generic_code_data::NEGATIVE && kcode_table[TYPE][i] == generic_code_data::TYPE2))
+					else if ((kcode_table[generic_code_data::table::LABEL][i] == generic_code_data::POSITIVE && kcode_table[generic_code_data::table::TYPE][i] == generic_code_data::TYPE1) ||
+					     (kcode_table[generic_code_data::table::LABEL][i] == generic_code_data::NEGATIVE && kcode_table[generic_code_data::table::TYPE][i] == generic_code_data::TYPE2))
 					    required_crossing = generic_code_data::NEGATIVE;
 					else
-						required_crossing = kcode_table[LABEL][i];
+						required_crossing = kcode_table[generic_code_data::table::LABEL][i];
 
 					assign_satellite_code(satellite_data, s_edge, s_prime_edge, s, s_prime, required_type, required_crossing);									
 				}
@@ -1328,10 +1456,10 @@ if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 		*/
 		for (int i =0; i < satellite_data.num_crossings; i++)
 		{
-			satellite_data.term_crossing[scode_table[EVEN_TERMINATING][i]] = i;
-			satellite_data.term_crossing[scode_table[ODD_TERMINATING][i]] = i;
-			satellite_data.orig_crossing[scode_table[EVEN_ORIGINATING][i]] = i;
-			satellite_data.orig_crossing[scode_table[ODD_ORIGINATING][i]] = i;
+			satellite_data.term_crossing[scode_table[generic_code_data::table::EVEN_TERMINATING][i]] = i;
+			satellite_data.term_crossing[scode_table[generic_code_data::table::ODD_TERMINATING][i]] = i;
+			satellite_data.orig_crossing[scode_table[generic_code_data::table::EVEN_ORIGINATING][i]] = i;
+			satellite_data.orig_crossing[scode_table[generic_code_data::table::ODD_ORIGINATING][i]] = i;
 		}
 
 //		print_code_data(cout, satellite_data, "    ");
@@ -1364,85 +1492,85 @@ if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 	
 	int s_crossing = s_even/2;
 
-	scode_table[OPEER][s_crossing] = s_odd;
-	scode_table[EPEER][(s_odd-1)/2] = s_even;
+	scode_table[generic_code_data::table::OPEER][s_crossing] = s_odd;
+	scode_table[generic_code_data::table::EPEER][(s_odd-1)/2] = s_even;
 
 	if (type == generic_code_data::TYPE1)
-		scode_table[TYPE][s_crossing] = generic_code_data::TYPE1;
+		scode_table[generic_code_data::table::TYPE][s_crossing] = generic_code_data::TYPE1;
 	else
-		scode_table[TYPE][s_crossing] = generic_code_data::TYPE2;
+		scode_table[generic_code_data::table::TYPE][s_crossing] = generic_code_data::TYPE2;
 
 if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
-	debug << "assign_satellite_code_data:       crossing is " << (scode_table[TYPE][s_crossing] == generic_code_data::TYPE1? "Type I" : "Type II") << endl;
+	debug << "assign_satellite_code_data:       crossing is " << (scode_table[generic_code_data::table::TYPE][s_crossing] == generic_code_data::TYPE1? "Type I" : "Type II") << endl;
 					
 	/* crossing indicates whether we have a positive, negative crossing in the standard sense, so we adjust
 	   for the peer code based on type.
 	*/
 	if (crossing == generic_code_data::POSITIVE)
 	{
-		if (scode_table[TYPE][s_crossing] == generic_code_data::TYPE2)
-			scode_table[LABEL][s_crossing] = generic_code_data::POSITIVE;
+		if (scode_table[generic_code_data::table::TYPE][s_crossing] == generic_code_data::TYPE2)
+			scode_table[generic_code_data::table::LABEL][s_crossing] = generic_code_data::POSITIVE;
 		else
-			scode_table[LABEL][s_crossing] = generic_code_data::NEGATIVE;
+			scode_table[generic_code_data::table::LABEL][s_crossing] = generic_code_data::NEGATIVE;
 	}
 	else if (crossing == generic_code_data::NEGATIVE)
 	{
-		if (scode_table[TYPE][s_crossing] == generic_code_data::TYPE1)
-			scode_table[LABEL][s_crossing] = generic_code_data::POSITIVE;
+		if (scode_table[generic_code_data::table::TYPE][s_crossing] == generic_code_data::TYPE1)
+			scode_table[generic_code_data::table::LABEL][s_crossing] = generic_code_data::POSITIVE;
 		else
-			scode_table[LABEL][s_crossing] = generic_code_data::NEGATIVE;
+			scode_table[generic_code_data::table::LABEL][s_crossing] = generic_code_data::NEGATIVE;
 	}
 	else
 	{
-		scode_table[LABEL][s_crossing] = crossing; // virtual, or flat
+		scode_table[generic_code_data::table::LABEL][s_crossing] = crossing; // virtual, or flat
 	}
 
 if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 {
 	debug << "assign_satellite_code_data:       label is ";
-	if (scode_table[LABEL][s_crossing] == generic_code_data::POSITIVE)
+	if (scode_table[generic_code_data::table::LABEL][s_crossing] == generic_code_data::POSITIVE)
 		debug << "positive" << endl;
-	else if (scode_table[LABEL][s_crossing] == generic_code_data::NEGATIVE)
+	else if (scode_table[generic_code_data::table::LABEL][s_crossing] == generic_code_data::NEGATIVE)
 		debug << "negative" << endl;
-	else if (scode_table[LABEL][s_crossing] == generic_code_data::VIRTUAL)
+	else if (scode_table[generic_code_data::table::LABEL][s_crossing] == generic_code_data::VIRTUAL)
 		debug << "virtual" << endl;
-	else if (scode_table[LABEL][s_crossing] == generic_code_data::FLAT)
+	else if (scode_table[generic_code_data::table::LABEL][s_crossing] == generic_code_data::FLAT)
 		debug << "flat" << endl;
 	else
-	    debug << scode_table[LABEL][s_crossing] << endl;
+	    debug << scode_table[generic_code_data::table::LABEL][s_crossing] << endl;
 }
 					
-	scode_table[EVEN_TERMINATING][s_crossing] = s_even;
-	scode_table[ODD_TERMINATING][s_crossing] = s_odd;				
+	scode_table[generic_code_data::table::EVEN_TERMINATING][s_crossing] = s_even;
+	scode_table[generic_code_data::table::ODD_TERMINATING][s_crossing] = s_odd;				
 
 
 	if (s_odd == s_edge)
 	{
 		if ( s_odd == satellite_data.first_edge_on_component[s_component] + satellite_data.num_component_edges[s_component] - 1)
-			scode_table[EVEN_ORIGINATING][s_crossing] = satellite_data.first_edge_on_component[s_component];
+			scode_table[generic_code_data::table::EVEN_ORIGINATING][s_crossing] = satellite_data.first_edge_on_component[s_component];
 		else
-			scode_table[EVEN_ORIGINATING][s_crossing] = s_odd+1;
+			scode_table[generic_code_data::table::EVEN_ORIGINATING][s_crossing] = s_odd+1;
 
-		scode_table[COMPONENT][s_crossing] = s_prime_component;
+		scode_table[generic_code_data::table::COMPONENT][s_crossing] = s_prime_component;
 	}
 	else
 	{
 		if ( s_odd == satellite_data.first_edge_on_component[s_prime_component] + satellite_data.num_component_edges[s_prime_component] - 1)
-			scode_table[EVEN_ORIGINATING][s_crossing] = satellite_data.first_edge_on_component[s_prime_component];
+			scode_table[generic_code_data::table::EVEN_ORIGINATING][s_crossing] = satellite_data.first_edge_on_component[s_prime_component];
 		else
-			scode_table[EVEN_ORIGINATING][s_crossing] = s_odd+1;					
+			scode_table[generic_code_data::table::EVEN_ORIGINATING][s_crossing] = s_odd+1;					
 
-		scode_table[COMPONENT][s_crossing] = s_component;
+		scode_table[generic_code_data::table::COMPONENT][s_crossing] = s_component;
 	}
 	
-	scode_table[ODD_ORIGINATING][s_crossing] = s_even+1;
+	scode_table[generic_code_data::table::ODD_ORIGINATING][s_crossing] = s_even+1;
 	
 if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 {
-	debug << "assign_satellite_code_data:       even terminating edge is " << scode_table[EVEN_TERMINATING][s_crossing] << endl;
-	debug << "assign_satellite_code_data:       odd terminating edge is " << scode_table[ODD_TERMINATING][s_crossing] << endl;
-	debug << "assign_satellite_code_data:       even originating edge is " << scode_table[EVEN_ORIGINATING][s_crossing] << endl;
-	debug << "assign_satellite_code_data:       odd originating edge is " << scode_table[ODD_ORIGINATING][s_crossing] << endl;
+	debug << "assign_satellite_code_data:       even terminating edge is " << scode_table[generic_code_data::table::EVEN_TERMINATING][s_crossing] << endl;
+	debug << "assign_satellite_code_data:       odd terminating edge is " << scode_table[generic_code_data::table::ODD_TERMINATING][s_crossing] << endl;
+	debug << "assign_satellite_code_data:       even originating edge is " << scode_table[generic_code_data::table::EVEN_ORIGINATING][s_crossing] << endl;
+	debug << "assign_satellite_code_data:       odd originating edge is " << scode_table[generic_code_data::table::ODD_ORIGINATING][s_crossing] << endl;
 	debug << "assign_satellite_code_data:       component " << s_component << endl;
 }
 
@@ -1612,16 +1740,16 @@ if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 							
 			bool new_minimal_rep_found = false;
 			/* check the lexicographic ordering of the peer code, ignoring components, that is
-			   compare the product of the TYPE and OPEER
+			   compare the product of the generic_code_data::table::TYPE and generic_code_data::table::OPEER
 			*/
 			for (int i=0; i< num_crossings; i++)
 			{
-				if (rcode_table[TYPE][i]*rcode_table[OPEER][i] < mcode_table[TYPE][i]*mcode_table[OPEER][i])
+				if (rcode_table[generic_code_data::table::TYPE][i]*rcode_table[generic_code_data::table::OPEER][i] < mcode_table[generic_code_data::table::TYPE][i]*mcode_table[generic_code_data::table::OPEER][i])
 				{
 					new_minimal_rep_found = true;
 					break;
 				}
-				else if (rcode_table[TYPE][i]*rcode_table[OPEER][i] > mcode_table[TYPE][i]*mcode_table[OPEER][i])
+				else if (rcode_table[generic_code_data::table::TYPE][i]*rcode_table[generic_code_data::table::OPEER][i] > mcode_table[generic_code_data::table::TYPE][i]*mcode_table[generic_code_data::table::OPEER][i])
 				{
 					break;
 				}
@@ -1771,10 +1899,10 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 		
 		for (int i=0; i< num_crossings; i++)
 		{
-			if (code_table[LABEL][i] != generic_code_data::VIRTUAL)
+			if (code_table[generic_code_data::table::LABEL][i] != generic_code_data::VIRTUAL)
 			{
-				if ((code_table[TYPE][i] == generic_code_data::TYPE1 && code_table[LABEL][i] == generic_code_data::NEGATIVE) ||
-				    (code_table[TYPE][i] == generic_code_data::TYPE2 && code_table[LABEL][i] == generic_code_data::POSITIVE))
+				if ((code_table[generic_code_data::table::TYPE][i] == generic_code_data::TYPE1 && code_table[generic_code_data::table::LABEL][i] == generic_code_data::NEGATIVE) ||
+				    (code_table[generic_code_data::table::TYPE][i] == generic_code_data::TYPE2 && code_table[generic_code_data::table::LABEL][i] == generic_code_data::POSITIVE))
 					crossing_sign[i] = 1;
 				else
 					crossing_sign[i] = -1;
@@ -1824,9 +1952,9 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 		
 		if (pure_knotoid)
 		{
-			if (code_table[LABEL][head] == generic_code_data::POSITIVE)
-				first_shortcut_edge = code_table[OPEER][head];
-			else if (code_table[LABEL][head] == generic_code_data::NEGATIVE)
+			if (code_table[generic_code_data::table::LABEL][head] == generic_code_data::POSITIVE)
+				first_shortcut_edge = code_table[generic_code_data::table::OPEER][head];
+			else if (code_table[generic_code_data::table::LABEL][head] == generic_code_data::NEGATIVE)
 				first_shortcut_edge = 2*head;
 			else
 			{
@@ -1934,24 +2062,24 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 				int turning_cycle;
 				int crossing_region;
 				
-				edge_1 = code_table[EVEN_TERMINATING][i];
-				edge_2 = code_table[ODD_TERMINATING][i];					
-				turning_cycle = find_cycle(cycle, num_cycles, num_left_cycles, edge_1, edge_2, (code_table[TYPE][i] == generic_code_data::type::TYPE1?true:false));
+				edge_1 = code_table[generic_code_data::table::EVEN_TERMINATING][i];
+				edge_2 = code_table[generic_code_data::table::ODD_TERMINATING][i];					
+				turning_cycle = find_cycle(cycle, num_cycles, num_left_cycles, edge_1, edge_2, (code_table[generic_code_data::table::TYPE][i] == generic_code_data::type::TYPE1?true:false));
 				crossing_region = region[turning_cycle];					
 				M[index][crossing_region] += (crossing_sign[i] == 1? polynomial<int>("-B") : polynomial<int>("-W"));
 				
-				edge_2 = code_table[EVEN_ORIGINATING][i];
-				turning_cycle = find_cycle(cycle, num_cycles, num_left_cycles, edge_1, edge_2, (code_table[TYPE][i] == generic_code_data::type::TYPE1?false:true)); 
+				edge_2 = code_table[generic_code_data::table::EVEN_ORIGINATING][i];
+				turning_cycle = find_cycle(cycle, num_cycles, num_left_cycles, edge_1, edge_2, (code_table[generic_code_data::table::TYPE][i] == generic_code_data::type::TYPE1?false:true)); 
 				crossing_region = region[turning_cycle];					
 				M[index][crossing_region] += polynomial<int>("1");
 				
-				edge_1 = code_table[ODD_ORIGINATING][i];
-				turning_cycle = find_cycle(cycle, num_cycles, num_left_cycles, edge_1, edge_2, (code_table[TYPE][i] == generic_code_data::type::TYPE1?true:false)); 
+				edge_1 = code_table[generic_code_data::table::ODD_ORIGINATING][i];
+				turning_cycle = find_cycle(cycle, num_cycles, num_left_cycles, edge_1, edge_2, (code_table[generic_code_data::table::TYPE][i] == generic_code_data::type::TYPE1?true:false)); 
 				crossing_region = region[turning_cycle];					
 				M[index][crossing_region] += (crossing_sign[i] == 1? polynomial<int>("W") : polynomial<int>("B"));
 
-				edge_2 = code_table[ODD_TERMINATING][i];
-				turning_cycle = find_cycle(cycle, num_cycles, num_left_cycles, edge_1, edge_2, (code_table[TYPE][i] == generic_code_data::type::TYPE1?false:true)); 
+				edge_2 = code_table[generic_code_data::table::ODD_TERMINATING][i];
+				turning_cycle = find_cycle(cycle, num_cycles, num_left_cycles, edge_1, edge_2, (code_table[generic_code_data::table::TYPE][i] == generic_code_data::type::TYPE1?false:true)); 
 				crossing_region = region[turning_cycle];					
 				M[index][crossing_region] += polynomial<int>("1");					
 			}

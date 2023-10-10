@@ -66,6 +66,7 @@ void print_prog_params (ostream& os, string level, string prefix)
 	os << prefix << "braid_control::DYNNIKOV_TEST = " << braid_control::DYNNIKOV_TEST << endl;
 	os << prefix << "braid_control::FIXED_POINT_INVARIANT = " << braid_control::FIXED_POINT_INVARIANT << endl;
 	os << prefix << "braid_control::GAUSS_CODE = " << braid_control::GAUSS_CODE << endl;
+	os << prefix << "braid_control::HAMILTONIAN = " << braid_control::HAMILTONIAN << endl;
 	os << prefix << "braid_control::HOMFLY = " << braid_control::HOMFLY << endl;
 	os << prefix << "braid_control::IMMERSION_CODE = " << braid_control::IMMERSION_CODE << endl;
 	os << prefix << "braid_control::JONES_POLYNOMIAL = " << braid_control::JONES_POLYNOMIAL << endl;
@@ -134,13 +135,13 @@ void print_prog_params (ostream& os, string level, string prefix)
    determined by the input codes code1 and code2. The input codes can be either peer codes or immersion codes.
 
    To concatenate the long knots we create a combined generic_code_data structure and write it to a stringstream.
-   Since writing only requires the head, num_components, OPEER, TYPE, LABEL and COMPONENT data, we calculate only
+   Since writing only requires the head, num_components, generic_code_data::table::OPEER, generic_code_data::table::TYPE, generic_code_data::table::LABEL and generic_code_data::table::COMPONENT data, we calculate only
    these.  Note however, that since we are only dealing with knots, there is only one component to consider.
    
-   We create a combined code table by juxtaposing code_table_1 and code_table_2 and then adjusting the OPEER row
+   We create a combined code table by juxtaposing code_table_1 and code_table_2 and then adjusting the generic_code_data::table::OPEER row
    by incrementing those corresponding to code_data_2 by the number of edges corresponding to code_data_1.  
      
-   The type and labels are unchanged by the concatenation and the COMPONENT row will correctly be populated with zeros.
+   The type and labels are unchanged by the concatenation and the generic_code_data::table::COMPONENT row will correctly be populated with zeros.
    
 */
 string long_knot_concatenation (string code1, string code2)
@@ -176,20 +177,20 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 	print (code_data_2,debug,"long_knot_concatenation: "); 
 }
 */
-	matrix<int> code_table(CODE_TABLE_SIZE,n1 + n2);
+	matrix<int> code_table(generic_code_data::table::CODE_TABLE_SIZE,n1 + n2);
 	
-	for (int i = 0; i<CODE_TABLE_SIZE; i++)
+	for (int i = 0; i<generic_code_data::table::CODE_TABLE_SIZE; i++)
 	for (int j = 0; j<n1; j++)
 		code_table[i][j] = code_table_1[i][j];
 		
-	for (int i = 0; i<CODE_TABLE_SIZE; i++)
+	for (int i = 0; i<generic_code_data::table::CODE_TABLE_SIZE; i++)
 	for (int j = 0; j<n2; j++)
 		code_table[i][n1+j] = code_table_2[i][j];
 		
 	int num_edges_1 = 2* code_data_1.num_crossings;
 		
 	for (int i = 0 ; i<n2; i++)
-		code_table[OPEER][n1+i] += num_edges_1;
+		code_table[generic_code_data::table::OPEER][n1+i] += num_edges_1;
 	
 	/* write the new peer code to a stringstream */
 	ostringstream oss;
@@ -1035,7 +1036,7 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 
 	for (int i=0; i<num_crossings; i++)
 	{
-		if (code_table[LABEL][i] == generic_code_data::VIRTUAL)
+		if (code_table[generic_code_data::table::LABEL][i] == generic_code_data::VIRTUAL)
 			num_classical--;
 	}
 
@@ -1082,12 +1083,12 @@ if (debug_control::DEBUG >= debug_control::BASIC)
 	
 	for (int i=0; i<num_crossings; i++)
 	{
-		if (code_table[LABEL][i] == generic_code_data::VIRTUAL)
+		if (code_table[generic_code_data::table::LABEL][i] == generic_code_data::VIRTUAL)
 		{
 if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
-	debug << "commutative_automorphism_invariant: crossing " << i << " trivial variables = " << 2*i << " and " << code_table[OPEER][i] << endl;
+	debug << "commutative_automorphism_invariant: crossing " << i << " trivial variables = " << 2*i << " and " << code_table[generic_code_data::table::OPEER][i] << endl;
 			trivial_variable_flags[2*i] = 1;
-			trivial_variable_flags[code_table[OPEER][i]] = 1;
+			trivial_variable_flags[code_table[generic_code_data::table::OPEER][i]] = 1;
 		}
 	}
 	
@@ -1194,13 +1195,13 @@ if (debug_control::DEBUG >= debug_control::BASIC)
 	for (int i=0; i<num_crossings; i++)
 	{
 		/* only consider classical crossings */
-		if (code_table[LABEL][i] == generic_code_data::VIRTUAL)
+		if (code_table[generic_code_data::table::LABEL][i] == generic_code_data::VIRTUAL)
 			continue;
 		
 		/* determine the braid crossing type, POSITIVE, NEGATIVE */
 		int crossing_type;		
-		if (  (code_table[TYPE][i] == generic_code_data::TYPE1 && code_table[LABEL][i] == generic_code_data::POSITIVE)
-				||(code_table[TYPE][i] == generic_code_data::TYPE2 && code_table[LABEL][i] == generic_code_data::NEGATIVE)
+		if (  (code_table[generic_code_data::table::TYPE][i] == generic_code_data::TYPE1 && code_table[generic_code_data::table::LABEL][i] == generic_code_data::POSITIVE)
+				||(code_table[generic_code_data::table::TYPE][i] == generic_code_data::TYPE2 && code_table[generic_code_data::table::LABEL][i] == generic_code_data::NEGATIVE)
    					)
 			crossing_type = braid_crossing_type::NEGATIVE;
 		else
@@ -1214,73 +1215,73 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 	else
 		debug << " positive";
 
-	debug <<  ", TYPE " << (code_table[TYPE][i] == generic_code_data::TYPE1? "I" : "II") << endl;
+	debug <<  ", generic_code_data::table::TYPE " << (code_table[generic_code_data::table::TYPE][i] == generic_code_data::TYPE1? "I" : "II") << endl;
 	debug << "commutative_automorphism_invariant: peer code variables p[i] = ";// << code_table[PERM][i];
-	debug << "\t2i = " << 2*i << "\t\t2j-1 = " << code_table[ODD_TERMINATING][i];
-	debug << "\t2i+1 = " << 2*i+1 << "\t2p[i] = " << code_table[EVEN_ORIGINATING][i] << endl;
+	debug << "\t2i = " << 2*i << "\t\t2j-1 = " << code_table[generic_code_data::table::ODD_TERMINATING][i];
+	debug << "\t2i+1 = " << 2*i+1 << "\t2p[i] = " << code_table[generic_code_data::table::EVEN_ORIGINATING][i] << endl;
 	
 	debug << "commutative_automorphism_invariant: mapped to\t\t";//v(p[i]) = " << variable[code_table[PERM][i]];
-	debug << "\tv(2i) = " << variable[2*i] << "\tv(2p[i]-1) = " << variable[code_table[ODD_TERMINATING][i]];
-	debug << "\tv(2i+1) = " << variable[2*i+1] << "\tv(2p[i]) = " << variable[code_table[EVEN_ORIGINATING][i]] << endl;
+	debug << "\tv(2i) = " << variable[2*i] << "\tv(2p[i]-1) = " << variable[code_table[generic_code_data::table::ODD_TERMINATING][i]];
+	debug << "\tv(2i+1) = " << variable[2*i+1] << "\tv(2p[i]) = " << variable[code_table[generic_code_data::table::EVEN_ORIGINATING][i]] << endl;
 
 	debug << "commutative_automorphism_invariant: row " << 2*row << " ";
 }		
 		/* first do the up action in row 2*row. */
 		if (crossing_type == braid_crossing_type::POSITIVE)
 		{
-			if (code_table[TYPE][i] == generic_code_data::TYPE1)
+			if (code_table[generic_code_data::table::TYPE][i] == generic_code_data::TYPE1)
 			{
-				set_matrix_N_element(matrix_rep,2*row,code_table[EVEN_TERMINATING][i],phi,0,0,N);
-				set_matrix_N_element(matrix_rep,2*row,code_table[EVEN_ORIGINATING][i],psi_minus_phi,0,0,N);
-				decrement_matrix_N_element(matrix_rep,2*row,code_table[ODD_ORIGINATING][i],N);
+				set_matrix_N_element(matrix_rep,2*row,code_table[generic_code_data::table::EVEN_TERMINATING][i],phi,0,0,N);
+				set_matrix_N_element(matrix_rep,2*row,code_table[generic_code_data::table::EVEN_ORIGINATING][i],psi_minus_phi,0,0,N);
+				decrement_matrix_N_element(matrix_rep,2*row,code_table[generic_code_data::table::ODD_ORIGINATING][i],N);
 
 if (debug_control::DEBUG >= debug_control::DETAIL)
 {
-	debug << code_table[EVEN_TERMINATING][i] << ":phi    ";
-	debug << code_table[EVEN_ORIGINATING][i] << ":psi_minus_phi    ";
-	debug << code_table[ODD_ORIGINATING][i] << ":-1     " << endl;
+	debug << code_table[generic_code_data::table::EVEN_TERMINATING][i] << ":phi    ";
+	debug << code_table[generic_code_data::table::EVEN_ORIGINATING][i] << ":psi_minus_phi    ";
+	debug << code_table[generic_code_data::table::ODD_ORIGINATING][i] << ":-1     " << endl;
 }
 			}
 			else
 			{
-				set_matrix_N_element(matrix_rep,2*row,code_table[ODD_TERMINATING][i],phi,0,0,N);
-				set_matrix_N_element(matrix_rep,2*row,code_table[ODD_ORIGINATING][i],psi_minus_phi,0,0,N);
-				decrement_matrix_N_element(matrix_rep,2*row,code_table[EVEN_ORIGINATING][i],N);
+				set_matrix_N_element(matrix_rep,2*row,code_table[generic_code_data::table::ODD_TERMINATING][i],phi,0,0,N);
+				set_matrix_N_element(matrix_rep,2*row,code_table[generic_code_data::table::ODD_ORIGINATING][i],psi_minus_phi,0,0,N);
+				decrement_matrix_N_element(matrix_rep,2*row,code_table[generic_code_data::table::EVEN_ORIGINATING][i],N);
 
 if (debug_control::DEBUG >= debug_control::DETAIL)
 {
-	debug << code_table[ODD_TERMINATING][i] << ":phi    ";
-	debug << code_table[ODD_ORIGINATING][i] << ":psi_minus_phi    ";
-	debug << code_table[EVEN_ORIGINATING][i] << ":-1     " << endl;
+	debug << code_table[generic_code_data::table::ODD_TERMINATING][i] << ":phi    ";
+	debug << code_table[generic_code_data::table::ODD_ORIGINATING][i] << ":psi_minus_phi    ";
+	debug << code_table[generic_code_data::table::EVEN_ORIGINATING][i] << ":-1     " << endl;
 }
 			}
 		}
 		else
 		{
-			if (code_table[TYPE][i] == generic_code_data::TYPE1)
+			if (code_table[generic_code_data::table::TYPE][i] == generic_code_data::TYPE1)
 			{
-				set_matrix_N_element(matrix_rep,2*row,code_table[EVEN_ORIGINATING][i],phi,0,0,N);
-				set_matrix_N_element(matrix_rep,2*row,code_table[EVEN_TERMINATING][i],psi_minus_phi,0,0,N);
-				decrement_matrix_N_element(matrix_rep,2*row,code_table[ODD_TERMINATING][i],N);
+				set_matrix_N_element(matrix_rep,2*row,code_table[generic_code_data::table::EVEN_ORIGINATING][i],phi,0,0,N);
+				set_matrix_N_element(matrix_rep,2*row,code_table[generic_code_data::table::EVEN_TERMINATING][i],psi_minus_phi,0,0,N);
+				decrement_matrix_N_element(matrix_rep,2*row,code_table[generic_code_data::table::ODD_TERMINATING][i],N);
 
 if (debug_control::DEBUG >= debug_control::DETAIL)
 {
-	debug << code_table[EVEN_ORIGINATING][i] << ":phi    ";
-	debug << code_table[EVEN_TERMINATING][i] << ":psi_minus_phi    ";
-	debug << code_table[ODD_TERMINATING][i] << ":-1     " << endl;
+	debug << code_table[generic_code_data::table::EVEN_ORIGINATING][i] << ":phi    ";
+	debug << code_table[generic_code_data::table::EVEN_TERMINATING][i] << ":psi_minus_phi    ";
+	debug << code_table[generic_code_data::table::ODD_TERMINATING][i] << ":-1     " << endl;
 }
 			}
 			else
 			{
-				set_matrix_N_element(matrix_rep,2*row,code_table[ODD_ORIGINATING][i],phi,0,0,N);
-				set_matrix_N_element(matrix_rep,2*row,code_table[ODD_TERMINATING][i],psi_minus_phi,0,0,N);
-				decrement_matrix_N_element(matrix_rep,2*row,code_table[EVEN_TERMINATING][i],N);
+				set_matrix_N_element(matrix_rep,2*row,code_table[generic_code_data::table::ODD_ORIGINATING][i],phi,0,0,N);
+				set_matrix_N_element(matrix_rep,2*row,code_table[generic_code_data::table::ODD_TERMINATING][i],psi_minus_phi,0,0,N);
+				decrement_matrix_N_element(matrix_rep,2*row,code_table[generic_code_data::table::EVEN_TERMINATING][i],N);
 
 if (debug_control::DEBUG >= debug_control::DETAIL)
 {
-	debug << code_table[ODD_ORIGINATING][i] << ":phi    ";
-	debug << code_table[ODD_TERMINATING][i] << ":psi_minus_phi    ";
-	debug << code_table[EVEN_TERMINATING][i] << ":-1     " << endl;
+	debug << code_table[generic_code_data::table::ODD_ORIGINATING][i] << ":phi    ";
+	debug << code_table[generic_code_data::table::ODD_TERMINATING][i] << ":psi_minus_phi    ";
+	debug << code_table[generic_code_data::table::EVEN_TERMINATING][i] << ":-1     " << endl;
 }
 			}
 		}
@@ -1292,51 +1293,51 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 		/* now the down action in row 2*row+1 */	
 		if (crossing_type == braid_crossing_type::POSITIVE)
 		{
-			if (code_table[TYPE][i] == generic_code_data::TYPE1)
+			if (code_table[generic_code_data::table::TYPE][i] == generic_code_data::TYPE1)
 			{
-				set_matrix_N_element(matrix_rep,2*row+1,code_table[EVEN_ORIGINATING][i],psi,0,0,N);
-				decrement_matrix_N_element(matrix_rep,2*row+1,code_table[ODD_TERMINATING][i],N);
+				set_matrix_N_element(matrix_rep,2*row+1,code_table[generic_code_data::table::EVEN_ORIGINATING][i],psi,0,0,N);
+				decrement_matrix_N_element(matrix_rep,2*row+1,code_table[generic_code_data::table::ODD_TERMINATING][i],N);
 
 if (debug_control::DEBUG >= debug_control::DETAIL)
 {
-	debug << code_table[EVEN_ORIGINATING][i] << ":psi    ";
-	debug << code_table[ODD_TERMINATING][i] << ":-1     " << endl;
+	debug << code_table[generic_code_data::table::EVEN_ORIGINATING][i] << ":psi    ";
+	debug << code_table[generic_code_data::table::ODD_TERMINATING][i] << ":-1     " << endl;
 }
 			}
 			else
 			{
-				set_matrix_N_element(matrix_rep,2*row+1,code_table[ODD_ORIGINATING][i],psi,0,0,N);
-				decrement_matrix_N_element(matrix_rep,2*row+1,code_table[EVEN_TERMINATING][i],N);
+				set_matrix_N_element(matrix_rep,2*row+1,code_table[generic_code_data::table::ODD_ORIGINATING][i],psi,0,0,N);
+				decrement_matrix_N_element(matrix_rep,2*row+1,code_table[generic_code_data::table::EVEN_TERMINATING][i],N);
 
 if (debug_control::DEBUG >= debug_control::DETAIL)
 {
-	debug << code_table[ODD_ORIGINATING][i] << ":psi    ";
-	debug << code_table[EVEN_TERMINATING][i] << ":-1     " << endl;
+	debug << code_table[generic_code_data::table::ODD_ORIGINATING][i] << ":psi    ";
+	debug << code_table[generic_code_data::table::EVEN_TERMINATING][i] << ":-1     " << endl;
 }
 			}
 		}
 		else
 		{
-			if (code_table[TYPE][i] == generic_code_data::TYPE1)
+			if (code_table[generic_code_data::table::TYPE][i] == generic_code_data::TYPE1)
 			{
-				set_matrix_N_element(matrix_rep,2*row+1,code_table[EVEN_TERMINATING][i],psi,0,0,N);
-				decrement_matrix_N_element(matrix_rep,2*row+1,code_table[ODD_ORIGINATING][i],N);
+				set_matrix_N_element(matrix_rep,2*row+1,code_table[generic_code_data::table::EVEN_TERMINATING][i],psi,0,0,N);
+				decrement_matrix_N_element(matrix_rep,2*row+1,code_table[generic_code_data::table::ODD_ORIGINATING][i],N);
 
 if (debug_control::DEBUG >= debug_control::DETAIL)
 {
-	debug << code_table[EVEN_TERMINATING][i] << ":psi    ";
-	debug << code_table[ODD_ORIGINATING][i] << ":-1     " << endl;
+	debug << code_table[generic_code_data::table::EVEN_TERMINATING][i] << ":psi    ";
+	debug << code_table[generic_code_data::table::ODD_ORIGINATING][i] << ":-1     " << endl;
 }
 			}
 			else
 			{
-				set_matrix_N_element(matrix_rep,2*row+1,code_table[ODD_TERMINATING][i],psi,0,0,N);
-				decrement_matrix_N_element(matrix_rep,2*row+1,code_table[EVEN_ORIGINATING][i],N);
+				set_matrix_N_element(matrix_rep,2*row+1,code_table[generic_code_data::table::ODD_TERMINATING][i],psi,0,0,N);
+				decrement_matrix_N_element(matrix_rep,2*row+1,code_table[generic_code_data::table::EVEN_ORIGINATING][i],N);
 
 if (debug_control::DEBUG >= debug_control::DETAIL)
 {
-	debug << code_table[ODD_TERMINATING][i] << ":psi    ";
-	debug << code_table[EVEN_ORIGINATING][i] << ":-1     " << endl;
+	debug << code_table[generic_code_data::table::ODD_TERMINATING][i] << ":psi    ";
+	debug << code_table[generic_code_data::table::EVEN_ORIGINATING][i] << ":-1     " << endl;
 }
 			}
 		}

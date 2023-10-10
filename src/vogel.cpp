@@ -80,6 +80,14 @@ string vogel (generic_code_data code_data)
 	int num_crossings = code_data.num_crossings;
 	int num_edges = 2*num_crossings;
 
+if (braid_control::VOGEL_DEBUG)
+{
+	debug << "vogel: presented with code_data = ";
+	write_peer_code(debug, code_data);
+	debug << "\nvogel: code_data:" << endl;
+	print_code_data(debug,code_data,"vogel: ");
+	debug << endl;
+}
 	
 	/* Count the number of Seifert circles, this will not change even if we
 	   apply Vogel moves. We will be storing Seifert circles as lists of edges
@@ -122,7 +130,7 @@ string vogel (generic_code_data code_data)
 				crossing = code_data.term_crossing[edge];
 				
 				/* determine the next edge in the Seifert circle */
-				edge = (edge % 2? code_data.code_table[ODD_ORIGINATING][crossing]: code_data.code_table[EVEN_ORIGINATING][crossing]);
+				edge = (edge % 2? code_data.code_table[generic_code_data::table::ODD_ORIGINATING][crossing]: code_data.code_table[generic_code_data::table::EVEN_ORIGINATING][crossing]);
 
 			} while (edge != start);
 			
@@ -224,7 +232,7 @@ if (braid_control::VOGEL_DEBUG)
 					seifert_circle[num_circles][offset] = crossing;
 					
 					/* determine the next edge in the Seifer circle */
-					edge = (edge % 2? code_table[ODD_ORIGINATING][crossing]: code_table[EVEN_ORIGINATING][crossing]);
+					edge = (edge % 2? code_table[generic_code_data::table::ODD_ORIGINATING][crossing]: code_table[generic_code_data::table::EVEN_ORIGINATING][crossing]);
 				
 				} while (edge != start);	
 				
@@ -321,7 +329,7 @@ if (braid_control::VOGEL_DEBUG)
 					   circles, and set the edge in the graph to be negative if they
 					   are joined by Type 1 crossings.
 					*/
-					if (code_table[TYPE][crossing] == generic_code_data::TYPE1)
+					if (code_table[generic_code_data::table::TYPE][crossing] == generic_code_data::TYPE1)
 						seifert_graph[i][edge] *= -1;
 	    		}
 			}
@@ -493,24 +501,34 @@ if (braid_control::VOGEL_DEBUG)
 		debug << new_edge[i] << ' ';
 	debug << endl;
 }
-			/* determine the crossing numbers in the new code for the
-			   two additional crossings introduced by the Vogel move.
+			/* determine the crossing numbers in the new code for the two additional crossings introduced by the Vogel move.
+			   also determine the component on which each edge resides.
 			*/
+			int component_e1;
+			int component_e2;
+			
 			if (e1%2)
 			{
 				/* both edges are odd */
 				c1 = (e1+1)/2;
 				c2 = (e2+3)/2; // allowing for the fact that new_edge[e2] == e2+2
+
+				component_e1 = code_table[generic_code_data::table::COMPONENT][(e1-1)/2];
+				component_e2 = code_table[generic_code_data::table::COMPONENT][(e2-1)/2];
 			}
 			else
 			{
 				c1 = e1/2;
 				c2 = (e2+2)/2; // allowing for the fact that new_edge[e2] == e2+2
+				
+				component_e1 = code_table[generic_code_data::table::COMPONENT][e1/2];
+				component_e2 = code_table[generic_code_data::table::COMPONENT][e2/2];
 			}
 
 if (braid_control::VOGEL_DEBUG)
 {
 	debug << "vogel: new crossings will have numbers " << c1 << " and " << c2 << endl;
+	debug << "vogel: edge " << e1 << " lies on component " << component_e1 << ", edge " << e2 << " lies on component " << component_e2 << endl;
 }	
 		
 			vector<int> new_crossing(num_crossings);
@@ -535,57 +553,62 @@ if (braid_control::VOGEL_DEBUG)
 			new_code_data.head = -1;
 			new_code_data.type = generic_code_data::peer_code;
 			new_code_data.num_crossings = num_crossings+2;
+			new_code_data.num_components = code_data.num_components;
+					
+			new_code_data.num_component_edges = code_data.num_component_edges;
+			new_code_data.num_component_edges[component_e1] += 2;
+			new_code_data.num_component_edges[component_e2] += 2;
 			
-			matrix<int> new_code_table(CODE_TABLE_SIZE,num_crossings+2);
+			matrix<int> new_code_table(generic_code_data::table::CODE_TABLE_SIZE,num_crossings+2);
 			
 			for (int i=0; i< num_crossings; i++)
 			{
 				/* evaluate the (old) odd edge incoming at this crossing */
-				edge = code_table[OPEER][i];
+				edge = code_table[generic_code_data::table::OPEER][i];
 				
 				/* now determine the the new odd edge incoming at the 
 				   same crossing using the new numbering
 				*/
-				new_code_table[OPEER][new_crossing[i]] = new_edge[edge];
+				new_code_table[generic_code_data::table::OPEER][new_crossing[i]] = new_edge[edge];
 			
 				/* The type of the crossing doesn't change, nor does the label or component*/
-				new_code_table[TYPE][new_crossing[i]] = code_table[TYPE][i];
-				new_code_table[LABEL][new_crossing[i]] = code_table[LABEL][i];
-				new_code_table[COMPONENT][new_crossing[i]] = code_table[COMPONENT][i];
+				new_code_table[generic_code_data::table::TYPE][new_crossing[i]] = code_table[generic_code_data::table::TYPE][i];
+				new_code_table[generic_code_data::table::LABEL][new_crossing[i]] = code_table[generic_code_data::table::LABEL][i];
+				new_code_table[generic_code_data::table::COMPONENT][new_crossing[i]] = code_table[generic_code_data::table::COMPONENT][i];
 			}
 			
 			/* Now fill in the peer edges and components for the two new crossings c1 and c2 */
 			if (e1%2)
 			{
-				new_code_table[OPEER][c1] = e2+2;
-				new_code_table[OPEER][c2] = e1;
+				new_code_table[generic_code_data::table::OPEER][c1] = e2+2;
+				new_code_table[generic_code_data::table::OPEER][c2] = e1;
 				
 				/* the naming edge for c1 is e1+1 which belongs to the same
 				   component as the edge preceeding e1
 				*/
-				int preceeding_edge = code_table[EVEN_TERMINATING][code_data.orig_crossing[e1]];
-				new_code_table[COMPONENT][c1] = code_table[COMPONENT][preceeding_edge/2];
+				int preceeding_edge = code_table[generic_code_data::table::EVEN_TERMINATING][code_data.orig_crossing[e1]];
+				new_code_table[generic_code_data::table::COMPONENT][c1] = code_table[generic_code_data::table::COMPONENT][preceeding_edge/2];
 				
 				/* the naming edge for c2 is e2+3 which belongs to the same 
 				   component as the edge preceeding e2
 				*/
-				preceeding_edge = code_table[EVEN_TERMINATING][code_data.orig_crossing[e2]];
-				new_code_table[COMPONENT][c2] = code_table[COMPONENT][preceeding_edge/2];
+				preceeding_edge = code_table[generic_code_data::table::EVEN_TERMINATING][code_data.orig_crossing[e2]];
+				new_code_table[generic_code_data::table::COMPONENT][c2] = code_table[generic_code_data::table::COMPONENT][preceeding_edge/2];
 			}
 			else
 			{
-				new_code_table[OPEER][c1] = e2+3;
-				new_code_table[OPEER][c2] = e1+1;
+				new_code_table[generic_code_data::table::OPEER][c1] = e2+3;
+				new_code_table[generic_code_data::table::OPEER][c2] = e1+1;
 
 				/* the naming edge for c1 is e1 which belongs to the same
 				   component as the old edge e1
 				*/
-				new_code_table[COMPONENT][c1] = code_table[COMPONENT][e1/2];
+				new_code_table[generic_code_data::table::COMPONENT][c1] = code_table[generic_code_data::table::COMPONENT][e1/2];
 				
 				/* the naming edge for c2 is e2+2 which belongs to the same 
 				   component as the old edge e2
 				*/
-				new_code_table[COMPONENT][c2] = code_table[COMPONENT][e2/2];
+				new_code_table[generic_code_data::table::COMPONENT][c2] = code_table[generic_code_data::table::COMPONENT][e2/2];
 			}
 		
 			/* both crossings c1 and c2 have the same type, it is the opposite
@@ -594,25 +617,25 @@ if (braid_control::VOGEL_DEBUG)
 			*/
 			if (graph_edge_type == generic_code_data::TYPE1)
 			{
-				new_code_table[TYPE][c1] = generic_code_data::TYPE2;
-				new_code_table[TYPE][c2] = generic_code_data::TYPE2;
+				new_code_table[generic_code_data::table::TYPE][c1] = generic_code_data::TYPE2;
+				new_code_table[generic_code_data::table::TYPE][c2] = generic_code_data::TYPE2;
 			}
 			else
 			{
-				new_code_table[TYPE][c1] = generic_code_data::TYPE1;
-				new_code_table[TYPE][c2] = generic_code_data::TYPE1;
+				new_code_table[generic_code_data::table::TYPE][c1] = generic_code_data::TYPE1;
+				new_code_table[generic_code_data::table::TYPE][c2] = generic_code_data::TYPE1;
 			}
 		
 			if (braid_control::FLAT_VOGEL_MOVES)
 			{
-				new_code_table[LABEL][c1] = generic_code_data::FLAT;
-				new_code_table[LABEL][c2] = generic_code_data::FLAT;
+				new_code_table[generic_code_data::table::LABEL][c1] = generic_code_data::FLAT;
+				new_code_table[generic_code_data::table::LABEL][c2] = generic_code_data::FLAT;
 			}
 			else
 			{
 				/* we are free to choose which of c1 and c2 has label + and which - */
-				new_code_table[LABEL][c1] = generic_code_data::POSITIVE;
-				new_code_table[LABEL][c2] = generic_code_data::NEGATIVE;
+				new_code_table[generic_code_data::table::LABEL][c1] = generic_code_data::POSITIVE;
+				new_code_table[generic_code_data::table::LABEL][c2] = generic_code_data::NEGATIVE;
 			}
 
 			new_code_data.code_table = new_code_table;
@@ -620,6 +643,14 @@ if (braid_control::VOGEL_DEBUG)
 			/* write the peer code to an ostringstream and read it back into 
 			   code_data ready for the next loop
 			*/
+if (braid_control::VOGEL_DEBUG)
+{
+	debug << "vogel: new_code_data = ";
+	write_peer_code(debug, new_code_data);
+	debug << "\nvogel: new_code_data:" << endl;
+	print_code_data(debug,new_code_data,"vogel: ");
+	debug << endl;
+}
 			ostringstream oss;
 			write_peer_code(oss, new_code_data);
 			read_peer_code(code_data, oss.str());
@@ -634,19 +665,19 @@ if (braid_control::VOGEL_DEBUG)
 	debug << "vogel: new code table after Vogel move:" << endl;
 	debug << "vogel: peer of even edges: ";
 	for (int i=0; i< num_crossings; i++)
-		debug << new_code_table[OPEER][i] << ' ';
+		debug << new_code_table[generic_code_data::table::OPEER][i] << ' ';
 	debug << endl;
 	debug << "vogel: type: ";	
 	for (int i=0; i< num_crossings; i++)
-		debug << new_code_table[TYPE][i] << ' ';
+		debug << new_code_table[generic_code_data::table::TYPE][i] << ' ';
 	debug << endl;
 	debug << "vogel: label: ";
 	for (int i=0; i< num_crossings; i++)
-		debug << new_code_table[LABEL][i] << ' ';
+		debug << new_code_table[generic_code_data::table::LABEL][i] << ' ';
 	debug << endl;
 	debug << "vogel: component: ";
 	for (int i=0; i< num_crossings; i++)
-		debug << new_code_table[COMPONENT][i] << ' ';
+		debug << new_code_table[generic_code_data::table::COMPONENT][i] << ' ';
 	debug << endl;
 
 	debug << "vogel: peer code written from new_code_table: " << oss.str() << endl;
@@ -665,14 +696,14 @@ if (braid_control::VOGEL_DEBUG)
 	matrix<int>& code_table = code_data.code_table;
 	for (int i=0; i< num_crossings; i++)
 	{
-		if (code_table[LABEL][i] == generic_code_data::VIRTUAL)
+		if (code_table[generic_code_data::table::LABEL][i] == generic_code_data::VIRTUAL)
 			crossing_type[i] = braid_crossing_type::VIRTUAL;
-		else if (code_table[LABEL][i] == generic_code_data::FLAT)
+		else if (code_table[generic_code_data::table::LABEL][i] == generic_code_data::FLAT)
 			crossing_type[i] = braid_crossing_type::FLAT;
 		else
 		{
-			if ((code_table[LABEL][i] == generic_code_data::NEGATIVE && code_table[TYPE][i] == generic_code_data::TYPE1)
-			  ||(code_table[LABEL][i] == generic_code_data::POSITIVE && code_table[TYPE][i] == generic_code_data::TYPE2))
+			if ((code_table[generic_code_data::table::LABEL][i] == generic_code_data::NEGATIVE && code_table[generic_code_data::table::TYPE][i] == generic_code_data::TYPE1)
+			  ||(code_table[generic_code_data::table::LABEL][i] == generic_code_data::POSITIVE && code_table[generic_code_data::table::TYPE][i] == generic_code_data::TYPE2))
 				crossing_type[i] = braid_crossing_type::POSITIVE;
 			else
 				crossing_type[i] = braid_crossing_type::NEGATIVE;		
@@ -902,7 +933,8 @@ if (braid_control::VOGEL_DEBUG)
 			    /* first add the crossing */
 		    	if (crossing_type[seifert_circle[parent][j]] == braid_crossing_type::NEGATIVE)
 					*pptr++ = '-';
-		    	if (crossing_type[seifert_circle[parent][j]] == braid_crossing_type::VIRTUAL)
+//		    	if (crossing_type[seifert_circle[parent][j]] == braid_crossing_type::VIRTUAL)
+		    	if (crossing_type[seifert_circle[parent][j]] == braid_crossing_type::VIRTUAL || crossing_type[seifert_circle[parent][j]] == braid_crossing_type::FLAT)
 					*pptr++ = 't';
 		    	else // braid_crossing_type::POSITIVE or braid_crossing_type::FLAT
 					*pptr++ = 's';

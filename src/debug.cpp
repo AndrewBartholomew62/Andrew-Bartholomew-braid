@@ -15,60 +15,59 @@ using namespace std;
 
 ofstream debug;
 
-/* debug.h should be provided by the main programme to describe what debug
-   capabilities the debug subsystem should provide.  These are specified in
-   terms of the following preprocessor ditectives, which should be #define
-   if required by the main programme
+/* The preprocessor directives used here should be provided by the main programme to describe what debug
+   capabilities the debug subsystem should provide.
    
-   DEBUG_BIGINT
-   DEBUG_BIGREAL
-   DEBUG_MATRIX
-   DEBUG_POLYNOMIAL
-   DEBUG_QUATERNION
-   DEBUG_RATIONAL
-   DEBUG_SURD
+   INITIALIZE_BIGINT
+   INITIALIZE_BIGREAL
+   INITIALIZE_MATRIX
+   INITIALIZE_POLYNOMIAL
+   INITIALIZE_QUATERNION
+   INITIALIZE_RATIONAL
+   INITIALIZE_SURD
 
    
 */
 #include <debug-control.h>
-#include <debug.h>
+#include <initialize.h>
+
 
 int debug_control::DEBUG = debug_control::OFF; 
 
 #include <util.h>
 #include <algorithm>
 
-//#ifdef DEBUG_SCALAR
+//#ifdef INITIALIZE_SCALAR
 //	#include <scalar.h>
 //#endif
 
 
-#ifdef DEBUG_BIGINT
+#ifdef INITIALIZE_BIGINT
 	#include <bigint.h>
 #endif
 
-#ifdef DEBUG_BIGREAL
+#ifdef INITIALIZE_BIGREAL
 	#include <bigreal_control.h>
 #endif
 
 
-#ifdef DEBUG_POLYNOMIAL
+#ifdef INITIALIZE_POLYNOMIAL
 	#include <polynomial.h>
 #endif
 
-#ifdef DEBUG_MATRIX	
+#ifdef INITIALIZE_MATRIX	
 	#include <matrix.h>
 #endif
 
-#ifdef DEBUG_QUATERNION
+#ifdef INITIALIZE_QUATERNION
 	#include <quaternion.h>
 #endif
 
-#ifdef DEBUG_RATIONAL
+#ifdef INITIALIZE_RATIONAL
 	#include <rational.h>
 #endif
 
-#ifdef DEBUG_SURD
+#ifdef INITIALIZE_SURD
 	#include <surd_control.h>
 #endif
 
@@ -171,25 +170,25 @@ void set_debug_option(char* start, char* end)
 	*/
 	if (start == 0 && end == 0)
 	{
-#ifdef DEBUG_BIGINT
+#ifdef INITIALIZE_BIGINT
 		cout << "\t\tbigint{san:+:-:*:/:%:rs:ls:bc:==:gt:out:in:sum:diff:num_len:gcd:all}, bitmap: no default" << endl;
 #endif
-#ifdef DEBUG_BIGREAL
+#ifdef INITIALIZE_BIGREAL
 		cout << "\t\tbigreal{+:-:*:/:==:gt:out:in:sum:diff:num_len:carry:all}, bitmap: no default" << endl;
 #endif
-#ifdef DEBUG_MATRIX
+#ifdef INITIALIZE_MATRIX
 		cout << "\t\tmatrix{det:inv:*:all}, bitmap: no default" << endl;
 #endif
-#ifdef DEBUG_POLYNOMIAL
+#ifdef INITIALIZE_POLYNOMIAL
 		cout << "\t\tpoly{no-gen:san:+:*:/:in:gcd:all}, bitmap: general debug included unless no-gen specified" << endl;
 #endif
-#ifdef DEBUG_QUATERNION
+#ifdef INITIALIZE_QUATERNION
 		cout << "\t\tquaternion, boolean" << endl;
 #endif
-#ifdef DEBUG_RATIONAL
+#ifdef INITIALIZE_RATIONAL
 		cout << "\t\trational, boolean" << endl;
 #endif
-#ifdef DEBUG_SURD
+#ifdef INITIALIZE_SURD
 		cout << "\t\tsurd{+:-:*:==:gt:in:newton:all}, bitmap: no default" << endl;
 #endif
 		return;
@@ -211,7 +210,7 @@ void set_debug_option(char* start, char* end)
 	
 	if (!strcmp(loc_buf,"bigint"))
 	{
-#ifdef DEBUG_BIGINT
+#ifdef INITIALIZE_BIGINT
 		if (pptr)
 		{
 			/* check for any parameters */
@@ -221,7 +220,7 @@ void set_debug_option(char* start, char* end)
 	}
 	else if (!strcmp(loc_buf,"bigreal"))
 	{
-#ifdef DEBUG_BIGREAL
+#ifdef INITIALIZE_BIGREAL
 		if (pptr)
 		{
 			/* check for any parameters */
@@ -231,7 +230,7 @@ void set_debug_option(char* start, char* end)
 	}
 	else if (!strcmp(loc_buf,"matrix"))
 	{
-#ifdef DEBUG_MATRIX
+#ifdef INITIALIZE_MATRIX
 		if (pptr)
 		{
 			/* check for any parameters */
@@ -241,7 +240,7 @@ void set_debug_option(char* start, char* end)
 	}
 	else if (!strcmp(loc_buf,"poly"))
 	{
-#ifdef DEBUG_POLYNOMIAL
+#ifdef INITIALIZE_POLYNOMIAL
 		polynomial_control::DEBUG |= polynomial_control::general;
 		debug << "debug: setting debug option polynomial_control::general\n";		
 
@@ -254,7 +253,7 @@ void set_debug_option(char* start, char* end)
 	}
 	else if (!strcmp(loc_buf,"rational"))
 	{
-#ifdef DEBUG_RATIONAL
+#ifdef INITIALIZE_RATIONAL
 		rational_control::DEBUG = true;
 		debug << "debug: setting debug option rational_control::DEBUG\n";		
 
@@ -262,14 +261,14 @@ void set_debug_option(char* start, char* end)
 	}
 	else if (!strcmp(loc_buf,"quaternion"))
 	{
-#ifdef DEBUG_QUATERNION
+#ifdef INITIALIZE_QUATERNION
 		quaternion_control::DEBUG = true;
 		debug << "debug: setting debug option quaternion_control::DEBUG\n";		
 #endif
 	}
 	else if (!strcmp(loc_buf,"surd"))
 	{
-#ifdef DEBUG_SURD
+#ifdef INITIALIZE_SURD
 		if (pptr)
 		{
 			/* check for any parameters */
@@ -316,7 +315,7 @@ void set_debug_option_parameter(char *pptr, string option)
 {
 	if (option == "bigint")
 	{
-#ifdef DEBUG_BIGINT
+#ifdef INITIALIZE_BIGINT
 		if (!strcmp(pptr,"san"))
 		{
 			bigint_control::DEBUG |= bigint_control::sanitize;
@@ -411,7 +410,7 @@ void set_debug_option_parameter(char *pptr, string option)
 	}
 	else if (option == "bigreal")
 	{
-#ifdef DEBUG_BIGREAL
+#ifdef INITIALIZE_BIGREAL
 //		if (!strcmp(pptr,"san"))
 //		{
 //			bigreal_control::DEBUG |= bigreal_control::sanitize;
@@ -486,11 +485,11 @@ void set_debug_option_parameter(char *pptr, string option)
 	}
 	else if (option == "matrix")
 	{
-#ifdef DEBUG_MATRIX	
+#ifdef INITIALIZE_MATRIX	
 		if (!strcmp(pptr,"det"))
 		{
 			matrix_control::DEBUG |= matrix_control::immanant;
-			debug << "debug: setting debug option matrix_control::determinant\n";		
+			debug << "debug: setting debug option matrix_control::immanant\n";		
 		}
 		if (!strcmp(pptr,"*"))
 		{
@@ -511,7 +510,7 @@ void set_debug_option_parameter(char *pptr, string option)
 	}
 	else if (option == "poly")
 	{
-#ifdef DEBUG_POLYNOMIAL
+#ifdef INITIALIZE_POLYNOMIAL
 		if (!strcmp(pptr,"no-gen"))
 		{
 			polynomial_control::DEBUG >>= 1;
@@ -557,7 +556,7 @@ void set_debug_option_parameter(char *pptr, string option)
 	}	
 	if (option == "surd")
 	{
-#ifdef DEBUG_SURD
+#ifdef INITIALIZE_SURD
 		if (!strcmp(pptr,"+"))
 		{
 			surd_control::DEBUG |= surd_control::add;

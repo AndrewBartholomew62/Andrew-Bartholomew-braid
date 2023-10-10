@@ -21,6 +21,7 @@ Reidemeister_III_return Reidemeister_III_present (generic_code_data code_data)
 #include <iostream>
 #include <cstdlib>
 #include <cstring>
+#include <vector>
 #include <valarray>
 #include <list>
 #include <iomanip>
@@ -36,8 +37,6 @@ extern ofstream     output;
 extern ifstream     input;
 
 #include <util.h>
-#include <quaternion-scalar.h>
-#include <polynomial.h>
 #include <matrix.h>
 #include <generic-code.h>
 #include <debug-control.h>
@@ -91,10 +90,10 @@ if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
 {
 	debug << "virtual_Reidemeister_I_present: term " << i << " immersion_crossing = " << immersion_crossing << ", label = " 
-	      << code_data.code_table[LABEL][immersion_crossing] << endl;
+	      << code_data.code_table[generic_code_data::table::LABEL][immersion_crossing] << endl;
 }	
 		/* we're only interested in terms related to virtual and shortcut crossings */
-		if (code_data.code_table[LABEL][immersion_crossing] != generic_code_data::VIRTUAL && !(ignore_shortcut && shortcut_crossing[immersion_crossing]))
+		if (code_data.code_table[generic_code_data::table::LABEL][immersion_crossing] != generic_code_data::VIRTUAL && !(ignore_shortcut && shortcut_crossing[immersion_crossing]))
 		{
 if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
 	debug << "virtual_Reidemeister_I_present: term " << i << " does not correspond to a virtual crossing" << endl;
@@ -200,9 +199,9 @@ if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 	{
 		ignore_shortcut = true;
 		
-		if (code_table[LABEL][code_data.head] == generic_code_data::POSITIVE)
-			head_semi_arc = code_table[OPEER][code_data.head];
-		else if (code_table[LABEL][code_data.head] == generic_code_data::NEGATIVE)
+		if (code_table[generic_code_data::table::LABEL][code_data.head] == generic_code_data::POSITIVE)
+			head_semi_arc = code_table[generic_code_data::table::OPEER][code_data.head];
+		else if (code_table[generic_code_data::table::LABEL][code_data.head] == generic_code_data::NEGATIVE)
 			head_semi_arc = 2*code_data.head;
 		else
 		{
@@ -225,7 +224,7 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 	for (int start=0; start<2*num_crossings; start++)
 	{	
 		int crossing = term_crossing[start];
-		int start_label = code_table[LABEL][crossing];
+		int start_label = code_table[generic_code_data::table::LABEL][crossing];
 		bool head_semi_arc_in_Reidemeister_I_loop = false;
 		
 if (debug_control::DEBUG >= debug_control::DETAIL)
@@ -252,15 +251,15 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 		
 		if (start%2) // arriving on odd edge
 		{
-			peer = code_table[EPEER][(start-1)/2];
-			component = code_table[COMPONENT][(start-1)/2];
-			peer_component = code_table[COMPONENT][peer/2]; 
+			peer = code_table[generic_code_data::table::EPEER][(start-1)/2];
+			component = code_table[generic_code_data::table::COMPONENT][(start-1)/2];
+			peer_component = code_table[generic_code_data::table::COMPONENT][peer/2]; 
 		}
 		else
 		{
-			peer = code_table[OPEER][start/2];
-			component = code_table[COMPONENT][start/2];
-			peer_component = code_table[COMPONENT][(peer-1)/2]; 
+			peer = code_table[generic_code_data::table::OPEER][start/2];
+			component = code_table[generic_code_data::table::COMPONENT][start/2];
+			peer_component = code_table[generic_code_data::table::COMPONENT][(peer-1)/2]; 
 		}
 
 if (debug_control::DEBUG >= debug_control::DETAIL)
@@ -312,15 +311,15 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 						/* this case includes the simple Reidemeister I move, where virtual_crossing_flag is empty */
 						Reidemeister_I_count++;
 					
-						RI_edge_flag[code_table[ODD_TERMINATING][crossing]] = 1;
-						RI_edge_flag[code_table[EVEN_TERMINATING][crossing]] = 1;
+						RI_edge_flag[code_table[generic_code_data::table::ODD_TERMINATING][crossing]] = 1;
+						RI_edge_flag[code_table[generic_code_data::table::EVEN_TERMINATING][crossing]] = 1;
 						
 						for (int i=0; i< num_crossings; i++)
 						{
 							if (virtual_crossing_flag[i] == 1)
 							{
-								RI_edge_flag[code_table[ODD_TERMINATING][i]] = 1;
-								RI_edge_flag[code_table[EVEN_TERMINATING][i]] = 1;
+								RI_edge_flag[code_table[generic_code_data::table::ODD_TERMINATING][i]] = 1;
+								RI_edge_flag[code_table[generic_code_data::table::EVEN_TERMINATING][i]] = 1;
 							}
 						}
 					
@@ -341,7 +340,7 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 					
 					break;
 				}
-				else if (code_table[LABEL][term_crossing[edge]] == generic_code_data::VIRTUAL)
+				else if (code_table[generic_code_data::table::LABEL][term_crossing[edge]] == generic_code_data::VIRTUAL)
 				{
 					virtual_crossing_flag[term_crossing[edge]] = 1;
 if (debug_control::DEBUG >= debug_control::DETAIL)
@@ -468,9 +467,9 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
     {	
 		pure_knotoid_code_data = true;
 		
-		if (code_table[LABEL][code_data.head] == generic_code_data::POSITIVE)
-			head_semi_arc = code_table[OPEER][code_data.head];
-		else if (code_table[LABEL][code_data.head] == generic_code_data::NEGATIVE)
+		if (code_table[generic_code_data::table::LABEL][code_data.head] == generic_code_data::POSITIVE)
+			head_semi_arc = code_table[generic_code_data::table::OPEER][code_data.head];
+		else if (code_table[generic_code_data::table::LABEL][code_data.head] == generic_code_data::NEGATIVE)
 			head_semi_arc = 2*code_data.head;
 		else
 		{
@@ -514,9 +513,9 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 
 		int old_edge_component;
 		if (old_edge%2)
-			old_edge_component = code_table[COMPONENT][(old_edge-1)/2];
+			old_edge_component = code_table[generic_code_data::table::COMPONENT][(old_edge-1)/2];
 		else
-			old_edge_component = code_table[COMPONENT][(old_edge)/2];
+			old_edge_component = code_table[generic_code_data::table::COMPONENT][(old_edge)/2];
 			
 		if (old_edge_component != new_edge_component)
 		{
@@ -588,7 +587,7 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_edge_flags_from_peer_code:   old edge " << edge << " terminates at crossing " << crossing << " row = " << row << endl;
 					
-					if (code_table[LABEL][crossing] != generic_code_data::VIRTUAL && !(pure_knotoid_code_data && shortcut_crossing[crossing]))
+					if (code_table[generic_code_data::table::LABEL][crossing] != generic_code_data::VIRTUAL && !(pure_knotoid_code_data && shortcut_crossing[crossing]))
 					{
 						if (new_edge_labels[row][crossing] != -1)
 						{								
@@ -642,7 +641,7 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 			   if the edge terminates at an odd crossing (i.e one that is not virtual or a shortcut crossing) write the amalgamated_zig_zag_count 
 			   to the corresponding location in initial_new_zig_zag_count and reset  amalgamated_zig_zag_count to zero;
 			*/
-			int row = (old_edge%2 ? ODD_TERMINATING: EVEN_TERMINATING);
+			int row = (old_edge%2 ? generic_code_data::table::ODD_TERMINATING: generic_code_data::table::EVEN_TERMINATING);
 			int col=0;
 			for (int i=0; i< num_crossings; i++)
 			{
@@ -654,11 +653,11 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 			}
 
 if (debug_control::DEBUG >= debug_control::DETAIL)
-	debug << "remove_edge_flags_from_peer_code:   old_edge " << old_edge << " lies in position " << (row==ODD_TERMINATING? "ODD_TERMINATING" : "EVEN_TERMINATING") << ", " << col << ", new_edge = " << new_edge << endl;				 
+	debug << "remove_edge_flags_from_peer_code:   old_edge " << old_edge << " lies in position " << (row==generic_code_data::table::ODD_TERMINATING? "generic_code_data::table::ODD_TERMINATING" : "generic_code_data::table::EVEN_TERMINATING") << ", " << col << ", new_edge = " << new_edge << endl;				 
 				
 			/* we'll write the new edges corresponding to the old even edges into the first row of new_edge_labels 
 			   and the new edges corresponding to the old odd edges into the second row */
-			if (row == ODD_TERMINATING)
+			if (row == generic_code_data::table::ODD_TERMINATING)
 				row = 1;
 			else
 				row = 0;
@@ -669,7 +668,7 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 			{
 				int crossing = code_data.term_crossing[old_edge];
 				
-				if (code_table[LABEL][crossing] != generic_code_data::VIRTUAL && !(pure_knotoid_code_data && shortcut_crossing[crossing]))
+				if (code_table[generic_code_data::table::LABEL][crossing] != generic_code_data::VIRTUAL && !(pure_knotoid_code_data && shortcut_crossing[crossing]))
 				{					
 					initial_new_zig_zag_count[row][col] = amalgamated_zig_zag_count;
 					amalgamated_zig_zag_count = 0;				
@@ -729,7 +728,7 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_edge_flags_from_peer_code:   old edge " << edge << " terminates at crossing " << crossing << " row = " << row << endl;
 					
-			if (code_table[LABEL][crossing] != generic_code_data::VIRTUAL && !(pure_knotoid_code_data && shortcut_crossing[crossing]))
+			if (code_table[generic_code_data::table::LABEL][crossing] != generic_code_data::VIRTUAL && !(pure_knotoid_code_data && shortcut_crossing[crossing]))
 			{
 				if (new_edge_labels[row][crossing] != -1)
 				{	
@@ -773,10 +772,10 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 		debug << new_last_component_edge[i] << ' ';
 	debug << "\nremove_edge_flags_from_peer_code: old edge_labels: " << "\nremove_edge_flags_from_peer_code: ";
 	for (int i=0; i< num_crossings; i++)
-		debug << setw(3) << code_table[EVEN_TERMINATING][i];
+		debug << setw(3) << code_table[generic_code_data::table::EVEN_TERMINATING][i];
 	debug << "\nremove_edge_flags_from_peer_code: ";
 	for (int i=0; i< num_crossings; i++)
-		debug << setw(3) << code_table[ODD_TERMINATING][i];
+		debug << setw(3) << code_table[generic_code_data::table::ODD_TERMINATING][i];
 	debug << endl;
 	debug << "remove_edge_flags_from_peer_code: new_edge_labels: " << endl;
 	print(new_edge_labels, debug,3,"remove_edge_flags_from_peer_code: ");
@@ -931,7 +930,7 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 		   component, since the naming edge for a crossing may now be on a different component than 
 		   before.  To do this we evaluate the new first edge on each component
 		*/
-		matrix<int> new_code_table (CODE_TABLE_SIZE,new_num_crossings);
+		matrix<int> new_code_table (generic_code_data::table::CODE_TABLE_SIZE,new_num_crossings);
 		matrix<int> new_zig_zag_count (2, new_num_crossings);
 		
 		for (int i=0; i< num_crossings; i++)
@@ -956,31 +955,31 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 				
 				int col = even_edge/2;
 				
-				new_code_table[OPEER][col] = odd_edge;
-				new_code_table[EPEER][(odd_edge-1)/2] = even_edge;
+				new_code_table[generic_code_data::table::OPEER][col] = odd_edge;
+				new_code_table[generic_code_data::table::EPEER][(odd_edge-1)/2] = even_edge;
 				
 				if (odd_edge == new_edge_labels[0][i])
 				{
 					/* in the new numbering, what was an even-numbered edge is now odd-numbered, therefore
 					   the type and any classical label will be reversed 
 					*/
-					new_code_table[TYPE][col] = (code_table[TYPE][i] == generic_code_data::TYPE1?generic_code_data::TYPE2:generic_code_data::TYPE1);
+					new_code_table[generic_code_data::table::TYPE][col] = (code_table[generic_code_data::table::TYPE][i] == generic_code_data::TYPE1?generic_code_data::TYPE2:generic_code_data::TYPE1);
 					
-					if (code_table[LABEL][i] == generic_code_data::POSITIVE)
-						new_code_table[LABEL][col] = generic_code_data::NEGATIVE;
-					else if (code_table[LABEL][i] == generic_code_data::NEGATIVE)
-						new_code_table[LABEL][col] = generic_code_data::POSITIVE;
+					if (code_table[generic_code_data::table::LABEL][i] == generic_code_data::POSITIVE)
+						new_code_table[generic_code_data::table::LABEL][col] = generic_code_data::NEGATIVE;
+					else if (code_table[generic_code_data::table::LABEL][i] == generic_code_data::NEGATIVE)
+						new_code_table[generic_code_data::table::LABEL][col] = generic_code_data::POSITIVE;
 					else
-						new_code_table[LABEL][col] = code_table[LABEL][i];
+						new_code_table[generic_code_data::table::LABEL][col] = code_table[generic_code_data::table::LABEL][i];
 				}
 				else
 				{
-					new_code_table[LABEL][col] = code_table[LABEL][i];
-					new_code_table[TYPE][col] = code_table[TYPE][i];
+					new_code_table[generic_code_data::table::LABEL][col] = code_table[generic_code_data::table::LABEL][i];
+					new_code_table[generic_code_data::table::TYPE][col] = code_table[generic_code_data::table::TYPE][i];
 				}
 				
-				new_code_table[ODD_TERMINATING][col] = odd_edge;
-				new_code_table[EVEN_TERMINATING][col] = even_edge;
+				new_code_table[generic_code_data::table::ODD_TERMINATING][col] = odd_edge;
+				new_code_table[generic_code_data::table::EVEN_TERMINATING][col] = even_edge;
 				
 				if (track_zig_zag_counts)
 				{
@@ -996,7 +995,7 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 					else
 						break;
 				}
-				new_code_table[COMPONENT][col] = component;
+				new_code_table[generic_code_data::table::COMPONENT][col] = component;
 			}
 		}
 		
@@ -1005,31 +1004,31 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_edge_flags_from_peer_code: new_code_table" << endl;
 	debug << "remove_edge_flags_from_peer_code:  type: ";
 	for (int i=0; i< new_num_crossings; i++)
-		debug << new_code_table[TYPE][i] << ' ';
+		debug << new_code_table[generic_code_data::table::TYPE][i] << ' ';
 	debug << endl;
 	debug << "remove_edge_flags_from_peer_code:  odd peer: ";
 	for (int i=0; i< new_num_crossings; i++)
-		debug << new_code_table[OPEER][i] << ' ';
+		debug << new_code_table[generic_code_data::table::OPEER][i] << ' ';
 	debug << endl;
 	debug << "remove_edge_flags_from_peer_code:  even peer: ";
 	for (int i=0; i< new_num_crossings; i++)
-		debug << new_code_table[EPEER][i] << ' ';
+		debug << new_code_table[generic_code_data::table::EPEER][i] << ' ';
 	debug << endl;
 	debug << "remove_edge_flags_from_peer_code:  odd term: ";
 	for (int i=0; i< new_num_crossings; i++)
-		debug << new_code_table[ODD_TERMINATING][i] << ' ';
+		debug << new_code_table[generic_code_data::table::ODD_TERMINATING][i] << ' ';
 	debug << endl;
 	debug << "remove_edge_flags_from_peer_code:  even term: ";
 	for (int i=0; i< new_num_crossings; i++)
-		debug << new_code_table[EVEN_TERMINATING][i] << ' ';
+		debug << new_code_table[generic_code_data::table::EVEN_TERMINATING][i] << ' ';
 	debug << endl;
 	debug << "remove_edge_flags_from_peer_code:  label: ";
 	for (int i=0; i< new_num_crossings; i++)
-		debug << new_code_table[LABEL][i] << ' ';
+		debug << new_code_table[generic_code_data::table::LABEL][i] << ' ';
 	debug << endl;
 	debug << "remove_edge_flags_from_peer_code:  component: ";
 	for (int i=0; i< new_num_crossings; i++)
-		debug << new_code_table[COMPONENT][i] << ' ';
+		debug << new_code_table[generic_code_data::table::COMPONENT][i] << ' ';
 	debug << endl;
 	
 	if (track_zig_zag_counts)
@@ -1085,7 +1084,7 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 	
 			}
 			else if (new_head_semi_arc % 2)
-				code_data.head = code_data.code_table[EPEER][(new_head_semi_arc-1)/2]/2;
+				code_data.head = code_data.code_table[generic_code_data::table::EPEER][(new_head_semi_arc-1)/2]/2;
 			else
 				code_data.head = new_head_semi_arc/2;
 
@@ -1184,7 +1183,7 @@ bool Gauss_Reidemeister_II_labels(int start_edge, int end_bigon_edge_a, int end_
 	
 	int start_crossing = code_data.term_crossing[start_edge];
 
-	component = code_table[COMPONENT][(start_edge %2 ? (start_edge-1)/2: start_edge/2)];
+	component = code_table[generic_code_data::table::COMPONENT][(start_edge %2 ? (start_edge-1)/2: start_edge/2)];
 
 	int end_edge;
 	
@@ -1207,15 +1206,15 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "Gauss_Reidemeister_II_labels: start_crossing = " << start_crossing << ", end_crossing = " << end_crossing << endl;	
 }
 
-	if (code_table[LABEL][start_crossing] == generic_code_data::FLAT && code_table[LABEL][end_crossing] == generic_code_data::FLAT)
+	if (code_table[generic_code_data::table::LABEL][start_crossing] == generic_code_data::FLAT && code_table[generic_code_data::table::LABEL][end_crossing] == generic_code_data::FLAT)
 	{
 if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "Gauss_Reidemeister_II_labels: start and end crossings both FLAT, compatible Reidemeister II labels" << endl;	
 		
 		return true;
 	}
-	else if ((code_table[LABEL][start_crossing] == generic_code_data::POSITIVE || code_table[LABEL][start_crossing] == generic_code_data::NEGATIVE)
-	       && (code_table[LABEL][end_crossing] == generic_code_data::POSITIVE || code_table[LABEL][end_crossing] == generic_code_data::NEGATIVE))
+	else if ((code_table[generic_code_data::table::LABEL][start_crossing] == generic_code_data::POSITIVE || code_table[generic_code_data::table::LABEL][start_crossing] == generic_code_data::NEGATIVE)
+	       && (code_table[generic_code_data::table::LABEL][end_crossing] == generic_code_data::POSITIVE || code_table[generic_code_data::table::LABEL][end_crossing] == generic_code_data::NEGATIVE))
 	{	
 
 if (debug_control::DEBUG >= debug_control::DETAIL)
@@ -1224,14 +1223,14 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 		bool start_under_arc;
 		if (start_edge % 2)
 		{
-			if (code_table[LABEL][start_crossing] == generic_code_data::POSITIVE)
+			if (code_table[generic_code_data::table::LABEL][start_crossing] == generic_code_data::POSITIVE)
 				start_under_arc = true;
 			else
 				start_under_arc = false;
 		}
 		else
 		{
-			if (code_table[LABEL][start_crossing] == generic_code_data::POSITIVE)
+			if (code_table[generic_code_data::table::LABEL][start_crossing] == generic_code_data::POSITIVE)
 				start_under_arc = false;
 			else
 				start_under_arc = true;
@@ -1240,14 +1239,14 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 		bool end_under_arc;
 		if (end_edge % 2)
 		{
-			if (code_table[LABEL][end_crossing] == generic_code_data::POSITIVE)
+			if (code_table[generic_code_data::table::LABEL][end_crossing] == generic_code_data::POSITIVE)
 				end_under_arc = true;
 			else
 				end_under_arc = false;
 		}
 		else
 		{
-			if (code_table[LABEL][end_crossing] == generic_code_data::POSITIVE)
+			if (code_table[generic_code_data::table::LABEL][end_crossing] == generic_code_data::POSITIVE)
 				end_under_arc = false;
 			else
 				end_under_arc = true;
@@ -1353,9 +1352,9 @@ if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 	
 	if (code_data.immersion == generic_code_data::character::PURE_KNOTOID && code_data.head != -1 && code_data.shortcut_crossing.size())
 	{
-		if (code_table[LABEL][code_data.head] == generic_code_data::POSITIVE)
-			head_semi_arc = code_table[OPEER][code_data.head];
-		else if (code_table[LABEL][code_data.head] == generic_code_data::NEGATIVE)
+		if (code_table[generic_code_data::table::LABEL][code_data.head] == generic_code_data::POSITIVE)
+			head_semi_arc = code_table[generic_code_data::table::OPEER][code_data.head];
+		else if (code_table[generic_code_data::table::LABEL][code_data.head] == generic_code_data::NEGATIVE)
 			head_semi_arc = 2*code_data.head;
 		else
 		{
@@ -1377,14 +1376,14 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 
 	for (int i=0; i<num_crossings  && !Reidemeister_II_found ; i++)
 	{	
-		int peer = code_table[OPEER][i];
-		int component = code_table[COMPONENT][i];
+		int peer = code_table[generic_code_data::table::OPEER][i];
+		int component = code_table[generic_code_data::table::COMPONENT][i];
 		int successor = (2*i+1 - first_edge_on_component[component])%num_component_edges[component] + first_edge_on_component[component];
 		int predecessor = (2*i-1 - first_edge_on_component[component]+num_component_edges[component])%
 		                     num_component_edges[component] + first_edge_on_component[component];	
 		
 		/* the first edge on a component is always even, so peer-1 is on the same component as peer */
-		int peer_component = code_table[COMPONENT][(peer-1)/2]; 
+		int peer_component = code_table[generic_code_data::table::COMPONENT][(peer-1)/2]; 
 
 		int peer_successor = (peer+1 - first_edge_on_component[peer_component])%
 		                     num_component_edges[peer_component] + first_edge_on_component[peer_component];
@@ -1398,7 +1397,7 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 		int j1 = peer_predecessor/2;
 
 		
-		if (code_table[OPEER][j] == successor && simple_Reidemeister_II_labels(code_table[LABEL][i],code_table[LABEL][j]))
+		if (code_table[generic_code_data::table::OPEER][j] == successor && simple_Reidemeister_II_labels(code_table[generic_code_data::table::LABEL][i],code_table[generic_code_data::table::LABEL][j]))
 	    {
 			/* 1) peer of 2j is 2i+1; i.e peer of peer_successor is successor */
 if (debug_control::DEBUG >= debug_control::DETAIL)
@@ -1406,20 +1405,20 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "simple_Reidemeister_II_present:  i = " << i << ", naming edge = " << 2*i << ", peer = " << peer 
 	      << ", peer of peer_sucessor=" << peer_successor << " is sucessor=" << successor << ", " << endl;
 }
-			if (pure_knotoid_code_data && code_table[LABEL][i] != generic_code_data::VIRTUAL &&
+			if (pure_knotoid_code_data && code_table[generic_code_data::table::LABEL][i] != generic_code_data::VIRTUAL &&
 			    (successor == 0 || successor == head_semi_arc || peer_successor == 0 || peer_successor == head_semi_arc))
 			{
 if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "simple_Reidemeister_II_present: case 1, bigon bounded by successor and peer_successor includes knotoid leg (0) or head (" << head_semi_arc << ")" << endl;
 			}
 			else if (code_data.immersion == generic_code_data::character::LONG_KNOT && 
-			         code_table[LABEL][i] != generic_code_data::VIRTUAL && (successor == 0 || peer_successor == 0 ))
+			         code_table[generic_code_data::table::LABEL][i] != generic_code_data::VIRTUAL && (successor == 0 || peer_successor == 0 ))
 			{
 if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "simple_Reidemeister_II_present: case 1, bigon bounded by successor and peer_successor includes long knot ends" << endl;
 			}
 			else if (code_data.immersion == generic_code_data::character::KNOTOID && 
-			         code_table[LABEL][i] != generic_code_data::VIRTUAL && (successor == 0 || peer_successor == 0 ))
+			         code_table[generic_code_data::table::LABEL][i] != generic_code_data::VIRTUAL && (successor == 0 || peer_successor == 0 ))
 			{
 if (debug_control::DEBUG >= debug_control::DETAIL)
 {
@@ -1437,7 +1436,7 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 					RII_edge_flag[2*i] = RII_edge_flag[peer] = RII_edge_flag[peer_successor] = RII_edge_flag[successor] =1;
 			}
 		}
-		else if (code_table[OPEER][j] == predecessor && simple_Reidemeister_II_labels(code_table[LABEL][i],code_table[LABEL][j]))
+		else if (code_table[generic_code_data::table::OPEER][j] == predecessor && simple_Reidemeister_II_labels(code_table[generic_code_data::table::LABEL][i],code_table[generic_code_data::table::LABEL][j]))
 	    {
 			/* 4) peer of 2j is 2i-1 i.e peer of peer_successor is predecessor */
 if (debug_control::DEBUG >= debug_control::DETAIL)
@@ -1445,20 +1444,20 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "simple_Reidemeister_II_present:  i = " << i << ", naming edge = " << 2*i << ", peer = " << peer 
 	      << ", peer of peer_successor=" << peer_successor << " is predecessor=" << predecessor << ", " << endl;
 }
-			if (pure_knotoid_code_data && code_table[LABEL][i] != generic_code_data::VIRTUAL &&
+			if (pure_knotoid_code_data && code_table[generic_code_data::table::LABEL][i] != generic_code_data::VIRTUAL &&
 			    (2*i == 0 || 2*i == head_semi_arc || peer_successor == 0 || peer_successor == head_semi_arc))
 			{
 if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "simple_Reidemeister_II_present: case 4, bigon bounded by naming edge and peer_successor includes knotoid leg (0) or head (" << head_semi_arc << ")" << endl;
 			}
 			else if (code_data.immersion == generic_code_data::character::LONG_KNOT && 
-			         code_table[LABEL][i] != generic_code_data::VIRTUAL && (2*i == 0 || peer_successor == 0))
+			         code_table[generic_code_data::table::LABEL][i] != generic_code_data::VIRTUAL && (2*i == 0 || peer_successor == 0))
 			{
 if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "simple_Reidemeister_II_present: case 4, bigon bounded by naming edge and peer_successor includes long knot ends" << endl;
 			}
 			else if (code_data.immersion == generic_code_data::character::KNOTOID && 
-			         code_table[LABEL][i] != generic_code_data::VIRTUAL && (2*i == 0 || peer_successor == 0))
+			         code_table[generic_code_data::table::LABEL][i] != generic_code_data::VIRTUAL && (2*i == 0 || peer_successor == 0))
 			{
 if (debug_control::DEBUG >= debug_control::DETAIL)
 {
@@ -1476,7 +1475,7 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 					RII_edge_flag[2*i] = RII_edge_flag[peer] = RII_edge_flag[peer_successor] = RII_edge_flag[predecessor] =1;
 			}
 		}
-		else if (code_table[OPEER][j1] == successor && simple_Reidemeister_II_labels(code_table[LABEL][i],code_table[LABEL][j1]))
+		else if (code_table[generic_code_data::table::OPEER][j1] == successor && simple_Reidemeister_II_labels(code_table[generic_code_data::table::LABEL][i],code_table[generic_code_data::table::LABEL][j1]))
 		{
 			/* 2) peer of 2j-2 is 2i+1 i.e peer of peer_predecessor is successor */
 if (debug_control::DEBUG >= debug_control::DETAIL)
@@ -1484,20 +1483,20 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "simple_Reidemeister_II_present:  i = " << i << ", naming edge = " << 2*i << ", peer = " << peer 
 	      << ", peer of peer_predecessor=" << peer_predecessor << " is successor=" << successor << ", " << endl;
 }
-			if (pure_knotoid_code_data && code_table[LABEL][i] != generic_code_data::VIRTUAL &&
+			if (pure_knotoid_code_data && code_table[generic_code_data::table::LABEL][i] != generic_code_data::VIRTUAL &&
 			    (peer == 0 || peer == head_semi_arc || successor == 0 || successor == head_semi_arc))
 			{
 if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "simple_Reidemeister_II_present: case 2, bigon bounded by peer and successor includes knotoid  leg (0) or head (" << head_semi_arc << ")" << endl;
 			}
 			else if (code_data.immersion == generic_code_data::character::LONG_KNOT && 
-			         code_table[LABEL][i] != generic_code_data::VIRTUAL && (peer == 0 || successor == 0))
+			         code_table[generic_code_data::table::LABEL][i] != generic_code_data::VIRTUAL && (peer == 0 || successor == 0))
 			{
 if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "simple_Reidemeister_II_present: case 2, bigon bounded by peer and successor includes long knot ends" << endl;
 			}
 			else if (code_data.immersion == generic_code_data::character::KNOTOID && 
-			         code_table[LABEL][i] != generic_code_data::VIRTUAL && (peer == 0 || successor == 0))
+			         code_table[generic_code_data::table::LABEL][i] != generic_code_data::VIRTUAL && (peer == 0 || successor == 0))
 			{
 if (debug_control::DEBUG >= debug_control::DETAIL)
 {
@@ -1515,7 +1514,7 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 					RII_edge_flag[2*i] = RII_edge_flag[peer] = RII_edge_flag[peer_predecessor] = RII_edge_flag[successor] =1;
 			}
 		}
-		else if (code_table[OPEER][j1] == predecessor && simple_Reidemeister_II_labels(code_table[LABEL][i],code_table[LABEL][j1]))
+		else if (code_table[generic_code_data::table::OPEER][j1] == predecessor && simple_Reidemeister_II_labels(code_table[generic_code_data::table::LABEL][i],code_table[generic_code_data::table::LABEL][j1]))
 		{
 			/* 3) peer of 2j-2 is 2i-1 i.e peer of peer_predecessor is predecessor */
 if (debug_control::DEBUG >= debug_control::DETAIL)
@@ -1524,20 +1523,20 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 	      << ", peer of peer_predecessor=" << peer_predecessor << " is predecessor=" << predecessor << ", " << endl;
 }
 
-			if (pure_knotoid_code_data && code_table[LABEL][i] != generic_code_data::VIRTUAL &&
+			if (pure_knotoid_code_data && code_table[generic_code_data::table::LABEL][i] != generic_code_data::VIRTUAL &&
 			    (2*i == 0 || 2*i == head_semi_arc || peer == 0 || peer == head_semi_arc))
 			{
 if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "simple_Reidemeister_II_present: case 3, bigon bounded by naming edge and peer includes knotoid leg (0) or head (" << head_semi_arc << ")" << endl;
 			}
 			else if (code_data.immersion == generic_code_data::character::LONG_KNOT && 
-			         code_table[LABEL][i] != generic_code_data::VIRTUAL && (2*i == 0 || peer == 0))
+			         code_table[generic_code_data::table::LABEL][i] != generic_code_data::VIRTUAL && (2*i == 0 || peer == 0))
 			{
 if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "simple_Reidemeister_II_present: case 3, bigon bounded by naming edge and peer includes long knot ends" << endl;
 			}
 			else if (code_data.immersion == generic_code_data::character::KNOTOID && 
-			         code_table[LABEL][i] != generic_code_data::VIRTUAL && (2*i == 0 || peer == 0))
+			         code_table[generic_code_data::table::LABEL][i] != generic_code_data::VIRTUAL && (2*i == 0 || peer == 0))
 			{
 if (debug_control::DEBUG >= debug_control::DETAIL)
 {
@@ -1706,7 +1705,7 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "Gauss_Reidemeister_II_present: potential RII sequence found at term " << i << endl;
 	debug << "Gauss_Reidemeister_II_present:   start_gauss_crossing " << start_gauss_crossing+1 << ", start_immersion_crossing = " << start_immersion_crossing << endl;
 	debug << "Gauss_Reidemeister_II_present:   rendezvous_gauss_crossing " << rendezvous_gauss_crossing+1 << ", rendezvous_immersion_crossing = " << rendezvous_immersion_crossing << endl;
-	debug << "Gauss_Reidemeister_II_present:   start label = " << code_table[LABEL][start_immersion_crossing] << ", rendezvous label = " << code_table[LABEL][rendezvous_immersion_crossing] << endl;
+	debug << "Gauss_Reidemeister_II_present:   start label = " << code_table[generic_code_data::table::LABEL][start_immersion_crossing] << ", rendezvous label = " << code_table[generic_code_data::table::LABEL][rendezvous_immersion_crossing] << endl;
 }
 
 			/* we identify the start_edge and peer_edge by the nature of the first term at the start of a potential RII sequence.
@@ -1714,16 +1713,16 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 			   is forwards or backwards.
 			*/
 			
-			if ((orientation_matrix[0][i] == gauss_orientation_data::LEFT && code_table[TYPE][start_immersion_crossing] == generic_code_data::TYPE1) ||
-			    (orientation_matrix[0][i] == gauss_orientation_data::RIGHT && code_table[TYPE][start_immersion_crossing] == generic_code_data::TYPE2))
+			if ((orientation_matrix[0][i] == gauss_orientation_data::LEFT && code_table[generic_code_data::table::TYPE][start_immersion_crossing] == generic_code_data::TYPE1) ||
+			    (orientation_matrix[0][i] == gauss_orientation_data::RIGHT && code_table[generic_code_data::table::TYPE][start_immersion_crossing] == generic_code_data::TYPE2))
 			{
-				start_edge = code_table[EVEN_TERMINATING][start_immersion_crossing];
-				start_peer = code_table[ODD_TERMINATING][start_immersion_crossing];
+				start_edge = code_table[generic_code_data::table::EVEN_TERMINATING][start_immersion_crossing];
+				start_peer = code_table[generic_code_data::table::ODD_TERMINATING][start_immersion_crossing];
 			}
 			else
 			{
-				start_edge = code_table[ODD_TERMINATING][start_immersion_crossing];
-				start_peer = code_table[EVEN_TERMINATING][start_immersion_crossing];
+				start_edge = code_table[generic_code_data::table::ODD_TERMINATING][start_immersion_crossing];
+				start_peer = code_table[generic_code_data::table::EVEN_TERMINATING][start_immersion_crossing];
 			}
 
 if (debug_control::DEBUG >= debug_control::DETAIL)
@@ -1776,10 +1775,10 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "Gauss_Reidemeister_II_present:     succeeding term " << successor << " involves rendezvous_gauss_crossing" << endl;
 
-							start_bigon_edge_a = code_table[EVEN_ORIGINATING][start_immersion_crossing];
-							start_bigon_edge_b = code_table[ODD_ORIGINATING][start_immersion_crossing];
-							end_bigon_edge_a = code_table[EVEN_TERMINATING][rendezvous_immersion_crossing];
-							end_bigon_edge_b = code_table[ODD_TERMINATING][rendezvous_immersion_crossing];
+							start_bigon_edge_a = code_table[generic_code_data::table::EVEN_ORIGINATING][start_immersion_crossing];
+							start_bigon_edge_b = code_table[generic_code_data::table::ODD_ORIGINATING][start_immersion_crossing];
+							end_bigon_edge_a = code_table[generic_code_data::table::EVEN_TERMINATING][rendezvous_immersion_crossing];
+							end_bigon_edge_b = code_table[generic_code_data::table::ODD_TERMINATING][rendezvous_immersion_crossing];
 
 							forwards_from_peer = true;
 							rendezvous_start_term = j;
@@ -1812,28 +1811,28 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "Gauss_Reidemeister_II_present:     succeeding term " << successor << " involves start_gauss_crossing" << endl;
 
-							if ((start_edge_parity == gauss_orientation_data::RIGHT && code_table[TYPE][start_immersion_crossing] == generic_code_data::TYPE1) ||
-								(start_edge_parity == gauss_orientation_data::LEFT && code_table[TYPE][start_immersion_crossing] == generic_code_data::TYPE2))
+							if ((start_edge_parity == gauss_orientation_data::RIGHT && code_table[generic_code_data::table::TYPE][start_immersion_crossing] == generic_code_data::TYPE1) ||
+								(start_edge_parity == gauss_orientation_data::LEFT && code_table[generic_code_data::table::TYPE][start_immersion_crossing] == generic_code_data::TYPE2))
 							{
-								start_bigon_edge_a = code_table[EVEN_TERMINATING][start_immersion_crossing];
-								start_bigon_edge_b = code_table[EVEN_ORIGINATING][start_immersion_crossing];
+								start_bigon_edge_a = code_table[generic_code_data::table::EVEN_TERMINATING][start_immersion_crossing];
+								start_bigon_edge_b = code_table[generic_code_data::table::EVEN_ORIGINATING][start_immersion_crossing];
 							}
 							else
 							{
-								start_bigon_edge_a = code_table[ODD_TERMINATING][start_immersion_crossing];
-								start_bigon_edge_b = code_table[ODD_ORIGINATING][start_immersion_crossing];
+								start_bigon_edge_a = code_table[generic_code_data::table::ODD_TERMINATING][start_immersion_crossing];
+								start_bigon_edge_b = code_table[generic_code_data::table::ODD_ORIGINATING][start_immersion_crossing];
 							}
 			
-							if ((end_edge_parity == gauss_orientation_data::RIGHT && code_table[TYPE][rendezvous_immersion_crossing] == generic_code_data::TYPE2) ||
-								(end_edge_parity == gauss_orientation_data::LEFT && code_table[TYPE][rendezvous_immersion_crossing] == generic_code_data::TYPE1))
+							if ((end_edge_parity == gauss_orientation_data::RIGHT && code_table[generic_code_data::table::TYPE][rendezvous_immersion_crossing] == generic_code_data::TYPE2) ||
+								(end_edge_parity == gauss_orientation_data::LEFT && code_table[generic_code_data::table::TYPE][rendezvous_immersion_crossing] == generic_code_data::TYPE1))
 							{
-								end_bigon_edge_a = code_table[EVEN_TERMINATING][rendezvous_immersion_crossing];
-								end_bigon_edge_b = code_table[EVEN_ORIGINATING][rendezvous_immersion_crossing];
+								end_bigon_edge_a = code_table[generic_code_data::table::EVEN_TERMINATING][rendezvous_immersion_crossing];
+								end_bigon_edge_b = code_table[generic_code_data::table::EVEN_ORIGINATING][rendezvous_immersion_crossing];
 							}
 							else
 							{
-								end_bigon_edge_a = code_table[ODD_TERMINATING][rendezvous_immersion_crossing];
-								end_bigon_edge_b = code_table[ODD_ORIGINATING][rendezvous_immersion_crossing];
+								end_bigon_edge_a = code_table[generic_code_data::table::ODD_TERMINATING][rendezvous_immersion_crossing];
+								end_bigon_edge_b = code_table[generic_code_data::table::ODD_ORIGINATING][rendezvous_immersion_crossing];
 							}
 
 							forwards_from_peer = false;						    
@@ -2052,8 +2051,8 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 		int start_crossing = code_data.term_crossing[i];
 		int start_edge_parity;
 		
-		if ((start_edge%2 == 1 && code_table[TYPE][start_crossing] == generic_code_data::TYPE1) ||
-		    (start_edge%2 == 0 && code_table[TYPE][start_crossing] == generic_code_data::TYPE2))
+		if ((start_edge%2 == 1 && code_table[generic_code_data::table::TYPE][start_crossing] == generic_code_data::TYPE1) ||
+		    (start_edge%2 == 0 && code_table[generic_code_data::table::TYPE][start_crossing] == generic_code_data::TYPE2))
 			start_edge_parity = gauss_orientation_data::RIGHT;
 		else
 			start_edge_parity = gauss_orientation_data::LEFT;
@@ -2061,11 +2060,11 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "virtual_Reidemeister_II_plus: edge " << i << " crossing = " << start_crossing << ", label = " 
-	      << code_table[LABEL][start_crossing] << ", start_edge_parity = " << (start_edge_parity == gauss_orientation_data::RIGHT? "RIGHT" : "LEFT") << endl;
+	      << code_table[generic_code_data::table::LABEL][start_crossing] << ", start_edge_parity = " << (start_edge_parity == gauss_orientation_data::RIGHT? "RIGHT" : "LEFT") << endl;
 }	
 
 		/* we're only interested in starting at edges related to virtual or shortcut crossings */
-		if (code_table[LABEL][start_crossing] != generic_code_data::VIRTUAL && !(ignore_shortcut && shortcut_crossing[start_crossing]))
+		if (code_table[generic_code_data::table::LABEL][start_crossing] != generic_code_data::VIRTUAL && !(ignore_shortcut && shortcut_crossing[start_crossing]))
 		{
 if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "virtual_Reidemeister_II_plus:   edge " << i << " does not terminate at a virtual crossing or a shortcut crossing" << endl;
@@ -2073,7 +2072,7 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 			continue;
 		}
 
-		if (code_table[LABEL][start_crossing] == generic_code_data::VIRTUAL)
+		if (code_table[generic_code_data::table::LABEL][start_crossing] == generic_code_data::VIRTUAL)
 		{		
 
 if (debug_control::DEBUG >= debug_control::DETAIL)
@@ -2099,9 +2098,9 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 
 		start_edge = i;
 		if (start_edge%2 == 1)
-			start_peer = code_table[EVEN_TERMINATING][start_crossing];
+			start_peer = code_table[generic_code_data::table::EVEN_TERMINATING][start_crossing];
 		else
-			start_peer = code_table[ODD_TERMINATING][start_crossing];
+			start_peer = code_table[generic_code_data::table::ODD_TERMINATING][start_crossing];
 
 if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "virtual_Reidemeister_II_plus:   start_edge = " << start_edge << ", start_peer = " << start_peer << endl;
@@ -2111,7 +2110,7 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 		   If there is, then the subsequent path between the same two crossings, around the component on which the subsequent path
 		   resides, will also comprise only virtual or shortcut crossings.
 		*/
-		int ith_edge_component = code_table[COMPONENT][(start_edge%2 == 0? start_edge/2: (start_edge-1)/2)];
+		int ith_edge_component = code_table[generic_code_data::table::COMPONENT][(start_edge%2 == 0? start_edge/2: (start_edge-1)/2)];
 		int num_initial_component_edges = code_data.num_component_edges[ith_edge_component];
 
 if (debug_control::DEBUG >= debug_control::DETAIL)
@@ -2127,14 +2126,14 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 
 			int jth_edge_parity;
 			
-			if ((jth_edge%2 == 1 && code_table[TYPE][jth_crossing] == generic_code_data::TYPE1) ||
-				(jth_edge%2 == 0 && code_table[TYPE][jth_crossing] == generic_code_data::TYPE2))
+			if ((jth_edge%2 == 1 && code_table[generic_code_data::table::TYPE][jth_crossing] == generic_code_data::TYPE1) ||
+				(jth_edge%2 == 0 && code_table[generic_code_data::table::TYPE][jth_crossing] == generic_code_data::TYPE2))
 				jth_edge_parity = gauss_orientation_data::RIGHT;
 			else
 				jth_edge_parity = gauss_orientation_data::LEFT;
 				
 			
-			if (code_table[LABEL][jth_crossing] != generic_code_data::VIRTUAL && !(ignore_shortcut && shortcut_crossing[jth_crossing]))
+			if (code_table[generic_code_data::table::LABEL][jth_crossing] != generic_code_data::VIRTUAL && !(ignore_shortcut && shortcut_crossing[jth_crossing]))
 			{
 if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "virtual_Reidemeister_II_plus:     edge " << jth_edge << " does not terminate at a virtual or shortcut crossing, stop checking crossings reached from edge " << i << endl;
@@ -2245,10 +2244,10 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 							/* we need the start and end bigon edges to determine whether this Reidemeister II
 							   configuration warrants detecting.
 							*/						
-							start_bigon_edge_a = code_table[EVEN_ORIGINATING][start_crossing];
-							start_bigon_edge_b = code_table[ODD_ORIGINATING][start_crossing];
-							end_bigon_edge_a = code_table[EVEN_TERMINATING][rendezvous_crossing];
-							end_bigon_edge_b = code_table[ODD_TERMINATING][rendezvous_crossing];					
+							start_bigon_edge_a = code_table[generic_code_data::table::EVEN_ORIGINATING][start_crossing];
+							start_bigon_edge_b = code_table[generic_code_data::table::ODD_ORIGINATING][start_crossing];
+							end_bigon_edge_a = code_table[generic_code_data::table::EVEN_TERMINATING][rendezvous_crossing];
+							end_bigon_edge_b = code_table[generic_code_data::table::ODD_TERMINATING][rendezvous_crossing];					
 						}
 						else if (code_data.term_crossing[component_edge] == rendezvous_crossing)
 						{
@@ -2263,24 +2262,24 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 	
 							if (start_edge%2 == 1)
 							{
-								start_bigon_edge_a = code_table[EVEN_ORIGINATING][start_crossing]; // start path
-								start_bigon_edge_b = code_table[EVEN_TERMINATING][start_crossing]; // peer path
+								start_bigon_edge_a = code_table[generic_code_data::table::EVEN_ORIGINATING][start_crossing]; // start path
+								start_bigon_edge_b = code_table[generic_code_data::table::EVEN_TERMINATING][start_crossing]; // peer path
 							}
 							else
 							{
-								start_bigon_edge_a = code_table[ODD_ORIGINATING][start_crossing]; // start path
-								start_bigon_edge_b = code_table[ODD_TERMINATING][start_crossing]; // peer path
+								start_bigon_edge_a = code_table[generic_code_data::table::ODD_ORIGINATING][start_crossing]; // start path
+								start_bigon_edge_b = code_table[generic_code_data::table::ODD_TERMINATING][start_crossing]; // peer path
 							}
 	
 							if (peer_path_start_edge%2 ==1)
 							{
-								end_bigon_edge_a = code_table[EVEN_TERMINATING][rendezvous_crossing]; // start path
-								end_bigon_edge_b = code_table[EVEN_ORIGINATING][rendezvous_crossing]; // peer path
+								end_bigon_edge_a = code_table[generic_code_data::table::EVEN_TERMINATING][rendezvous_crossing]; // start path
+								end_bigon_edge_b = code_table[generic_code_data::table::EVEN_ORIGINATING][rendezvous_crossing]; // peer path
 							}
 							else
 							{
-								end_bigon_edge_a = code_table[ODD_TERMINATING][rendezvous_crossing]; // start path
-								end_bigon_edge_b = code_table[ODD_ORIGINATING][rendezvous_crossing]; // peer path
+								end_bigon_edge_a = code_table[generic_code_data::table::ODD_TERMINATING][rendezvous_crossing]; // start path
+								end_bigon_edge_b = code_table[generic_code_data::table::ODD_ORIGINATING][rendezvous_crossing]; // peer path
 							}						
 						}
 						else
@@ -2310,7 +2309,7 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 }						
 							bool virtual_Reidemeister_II = true;
 	
-							int subsequent_component = code_table[COMPONENT][(peer_path_start_edge%2 == 0? peer_path_start_edge/2: (peer_path_start_edge-1)/2)];
+							int subsequent_component = code_table[generic_code_data::table::COMPONENT][(peer_path_start_edge%2 == 0? peer_path_start_edge/2: (peer_path_start_edge-1)/2)];
 								
 							int num_subsequent_component_edges = code_data.num_component_edges[subsequent_component];						
 							bool peer_path_shortcut_crossing = false;
@@ -2333,7 +2332,7 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 	
 									break;
 								}
-								else if (code_table[LABEL][kth_crossing] != generic_code_data::VIRTUAL && !(ignore_shortcut && shortcut_crossing[kth_crossing]))
+								else if (code_table[generic_code_data::table::LABEL][kth_crossing] != generic_code_data::VIRTUAL && !(ignore_shortcut && shortcut_crossing[kth_crossing]))
 								{
 if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "virtual_Reidemeister_II_plus:           edge " << kth_edge << " does not terminate at a virtual or shortcut crossing" << endl;
@@ -2345,8 +2344,8 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 								{
 									peer_virtual_crossing_flag[kth_crossing] = 1;	
 		
-									if ((kth_edge%2 == 0 && code_table[LABEL][kth_crossing] == generic_code_data::NEGATIVE) ||
-									     (kth_edge%2 == 1 && code_table[LABEL][kth_crossing] == generic_code_data::POSITIVE))
+									if ((kth_edge%2 == 0 && code_table[generic_code_data::table::LABEL][kth_crossing] == generic_code_data::NEGATIVE) ||
+									     (kth_edge%2 == 1 && code_table[generic_code_data::table::LABEL][kth_crossing] == generic_code_data::POSITIVE))
 									{
 										peer_path_shortcut_crossing = true;
 									}
@@ -2536,8 +2535,8 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 								{
 									if (mark_special)
 									{
-										code_data.code_table[LABEL][start_crossing] = generic_code_data::VOID;
-										code_data.code_table[LABEL][rendezvous_crossing] = generic_code_data::VOID;
+										code_data.code_table[generic_code_data::table::LABEL][start_crossing] = generic_code_data::VOID;
+										code_data.code_table[generic_code_data::table::LABEL][rendezvous_crossing] = generic_code_data::VOID;
 									}
 									
 									_return.Reidemeister_II_found = true;
@@ -2659,9 +2658,9 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 	
 	if (code_data.immersion == generic_code_data::character::PURE_KNOTOID && code_data.head != -1 && shortcut_crossing.size())
 	{
-		if (code_table[LABEL][code_data.head] == generic_code_data::POSITIVE)
-			head_semi_arc = code_table[OPEER][code_data.head];
-		else if (code_table[LABEL][code_data.head] == generic_code_data::NEGATIVE)
+		if (code_table[generic_code_data::table::LABEL][code_data.head] == generic_code_data::POSITIVE)
+			head_semi_arc = code_table[generic_code_data::table::OPEER][code_data.head];
+		else if (code_table[generic_code_data::table::LABEL][code_data.head] == generic_code_data::NEGATIVE)
 			head_semi_arc = 2*code_data.head;
 		else
 		{
@@ -2797,7 +2796,7 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 		{
 			/* identify the virtual crossings and edge flags associated with the detour */
 			int start_crossing = term_crossing[start];	
-			int start_label = code_table[LABEL][start_crossing];
+			int start_label = code_table[generic_code_data::table::LABEL][start_crossing];
 
 if (debug_control::DEBUG >= debug_control::DETAIL)
 {
@@ -2819,15 +2818,15 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 			
 			if (start%2) // arriving on odd edge
 			{
-				peer = code_table[EPEER][(start-1)/2];
-				start_component = code_table[COMPONENT][(start-1)/2];
-				peer_component = code_table[COMPONENT][peer/2]; 
+				peer = code_table[generic_code_data::table::EPEER][(start-1)/2];
+				start_component = code_table[generic_code_data::table::COMPONENT][(start-1)/2];
+				peer_component = code_table[generic_code_data::table::COMPONENT][peer/2]; 
 			}
 			else
 			{
-				peer = code_table[OPEER][start/2];
-				start_component = code_table[COMPONENT][start/2];
-				peer_component = code_table[COMPONENT][(peer-1)/2]; 
+				peer = code_table[generic_code_data::table::OPEER][start/2];
+				start_component = code_table[generic_code_data::table::COMPONENT][start/2];
+				peer_component = code_table[generic_code_data::table::COMPONENT][(peer-1)/2]; 
 			}
 
 if (debug_control::DEBUG >= debug_control::DETAIL)
@@ -2858,7 +2857,7 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 				else if (edge == head_semi_arc)
 					head_semi_arc_in_start_path = true;
 					
-				if (code_table[LABEL][term_crossing[edge]] == generic_code_data::VOID)
+				if (code_table[generic_code_data::table::LABEL][term_crossing[edge]] == generic_code_data::VOID)
 				{
 					rendezvous_crossing = term_crossing[edge];
 					
@@ -2867,7 +2866,7 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 	
 					break;
 				}
-				else if (code_table[LABEL][term_crossing[edge]] == generic_code_data::VIRTUAL)
+				else if (code_table[generic_code_data::table::LABEL][term_crossing[edge]] == generic_code_data::VIRTUAL)
 				{
 					start_virtual_crossing_flag[term_crossing[edge]] = 1;
 if (debug_control::DEBUG >= debug_control::DETAIL)
@@ -2921,7 +2920,7 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 				else if (edge == head_semi_arc)
 					head_semi_arc_in_peer_path = true;
 
-				if (code_table[LABEL][term_crossing[edge]] == generic_code_data::VOID)
+				if (code_table[generic_code_data::table::LABEL][term_crossing[edge]] == generic_code_data::VOID)
 				{
 if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II:   edge " << edge << " terminates at the rendezvous crossing, " << rendezvous_crossing << endl;
@@ -2929,7 +2928,7 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 						peer_detour_entry_edge = edge;
 					break;
 				}
-				if (code_table[LABEL][term_crossing[edge]] == generic_code_data::VIRTUAL)
+				if (code_table[generic_code_data::table::LABEL][term_crossing[edge]] == generic_code_data::VIRTUAL)
 				{
 					peer_virtual_crossing_flag[term_crossing[edge]] = 1;
 
@@ -2954,10 +2953,10 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 			}
 			
 			/* Now we know the start and rendezvous crossings we can reset any VOID labels */
-			if (code_table[LABEL][start_crossing] == generic_code_data::VOID)
+			if (code_table[generic_code_data::table::LABEL][start_crossing] == generic_code_data::VOID)
 			{
-				code_table[LABEL][start_crossing] = copy_code_table[LABEL][start_crossing];
-				code_table[LABEL][rendezvous_crossing] = copy_code_table[LABEL][rendezvous_crossing];
+				code_table[generic_code_data::table::LABEL][start_crossing] = copy_code_table[generic_code_data::table::LABEL][start_crossing];
+				code_table[generic_code_data::table::LABEL][rendezvous_crossing] = copy_code_table[generic_code_data::table::LABEL][rendezvous_crossing];
 			}
 
 if (debug_control::DEBUG >= debug_control::DETAIL)
@@ -3001,7 +3000,7 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 			
 			int start_successor = (start+1 - first_edge_on_component[start_component])%
 												num_component_edges[start_component] + first_edge_on_component[start_component];
-			int start_path_rendezvous_edge = (edge %2 == 1? code_table[EPEER][(edge-1)/2]: code_table[OPEER][rendezvous_crossing]);
+			int start_path_rendezvous_edge = (edge %2 == 1? code_table[generic_code_data::table::EPEER][(edge-1)/2]: code_table[generic_code_data::table::OPEER][rendezvous_crossing]);
 		
 			int start_path_start_edge;
 			int peer_path_start_edge;
@@ -3063,17 +3062,17 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 
 				/* we just need to remove all the virtual crossings we've identified plus the two non-virtual crossings */
 				
-				RII_edge_flag[code_table[ODD_TERMINATING][start_crossing]] = 1;
-				RII_edge_flag[code_table[EVEN_TERMINATING][start_crossing]] = 1;
-				RII_edge_flag[code_table[ODD_TERMINATING][rendezvous_crossing]] = 1;
-				RII_edge_flag[code_table[EVEN_TERMINATING][rendezvous_crossing]] = 1;
+				RII_edge_flag[code_table[generic_code_data::table::ODD_TERMINATING][start_crossing]] = 1;
+				RII_edge_flag[code_table[generic_code_data::table::EVEN_TERMINATING][start_crossing]] = 1;
+				RII_edge_flag[code_table[generic_code_data::table::ODD_TERMINATING][rendezvous_crossing]] = 1;
+				RII_edge_flag[code_table[generic_code_data::table::EVEN_TERMINATING][rendezvous_crossing]] = 1;
 				
 				for (int i=0; i< num_crossings; i++)
 				{
 					if (start_virtual_crossing_flag[i] || peer_virtual_crossing_flag[i])
 					{
-						RII_edge_flag[code_table[ODD_TERMINATING][i]] = 1;
-						RII_edge_flag[code_table[EVEN_TERMINATING][i]] = 1;
+						RII_edge_flag[code_table[generic_code_data::table::ODD_TERMINATING][i]] = 1;
+						RII_edge_flag[code_table[generic_code_data::table::EVEN_TERMINATING][i]] = 1;
 					}
 				}
 
@@ -3192,7 +3191,7 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 				   [-3 9 -15 -13 -11 1 -5 -7]/# # * # # * * *, the peer detour crosses the start detour, so that there is a
 				   virtual crossing on both detours.  These crossings do not appear when we move the peer detour, since it
 				   is moved to become parallel with the start detour.  However, we need to record how many there are initially,
-				   since we have to set the TYPE of the corresponding additional virtual crossings on the peer detour when it has
+				   since we have to set the generic_code_data::table::TYPE of the corresponding additional virtual crossings on the peer detour when it has
 				   been moved.  Therefore we first count the initial number of start_virtual_crossings, then adjust them to 
 				   remove those also lying on the peer detour.  Once this is done, the number of additional crossings added 
 				   when the peer detour is moved is just the number of virtual crossings remaining on the start detour.  
@@ -3269,33 +3268,33 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 									
 					if (standard_Reidemeister_II_configuration)
 					{
-						RII_edge_flag[code_table[ODD_TERMINATING][start_crossing]] = 1;
-						RII_edge_flag[code_table[EVEN_TERMINATING][start_crossing]] = 1;
-						RII_edge_flag[code_table[ODD_TERMINATING][rendezvous_crossing]] = 1;
-						RII_edge_flag[code_table[EVEN_TERMINATING][rendezvous_crossing]] = 1;
+						RII_edge_flag[code_table[generic_code_data::table::ODD_TERMINATING][start_crossing]] = 1;
+						RII_edge_flag[code_table[generic_code_data::table::EVEN_TERMINATING][start_crossing]] = 1;
+						RII_edge_flag[code_table[generic_code_data::table::ODD_TERMINATING][rendezvous_crossing]] = 1;
+						RII_edge_flag[code_table[generic_code_data::table::EVEN_TERMINATING][rendezvous_crossing]] = 1;
 					}
 					else
 					{
 						if (forwards_from_peer)
 						{
-							RII_edge_flag[code_table[ODD_TERMINATING][start_crossing]] = 1;
-							RII_edge_flag[code_table[EVEN_TERMINATING][start_crossing]] = 1;
+							RII_edge_flag[code_table[generic_code_data::table::ODD_TERMINATING][start_crossing]] = 1;
+							RII_edge_flag[code_table[generic_code_data::table::EVEN_TERMINATING][start_crossing]] = 1;
 							
 if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "remove_Reidemeister_II: non-standard Reidemeister II condition, forwards from peer, retaining rendezvous crossing terminating edges ";
-	debug << code_table[ODD_TERMINATING][rendezvous_crossing] << " and " << code_table[EVEN_TERMINATING][rendezvous_crossing] << endl;
+	debug << code_table[generic_code_data::table::ODD_TERMINATING][rendezvous_crossing] << " and " << code_table[generic_code_data::table::EVEN_TERMINATING][rendezvous_crossing] << endl;
 }
 						}
 						else
 						{
-							RII_edge_flag[code_table[ODD_TERMINATING][rendezvous_crossing]] = 1;
-							RII_edge_flag[code_table[EVEN_TERMINATING][rendezvous_crossing]] = 1;
+							RII_edge_flag[code_table[generic_code_data::table::ODD_TERMINATING][rendezvous_crossing]] = 1;
+							RII_edge_flag[code_table[generic_code_data::table::EVEN_TERMINATING][rendezvous_crossing]] = 1;
 							
 if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "remove_Reidemeister_II: non-standard Reidemeister II condition, backwards from peer, retaining start crossing terminating edges ";
-	debug << code_table[ODD_TERMINATING][start_crossing] << " and " << code_table[EVEN_TERMINATING][start_crossing] << endl;
+	debug << code_table[generic_code_data::table::ODD_TERMINATING][start_crossing] << " and " << code_table[generic_code_data::table::EVEN_TERMINATING][start_crossing] << endl;
 }
 						}
 					}
@@ -3304,8 +3303,8 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 					{
 						if (peer_virtual_crossing_flag[i])
 						{
-							RII_edge_flag[code_table[ODD_TERMINATING][i]] = 1;
-							RII_edge_flag[code_table[EVEN_TERMINATING][i]] = 1;
+							RII_edge_flag[code_table[generic_code_data::table::ODD_TERMINATING][i]] = 1;
+							RII_edge_flag[code_table[generic_code_data::table::EVEN_TERMINATING][i]] = 1;
 						}
 					}
 	
@@ -3322,8 +3321,8 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 					   (with respect to the start detour's orientation) after it has been moved 
 					*/
 					int start_polarity;				
-					if ((start%2 == 0 && code_table[TYPE][start_crossing] == generic_code_data::TYPE1) || 
-					    (start%2 == 1 && code_table[TYPE][start_crossing] == generic_code_data::TYPE2)
+					if ((start%2 == 0 && code_table[generic_code_data::table::TYPE][start_crossing] == generic_code_data::TYPE1) || 
+					    (start%2 == 1 && code_table[generic_code_data::table::TYPE][start_crossing] == generic_code_data::TYPE2)
 					   )
 					{
 						start_polarity = gauss_orientation_data::LEFT;
@@ -3494,10 +3493,10 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "remove_Reidemeister_II:   start detour edge " << edge << " terminates at crossing " << term_crossing[edge] << ", which is " << 
-	         (code_table[TYPE][term_crossing[edge]] == generic_code_data::TYPE1? "TYPE1" : "TYPE2") << endl;
+	         (code_table[generic_code_data::table::TYPE][term_crossing[edge]] == generic_code_data::TYPE1? "TYPE1" : "TYPE2") << endl;
 }					
-							if ((edge%2 == 0 && code_table[TYPE][term_crossing[edge]] == generic_code_data::TYPE1) ||
-							    (edge%2 == 1 && code_table[TYPE][term_crossing[edge]] == generic_code_data::TYPE2)
+							if ((edge%2 == 0 && code_table[generic_code_data::table::TYPE][term_crossing[edge]] == generic_code_data::TYPE1) ||
+							    (edge%2 == 1 && code_table[generic_code_data::table::TYPE][term_crossing[edge]] == generic_code_data::TYPE2)
 							   )
 							{
 								start_virtual_polarity[start_virtual_index] = gauss_orientation_data::LEFT;
@@ -3543,8 +3542,8 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 						*/
 						if (start_virtual_crossing_flag[term_crossing[edge]] == 1)
 						{						
-							int transverse_peer = (edge%2? code_table[EPEER][(edge-1)/2]:code_table[OPEER][edge/2]);
-							int transverse_peer_component = (transverse_peer%2? code_table[COMPONENT][(transverse_peer-1)/2]:code_table[COMPONENT][(transverse_peer)/2]);
+							int transverse_peer = (edge%2? code_table[generic_code_data::table::EPEER][(edge-1)/2]:code_table[generic_code_data::table::OPEER][edge/2]);
+							int transverse_peer_component = (transverse_peer%2? code_table[generic_code_data::table::COMPONENT][(transverse_peer-1)/2]:code_table[generic_code_data::table::COMPONENT][(transverse_peer)/2]);
 	
 if (debug_control::DEBUG >= debug_control::DETAIL)
 {
@@ -3684,9 +3683,9 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 												
 						int old_edge_component;
 						if (old_edge%2)
-							old_edge_component = code_table[COMPONENT][(old_edge-1)/2];
+							old_edge_component = code_table[generic_code_data::table::COMPONENT][(old_edge-1)/2];
 						else
-							old_edge_component = code_table[COMPONENT][(old_edge)/2];
+							old_edge_component = code_table[generic_code_data::table::COMPONENT][(old_edge)/2];
 							
 						/* Since the start and rendezvous crossings are in different turning cycles, there is at least one
 						   virtual crossing on the start detour.  This means there will always be at least one crossing 
@@ -3761,7 +3760,7 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II:   old edge " << edge << " terminates at crossing " << crossing << " row = " << row << endl;
 					
-									if (code_table[LABEL][crossing] != generic_code_data::VIRTUAL && !(pure_knotoid_code_data && shortcut_crossing[crossing]))
+									if (code_table[generic_code_data::table::LABEL][crossing] != generic_code_data::VIRTUAL && !(pure_knotoid_code_data && shortcut_crossing[crossing]))
 									{
 										if (new_edge_labels[row][crossing] != -1)
 										{		
@@ -3888,7 +3887,7 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 							   old_edge's place in the terminating edge data contained in the code table.  We
 							   know which row to look in because of the polarity of old_edge.
 							*/
-							int row = (old_edge%2 ? ODD_TERMINATING: EVEN_TERMINATING);
+							int row = (old_edge%2 ? generic_code_data::table::ODD_TERMINATING: generic_code_data::table::EVEN_TERMINATING);
 							int col=0;
 							for (int i=0; i< num_crossings; i++)
 							{
@@ -3902,12 +3901,12 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 	
 if (debug_control::DEBUG >= debug_control::DETAIL)
 {
-	debug << "remove_Reidemeister_II:   old_edge " << old_edge << " lies in position " << (row==ODD_TERMINATING? "ODD_TERMINATING" : "EVEN_TERMINATING") 
+	debug << "remove_Reidemeister_II:   old_edge " << old_edge << " lies in position " << (row==generic_code_data::table::ODD_TERMINATING? "generic_code_data::table::ODD_TERMINATING" : "generic_code_data::table::EVEN_TERMINATING") 
 	      << ", " << col << "; new_edge = " << new_edge << endl;				 
 }					
 							/* we'll write the new edges corresponding to the old even edges into the first row of new_edge_labels 
 							   and the new edges corresponding to the old odd edges into the second row */
-							if (row == ODD_TERMINATING)
+							if (row == generic_code_data::table::ODD_TERMINATING)
 								row = 1;
 							else
 								row = 0;
@@ -3926,7 +3925,7 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 							{
 								int crossing = term_crossing[edge];
 								
-								if (code_table[LABEL][crossing] != generic_code_data::VIRTUAL && !(pure_knotoid_code_data && shortcut_crossing[crossing]))
+								if (code_table[generic_code_data::table::LABEL][crossing] != generic_code_data::VIRTUAL && !(pure_knotoid_code_data && shortcut_crossing[crossing]))
 								{					
 									initial_new_zig_zag_count[row][col] = amalgamated_zig_zag_count;
 									amalgamated_zig_zag_count = 0;				
@@ -3984,7 +3983,7 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II:   old edge " << edge << " terminates at crossing " << crossing << " row = " << row << endl;
 					
-							if (code_table[LABEL][crossing] != generic_code_data::VIRTUAL && !(pure_knotoid_code_data && shortcut_crossing[crossing]))
+							if (code_table[generic_code_data::table::LABEL][crossing] != generic_code_data::VIRTUAL && !(pure_knotoid_code_data && shortcut_crossing[crossing]))
 							{
 								if (new_edge_labels[row][crossing] != -1)
 								{		
@@ -4096,10 +4095,10 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "remove_Reidemeister_II: old edge_labels" << "\nremove_Reidemeister_II: ";
 	for (int i=0; i< num_crossings; i++)
-		debug << setw(3) << code_table[EVEN_TERMINATING][i];
+		debug << setw(3) << code_table[generic_code_data::table::EVEN_TERMINATING][i];
 	debug << "\nremove_Reidemeister_II: ";
 	for (int i=0; i< num_crossings; i++)
-		debug << setw(3) << code_table[ODD_TERMINATING][i];
+		debug << setw(3) << code_table[generic_code_data::table::ODD_TERMINATING][i];
 	debug << endl;
 	debug << "remove_Reidemeister_II: new_edge_labels: " << endl;
 	print(new_edge_labels, debug, 3, "remove_Reidemeister_II: ");
@@ -4194,7 +4193,7 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 						{						
 							if (peer_detour_entry_edge == 0 || leg_semi_arc_in_peer_path)
 							{
-								int row = (peer_detour_skip_edge%2 ? ODD_TERMINATING: EVEN_TERMINATING);
+								int row = (peer_detour_skip_edge%2 ? generic_code_data::table::ODD_TERMINATING: generic_code_data::table::EVEN_TERMINATING);
 								int col=0;
 								for (int i=0; i< num_crossings; i++)
 								{
@@ -4205,7 +4204,7 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 									}
 								}						
 								
-								if (row == ODD_TERMINATING)
+								if (row == generic_code_data::table::ODD_TERMINATING)
 									row = 1;
 								else
 									row = 0;
@@ -4409,7 +4408,7 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 					   component, since the naming edge for a crossing may now be on a different component than 
 					   before.  
 					*/
-					matrix<int> new_code_table (CODE_TABLE_SIZE,new_num_crossings);
+					matrix<int> new_code_table (generic_code_data::table::CODE_TABLE_SIZE,new_num_crossings);
 					matrix<int> new_zig_zag_count (2, new_num_crossings);
 
 					for (int i=0; i< num_new_edge_label_columns; i++)
@@ -4436,8 +4435,8 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 							
 							int col = even_edge/2;
 							
-							new_code_table[OPEER][col] = odd_edge;
-							new_code_table[EPEER][(odd_edge-1)/2] = even_edge;
+							new_code_table[generic_code_data::table::OPEER][col] = odd_edge;
+							new_code_table[generic_code_data::table::EPEER][(odd_edge-1)/2] = even_edge;
 							
 							/* We arbitrarily recorded the new_edge labels of the virtual crossings introduced by moving the peer
 							   with the even edge in row zero, but they do not have a corresponding old crossing from which we can
@@ -4451,24 +4450,24 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 									/* in the new numbering, what was an even-numbered edge is now odd-numbered, therefore
 									   the type and any classical label will be reversed 
 									*/
-									new_code_table[TYPE][col] = (code_table[TYPE][i] == generic_code_data::TYPE1?generic_code_data::TYPE2:generic_code_data::TYPE1);
+									new_code_table[generic_code_data::table::TYPE][col] = (code_table[generic_code_data::table::TYPE][i] == generic_code_data::TYPE1?generic_code_data::TYPE2:generic_code_data::TYPE1);
 									
-									if (code_table[LABEL][i] == generic_code_data::POSITIVE)
-										new_code_table[LABEL][col] = generic_code_data::NEGATIVE;
-									else if (code_table[LABEL][i] == generic_code_data::NEGATIVE)
-										new_code_table[LABEL][col] = generic_code_data::POSITIVE;
+									if (code_table[generic_code_data::table::LABEL][i] == generic_code_data::POSITIVE)
+										new_code_table[generic_code_data::table::LABEL][col] = generic_code_data::NEGATIVE;
+									else if (code_table[generic_code_data::table::LABEL][i] == generic_code_data::NEGATIVE)
+										new_code_table[generic_code_data::table::LABEL][col] = generic_code_data::POSITIVE;
 									else
-										new_code_table[LABEL][col] = code_table[LABEL][i];
+										new_code_table[generic_code_data::table::LABEL][col] = code_table[generic_code_data::table::LABEL][i];
 								}
 								else
 								{
-									new_code_table[LABEL][col] = code_table[LABEL][i];
-									new_code_table[TYPE][col] = code_table[TYPE][i];
+									new_code_table[generic_code_data::table::LABEL][col] = code_table[generic_code_data::table::LABEL][i];
+									new_code_table[generic_code_data::table::TYPE][col] = code_table[generic_code_data::table::TYPE][i];
 								}
 							}
 
-							new_code_table[EVEN_TERMINATING][col] = even_edge;
-							new_code_table[ODD_TERMINATING][col] = odd_edge;
+							new_code_table[generic_code_data::table::EVEN_TERMINATING][col] = even_edge;
+							new_code_table[generic_code_data::table::ODD_TERMINATING][col] = odd_edge;
 
 							if (track_zig_zag_counts)
 							{
@@ -4484,12 +4483,12 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 								else
 									break;
 							}
-							new_code_table[COMPONENT][col] = component;
+							new_code_table[generic_code_data::table::COMPONENT][col] = component;
 						}
 					}
 					
-					/* The TYPE of the virtual crossings and both the TYPE and LABEL of shortcut crossings
-					   introduced by moving the peer detour may be determined from the TYPE and LABEL of 
+					/* The generic_code_data::table::TYPE of the virtual crossings and both the generic_code_data::table::TYPE and generic_code_data::table::LABEL of shortcut crossings
+					   introduced by moving the peer detour may be determined from the generic_code_data::table::TYPE and generic_code_data::table::LABEL of 
 					   the start virtual crossing on the same transverse path, since the start detour 
 					   and moved peer detour are parallel.
 					   
@@ -4518,7 +4517,7 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 		               the peer detour).
 					*/
 if (debug_control::DEBUG >= debug_control::DETAIL)
-	debug << "remove_Reidemeister_II: set TYPE and LABEL of virtual crossings introduced by moving the peer detour" << endl;
+	debug << "remove_Reidemeister_II: set generic_code_data::table::TYPE and generic_code_data::table::LABEL of virtual crossings introduced by moving the peer detour" << endl;
 	
 					int index = 0;
 					for (int i=0; i< num_initial_start_virtual_crossings; i++)
@@ -4574,16 +4573,16 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 								peer_new_edge_label_column = num_crossings+index;
 								peer_new_even_edge = (new_edge_labels[0][peer_new_edge_label_column] % 2 ? new_edge_labels[1][peer_new_edge_label_column]: new_edge_labels[0][peer_new_edge_label_column]);								
 								peer_detour_crossing = peer_new_even_edge/2;
-								if (new_code_table[TYPE][start_detour_crossing] == generic_code_data::TYPE1)
-									new_code_table[TYPE][peer_detour_crossing] = generic_code_data::TYPE2;
+								if (new_code_table[generic_code_data::table::TYPE][start_detour_crossing] == generic_code_data::TYPE1)
+									new_code_table[generic_code_data::table::TYPE][peer_detour_crossing] = generic_code_data::TYPE2;
 								else
-									new_code_table[TYPE][peer_detour_crossing] = generic_code_data::TYPE1;
+									new_code_table[generic_code_data::table::TYPE][peer_detour_crossing] = generic_code_data::TYPE1;
 	
 if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "remove_Reidemeister_II:   moving forwards from peer, peer_new_edge_label_column = " << peer_new_edge_label_column << ", peer_new_even_edge " << peer_new_even_edge 
 		  << ", peer_detour_crossing = " << peer_detour_crossing << endl;
-	debug << "remove_Reidemeister_II:   peer_detour_crossing type is " << (new_code_table[TYPE][peer_detour_crossing] == generic_code_data::TYPE1? "TYPE1" : "TYPE2") << endl;
+	debug << "remove_Reidemeister_II:   peer_detour_crossing type is " << (new_code_table[generic_code_data::table::TYPE][peer_detour_crossing] == generic_code_data::TYPE1? "TYPE1" : "TYPE2") << endl;
 }
 							}
 							else
@@ -4592,13 +4591,13 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 								peer_new_even_edge = (new_edge_labels[0][peer_new_edge_label_column] % 2 ? new_edge_labels[1][peer_new_edge_label_column]: new_edge_labels[0][peer_new_edge_label_column]);								
 								peer_detour_crossing = peer_new_even_edge/2;
 
-								new_code_table[TYPE][peer_detour_crossing] = new_code_table[TYPE][start_detour_crossing];
+								new_code_table[generic_code_data::table::TYPE][peer_detour_crossing] = new_code_table[generic_code_data::table::TYPE][start_detour_crossing];
 
 if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "remove_Reidemeister_II:   moving backwards from peer, peer_new_edge_label_column = " << peer_new_edge_label_column << ", peer_new_even_edge " << peer_new_even_edge 
 		  << ", peer_detour_crossing = " << peer_detour_crossing << endl;
-	debug << "remove_Reidemeister_II:   peer_detour_crossing type is " << (new_code_table[TYPE][peer_detour_crossing] == generic_code_data::TYPE1? "TYPE1" : "TYPE2") << endl;
+	debug << "remove_Reidemeister_II:   peer_detour_crossing type is " << (new_code_table[generic_code_data::table::TYPE][peer_detour_crossing] == generic_code_data::TYPE1? "TYPE1" : "TYPE2") << endl;
 }
 							}
 	
@@ -4628,23 +4627,23 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 								}
 							}
 							
-							if (!peer_path_edge_in_shortcut &&(new_code_table[LABEL][start_detour_crossing] == generic_code_data::VIRTUAL || start_path_edge_in_shortcut))
+							if (!peer_path_edge_in_shortcut &&(new_code_table[generic_code_data::table::LABEL][start_detour_crossing] == generic_code_data::VIRTUAL || start_path_edge_in_shortcut))
 							{
-								new_code_table[LABEL][peer_detour_crossing] = generic_code_data::VIRTUAL;
+								new_code_table[generic_code_data::table::LABEL][peer_detour_crossing] = generic_code_data::VIRTUAL;
 							}
 							else if (peer_path_edge_in_shortcut)
 							{
 								if (peer_path_terminating_edge%2 == 0)
-									new_code_table[LABEL][peer_detour_crossing] = generic_code_data::NEGATIVE;
+									new_code_table[generic_code_data::table::LABEL][peer_detour_crossing] = generic_code_data::NEGATIVE;
 								else
-									new_code_table[LABEL][peer_detour_crossing] = generic_code_data::POSITIVE;
+									new_code_table[generic_code_data::table::LABEL][peer_detour_crossing] = generic_code_data::POSITIVE;
 							}
 							else
 							{
-								if (new_code_table[LABEL][start_detour_crossing] == generic_code_data::POSITIVE)
-									new_code_table[LABEL][peer_detour_crossing] = generic_code_data::NEGATIVE;
+								if (new_code_table[generic_code_data::table::LABEL][start_detour_crossing] == generic_code_data::POSITIVE)
+									new_code_table[generic_code_data::table::LABEL][peer_detour_crossing] = generic_code_data::NEGATIVE;
 								else
-									new_code_table[LABEL][peer_detour_crossing] = generic_code_data::POSITIVE;
+									new_code_table[generic_code_data::table::LABEL][peer_detour_crossing] = generic_code_data::POSITIVE;
 							}
 						
 							index++;
@@ -4652,7 +4651,7 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "remove_Reidemeister_II:   peer_detour_crossing label is ";
-	switch(new_code_table[LABEL][peer_detour_crossing])
+	switch(new_code_table[generic_code_data::table::LABEL][peer_detour_crossing])
 	{
 		case generic_code_data::POSITIVE: debug << "POSITIVE"; break;
 		case generic_code_data::NEGATIVE: debug << "NEGATIVE"; break;
@@ -4675,31 +4674,31 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II: new_code_table" << endl;
 	debug << "remove_Reidemeister_II:  type: ";
 	for (int i=0; i< new_num_crossings; i++)
-		debug << new_code_table[TYPE][i] << ' ';
+		debug << new_code_table[generic_code_data::table::TYPE][i] << ' ';
 	debug << endl;
 	debug << "remove_Reidemeister_II:  odd peer: ";
 	for (int i=0; i< new_num_crossings; i++)
-		debug << new_code_table[OPEER][i] << ' ';
+		debug << new_code_table[generic_code_data::table::OPEER][i] << ' ';
 	debug << endl;
 	debug << "remove_Reidemeister_II:  even peer: ";
 	for (int i=0; i< new_num_crossings; i++)
-		debug << new_code_table[EPEER][i] << ' ';
+		debug << new_code_table[generic_code_data::table::EPEER][i] << ' ';
 	debug << endl;
 	debug << "remove_Reidemeister_II:  odd term: ";
 	for (int i=0; i< new_num_crossings; i++)
-		debug << new_code_table[ODD_TERMINATING][i] << ' ';
+		debug << new_code_table[generic_code_data::table::ODD_TERMINATING][i] << ' ';
 	debug << endl;
 	debug << "remove_Reidemeister_II:  even term: ";
 	for (int i=0; i< new_num_crossings; i++)
-		debug << new_code_table[EVEN_TERMINATING][i] << ' ';
+		debug << new_code_table[generic_code_data::table::EVEN_TERMINATING][i] << ' ';
 	debug << endl;
 	debug << "remove_Reidemeister_II:  label: ";
 	for (int i=0; i< new_num_crossings; i++)
-		debug << new_code_table[LABEL][i] << ' ';
+		debug << new_code_table[generic_code_data::table::LABEL][i] << ' ';
 	debug << endl;
 	debug << "remove_Reidemeister_II:  component: ";
 	for (int i=0; i< new_num_crossings; i++)
-		debug << new_code_table[COMPONENT][i] << ' ';
+		debug << new_code_table[generic_code_data::table::COMPONENT][i] << ' ';
 	debug << endl;
 	
 	if (track_zig_zag_counts)
@@ -4744,7 +4743,7 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 					/* read back the peer code into code_data */
 					read_peer_code(code_data, oss.str());
 				
-					/* We can't set the head until we have the EPEER row of the code table, which is completed by read_peer_code,
+					/* We can't set the head until we have the generic_code_data::table::EPEER row of the code table, which is completed by read_peer_code,
 					   so have to set both the head and the immersion character manually here.
 					
 					   If new_head_semi_arc == 0, we have already cleared pure_knotoid_code_data 
@@ -4757,7 +4756,7 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II: new_head_semi_arc is zero, already cleared knotoid status of code data" << endl;
 						}
 						else if (new_head_semi_arc % 2)
-							code_data.head = code_data.code_table[EPEER][(new_head_semi_arc-1)/2]/2;
+							code_data.head = code_data.code_table[generic_code_data::table::EPEER][(new_head_semi_arc-1)/2]/2;
 						else
 							code_data.head = new_head_semi_arc/2;
 
