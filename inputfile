@@ -1,5 +1,5 @@
 
-;                          Input file for braid programme version 25.1
+;                          Input file for braid programme version 26.0
 
 
 ; An input file may contain one or more braid definitions together with
@@ -37,6 +37,10 @@
 ;[flip-braid]             ; flip all the braids in the input file
 ;[format]                 ; format the output file so that it may be used as an input file later
 ;[gauss]                  ; evaluate Gauss code
+;[hamiltonian]            ; determine a Hamiltonian circuit in the shadow of a knot or link
+;[HC-count]               ; count the number of Hamiltonian circuits in a diagram\n";
+;[HC-edges]               ; create Hamiltonian circuits from edges rather than crossings\n";
+;[HC-list-all]            ; find all of the Hamiltonian circuits in a diagram\n";
 ;[homfly]                 ; evaluate HOMFLY polynomial
 ;[immersion]              ; evaluate labelled immersion code
 ;[info]                   ; display status information about a braid

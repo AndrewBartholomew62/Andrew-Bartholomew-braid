@@ -1,43 +1,4 @@
-                     Braid v25.1 Help Information
-
-This programme was originally designed to carry out a number of tasks relating to virtual, and consequently classical, 
-braids.  It has evolved to include tasks that relate to virtual knots, long knots and knotoids but that do not involve 
-a braid representation.  However, in the absence of anything better, the name 'braid' has been retained for the programme.
-
-The following tasks are provided:
-
-    1. The Burau matrix representation 
-    2. The Alexander matrix representation and polynomial
-    3. Various quaternionic polynomial invariants
-    4. Various matrix switch polynomial invariants
-    5. Various Weyl algebra switch polynomial invariants
-    6. Commutative automorphism switch representation of a peer code.
-    7. The HOMFLY polynomial
-    8. Finite biquandle fixed-point invariant of a braid
-    9. Various finite-switch polynomial invariants (also known as rack polynomials)
-   10. The Kauffman bracket polynomial of a classical or virtual knot, link, knotoid or multi-knotoid
-   11. The Jones polynomial of a classical or virtual knot, link, knotoid or multi-knotoid
-   12. Turaev's extended bracket polynomial of a classical or virtual knotoid or multi-knotoid
-   13. The arrow polynomial of a classical or virtual knot, link, long knot, long virtual knot, knotoid or multi-knotoid
-   14. The parity bracket polynomial of a classical or virtual knot or knotoid
-   15. The parity arrow polynomial of a classical or virtual knot or knotoid
-   16. Kauffman's Affine Index Polynomial for virtual knots or knotoids
-   17. Sawolleks normalized Conway polynomial
-   18. The Dynnikov test for the trivial braid
-   19. The Dowker(-Thistlethwaite) code for the closure of the braid or a labelled peer code
-   20. The Gauss code for a labelled peer code or the closure of a braid word
-   21. The labeled immersion code for the closure of the braid
-   22. The labeled peer code for an immersion code or the closure of a braid
-   23. The labeled peer code for the Gauss code of a classical, virtual or flat link, or of a doodle
-   24. The peer code for the r-parallel cable satellite of a knot's peer code
-   25. Display information about a braid
-   26. Vogel's algorithm for determining a braid word 
-
-If the programme is started without arguments, a menu is displayed that
-allows the user to choose which task to perform.  Alternatively the programme
-may be started with a task and number of options to select a particular task 
-directly. It is also possible to supply a file containing the input to the 
-programme that allows the programme to operate in batch mode.
+                     Braid v26.0 Help Information
 
 The full syntax of the programme is
 
@@ -57,6 +18,7 @@ The <task> is a keyword identifying the required task, valid task keywords are:
                         trivial or not 
     fixed-point         evaluate the fixed-point invariant of a braid
     gauss               evaluate a Gauss code
+    hamiltonian         determine a Hamiltonian circuit in the shadow of a knot or link
     homfly              evaluate the HOMFLY polynomial for the closure of a braid
     immersion           evaluate a labelled immersion code
     info                display status information about the braid
@@ -69,8 +31,6 @@ The <task> is a keyword identifying the required task, valid task keywords are:
     peer                evaluate a labelled peer code
     quaternion          evaluate quaternionic switch polynomial invariants
     rack-polynomial     evaluate the finite switch polynomial invariants
-    satellite[=n]       evaluate the peer code of the n-parallel cable satellite 
-                        of a knot's peer code, n defaults to 2
     sawollek            evaluate Sawollek's normalized Conway polynomial 
     vogel               apply the Vogel algorithm to a labelled peer code
     weyl                evaluate Weyl algebra switch polynomial invariants
@@ -88,11 +48,14 @@ file programme option may be used as a <long_option>.  The other <long_options> 
     flip-braid              flip all the braids in the input file
     format                  format the output file so that it may be used as an input file later
     invert-braid            invert all the braids in the input file
+    HC-count                count the number of Hamiltonian circuits in a diagram
+    HC-edges                create Hamiltonian circuits from edges rather than crossings
+    HC-list-all             find all of the Hamiltonian circuits in a diagram
     line-reflect            reflect all the braids in the file in a horizontal line drawn south of the braid
-	lpgc                    calculate the left preferred Gauss code, rather than a standard gauss code
+    lpgc                    calculate the left preferred Gauss code, rather than a standard gauss code
     mod-p=n                 calculate mod p with p=n (only used for non-Weyl algebra switches)
     no-auto-delta1          only calculate Delta_1 if Delta_0 is zero
-	no-even-writhe          normalize the parity bracket polynomial with the full writhe rather than the even writhe
+    no-even-writhe          normalize the parity bracket polynomial with the full writhe rather than the even writhe
     no-expanded-bracket     do not expand D=(-A^2-A^{-2}) in bracket polynomials
     no-normalize-bracket    do not normalize bracket polynomial invariants
     normalize-quaternions   normalize quaternionic polynomial invariants
@@ -106,10 +69,12 @@ file programme option may be used as a <long_option>.  The other <long_options> 
     relaxed-parity          evaluate the relaxed variant of the parity arrow polynomial
     remove=n                remove the n-th component from a peer code
     rho                     use the Study rho mapping for calculating Study determinants
+    satellite[=n]           determine the peer code of the n-parallel cable satellite of a knot's peer code before carrying 
+                            out the required programme task, n defaults to 2
     show-parity-peer-codes  show peer codes in addition to unoriented left preferred Gauss codes in parity bracket polynomial output;	
     show-varmaps            show variable mappings instead of substituting mapped variables in polynomial output
     silent                  do not generate any output to the command line (stdout)
-	TeX-polynomials         display output polynomials in TeX format (not supported for the Jones polynomial)
+    TeX-polynomials         display output polynomials in TeX format (not supported for the Jones polynomial)
     ulpgd                   calculate the unoriented left preferred Gauss data, rather than a standard gauss code;
     uopgc                   calculate the unoriented over preferred Gauss code, rather than a standard gauss code;
     wait[=n]                display determinant wait information, (based on nxn minors, so larger n produces less frequent output)

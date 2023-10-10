@@ -1,8 +1,8 @@
 
-OBJFILES = util.o debug.o bigint-scalar.o class-control.o \
-           input.o braid-util.o gauss-to-peer.o generic-code-util.o gauss-orientation.o reidemeister.o \
-           main.o braid.o generic-code.o bracket.o braidfns.o vogel.o vogelfns.o
-         
+OBJFILES = util.o debug.o bigint-scalar.o class-control.o input.o \
+           braid-util.o gauss-to-peer.o generic-code-util.o gauss-orientation.o reidemeister.o \
+           main.o bracket.o braid.o  braidfns.o generic-code.o hamiltonian.o vogel.o vogelfns.o 
+                    
 DEPS     = ./include/* 
 
 COMPILE  = g++ -Wall -Wno-misleading-indentation -std=c++11 -I ./include -g -c $< -o $@ 
@@ -36,6 +36,9 @@ generic-code-util.o: ./src/generic-code-util.cpp $(DEPS)
 
 gauss-orientation.o: ./src/gauss-orientation.cpp $(DEPS)
 	$(COMPILE)
+	
+hamiltonian.o: ./src/hamiltonian.cpp $(DEPS)
+	$(COMPILE)	
 
 reidemeister.o: ./src/reidemeister.cpp $(DEPS)
 	$(COMPILE)
