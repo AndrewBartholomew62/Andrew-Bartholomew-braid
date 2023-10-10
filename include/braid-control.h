@@ -39,6 +39,10 @@ struct braid_control
 	static bool		FLIP_BRAID;
 	static bool		GAUSS_CODE;
 	static bool		GCD_BACK_SUBSTITUTING;
+	static bool		HAMILTONIAN;
+	static bool		HC_COUNT;
+	static bool		HC_EDGES;
+	static bool		HC_LIST_ALL;
 	static bool		HOMFLY;
 	static bool		IMMERSION_CODE;
 	static bool		INVERT_BRAID;
@@ -60,6 +64,7 @@ struct braid_control
 	static bool		PARITY_BRACKET;
 	static bool    	PD_FORMAT;
 	static bool    	PEER_CODE;
+	static bool    	PRIME_TEST;
 	static bool    	PRIME_WEYL;
 	static bool    	QUANTUM_WEYL;
 	static bool     QUATERNION;
@@ -114,6 +119,7 @@ struct braid_control
 	static int reset_count; // number of times wait_count has reached wait_threshold
 	
 };
+
 
 /* ST_pair_type is an enumeration of the type of pairs of finite switches S and T */
 enum class ST_pair_type {FLAT_ESSENTIAL_VIRTUAL, ESSENTIAL_VIRTUAL, ESSENTIAL_WELDED, ESSENTIAL_DOODLE};

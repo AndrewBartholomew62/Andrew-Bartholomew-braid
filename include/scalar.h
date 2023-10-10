@@ -106,7 +106,7 @@ inline scalar::scalar(int a)
 
 
 /* finally, include the scalar classes that are based on Scalar */
-#include<mod-p-scalar.h>
-#include<bigint-scalar.h>
-#include<big-rational-scalar.h>
+#include <mod-p-scalar.h>
+#include <bigint-scalar.h>
+#include <big-rational-scalar.h>
 
