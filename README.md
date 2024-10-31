@@ -25,10 +25,12 @@ The tools provided by the programme support the following:
     Turaev's extended bracket polynomial of a classical or virtual knotoid or multi-knotoid
     Parity arrow polynomial of a classical or virtual knot or knotoid
     Parity bracket polynomial of a classical or virtual knot or knotoid
+    Kim and Kim's Q polynomial for doodles with one component 
 
     Dynnikov test for the trivial braid
     Hamiltonian circuits within classical or flat knot or link diagram
     Vogel's algorithm for determining a braid word from a knot or link diagram
+    Prime test to determine whether a given diagram is prime; i.e is not a connected sum, or has a 3-connected shadow
 
     Dowker(-Thistlethwaite) code for a braid or labelled peer code
     Gauss code for a labelled peer code or the closure of a braid word
