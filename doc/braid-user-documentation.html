@@ -3,11 +3,20 @@
 <head>
 	<meta HTTP-EQUIV="CONTENT-TYPE" CONTENT="text/html; charset=utf-8">
 	<title></title>
+   <style>
+     p{font-size: 1.2em}
+     li{font-size: 1.0em}
+     h1{font-size: 2.25em}
+     h2{font-size: 2.0em}
+     h3{font-size: 1.75em}
+     h4{font-size: 1.5em}
+     h5{font-size: 1.25em}
+   </style>	
 </head>
 
 <body LANG="en-GB">
 
-<p ALIGN=CENTER><a NAME="_top"></a><FONT SIZE=6><B> Braid v26.0  User Documentation </B></FONT></p>
+<p ALIGN=CENTER><a NAME="_top"></a><FONT SIZE=6><B> Braid v28.0  User Documentation </B></FONT></p>
 
 <br>
 
@@ -38,10 +47,13 @@ programme is <a href="http://www.layer8.co.uk/maths/braids">http://www.layer8.co
 
 <li><p><a href="#Polynomial Invariants">Polynomial Invariants</a></p>
     <p style="margin-left: 1cm"><a href="#Switch Polynomials">Switch Polynomials</a></p>
+    	<p style="margin-left: 2cm"><a href="#Rack-polynomial">Rack Polynomial</a></p>
     	<p style="margin-left: 2cm"><a href="#Active-Switch">The Active Switch</a></p>
     	<p style="margin-left: 2cm"><a href="#T-Variable">The Variable t</a></p></li>
     	<p style="margin-left: 2cm"><a href="#Long-Knots">Long Knots</a></p></li>
     	<p style="margin-left: 2cm"><a href="#Doodle-Alexander">Alexander Type Invariant for Doodles</a></p></li>
+    <p style="margin-left: 1cm"><a href="#Fixed-point Invariants">Fixed-point Invariants</a></p>
+      <p style="margin-left: 2cm"><a href="#Doodle Colouring Invariants">Colouring Number Invariants for Doodles</a></p>
     <p style="margin-left: 1cm"><a href="#HOMFLY Polynomial">The HOMFLY Polynomial</a></p>
     <p style="margin-left: 1cm"><a href="#Kauffman Bracket Polynomial">Kauffman Bracket Polynomial for Classical and Virtual Links or Knotoids</a></p>
     <p style="margin-left: 1cm"><a href="#Jones Polynomial">The Jones Polynomial for Classical and Virtual Links or Knotoids</a></p>
@@ -50,13 +62,17 @@ programme is <a href="http://www.layer8.co.uk/maths/braids">http://www.layer8.co
     <p style="margin-left: 1cm"><a href="#Parity Bracket Polynomial">Manturov's Parity Bracket Polynomial for Classical and Virtual Knots or Knotoids</a></p>
     <p style="margin-left: 1cm"><a href="#Parity Arrow Polynomial">Kaestner and Kauffman's Parity Arrow Polynomial for Classical and Virtual Knots or Knotoids</a></p>
     <p style="margin-left: 1cm"><a href="#Affine Index Polynomial">Kauffman's Affine Index Polynomial for Virtual Knots or Knotoids</a></p>
-<li><p><a href="#Fixed-point Invariants">Fixed-point Invariants</a></p>
-    <p style="margin-left: 1cm"><a href="#Doodle Colouring Invariants">Colouring Number Invariants for Doodles</a></p>
+    <p style="margin-left: 1cm"><a href="#Doodle Q-Polynomial">Kim and Kim's Q polynomial for doodles with one component</a></p>
 <li><p><a href="#The-Vogel-Algorithm">The Vogel Algorithm</a></p>
+<li><p><a href="#Turning-Number">Evaluation of the turning number of a given diagram</a></p></li>
 <li><p><a href="#Sawollek">Sawollek Normalized Conway polynomial</a></p></li>
 <li><p><a href="#Dynnikov-Test">Dynnikov Test for Trivial Braids</a></p></li>
+<li><p><a href="#Prime-Test">Prime Test for determining whether a given diagram is prime; i.e is not a connected sum, or has a 3-connected shadow</a></p></li>
 <li><p><a href="#Hamiltonian-circuits">Hamiltonian circuits</a></p></li>
 <li><p><a href="#Knot-Link-Code-Tasks">Knot and Link Code Conversion</a></p></li>
+    <p style="margin-left: 1cm"><a href="#Dowker-Code">Dowker-Thistlethwaite Codes</a></p>
+    <p style="margin-left: 1cm"><a href="#Immersion-Code">Labelled Immersion Codes</a></p>
+    <p style="margin-left: 1cm"><a href="#Peer-Code">Labelled Peer Codes</a></p>
     <p style="margin-left: 1cm"><a href="#Gauss-Code">Gauss codes and Gauss data</a></p>
     <p style="margin-left: 1cm"><a href="#Satellites">Satellite links</a></p>
     <p style="margin-left: 1cm"><a href="#Renumbering-Labelled-Peer-Codes">Renumbering Labelled Peer Codes</a></p>	
@@ -84,8 +100,11 @@ programme is <a href="http://www.layer8.co.uk/maths/braids">http://www.layer8.co
 
 <h2><a NAME="Overall-Description"></a>2. Overall Description</h2>
 
-<p>The braid programme was originally designed to provide a number of tasks relating to virtual, and consequently classical, braids.  Coding began on 25th November 2001, initially to calculate bariad invariants based on quaternionic linear switches.   It has since evolved to include tasks that relate to a variety (including virtual, welded, and flat) of knots and links
-but that do not involve a braid representation.  However, in the absence of anything better, the name 'braid' has been retained for the programme.
+<p>The braid programme is a command-line evaluation and conversion tool for braids and other descriptive codes of various categories of single or multi-component knots and their
+representative diagrams.  It is capable of operating interactively or can perform large scale batch operations, able to accept input files containing millions of input codes.</p>
+
+<p>The braid programme was originally designed to provide a number of tasks relating to virtual, and consequently classical, braids.  Coding began on 25th November 2001, initially to calculate braid invariants based on quaternionic linear switches.   It has since evolved to include tasks that relate to a variety of knots and links, knotoids, multi-knotoids and multi-linkoids, be they classical, virtual, welded, flat, or doodles.  Moreover, it is now able to accept various forms of input code including <a href="#Labelled Peer Code">labelled peer codes</a>, Gauss codes, and planar diagram data.  
+However, in the absence of anything better, the name 'braid' has been retained for the programme.</p>
 
 
 <p>The tasks provided by the programme support the following:</p>
@@ -94,7 +113,7 @@ but that do not involve a braid representation.  However, in the absence of anyt
 <li>Alexander-like polynomial invariant of a classical doodle</li>
 <li>Burau, or generalized Alexander, polynomial invariant</li>
 <li>Commutative automorphism switch invariants</li>
-<li>Finite-switch polynomial invariants (also known as rack polynomials)</li>
+<li>Rack polynomial invariants (also known as finite-switch polynomials)</li>
 <li>Fixed-point invariant of the braid representation of a knot or doodle</li>
 <li>Matrix-switch polynomial invariants</li>
 <li>Quaternionic polynomial invariants</li>
@@ -113,6 +132,8 @@ but that do not involve a braid representation.  However, in the absence of anyt
 <li>Dynnikov test for the trivial braid</li>
 <li>Hamiltonian circuits within classical or flat knot or link diagram</li>
 <li>Vogel's algorithm for determining a braid word from a knot or link diagram</li>
+<li>The turning number of a knot or link diagram</li>
+<li>Prime test to determine whether the shadow of a classical or virtual knot, link, knotoid or multi-linkoid diagram is 3-connected</li>
 <br>
 <li>Dowker(-Thistlethwaite) code for a braid or labelled peer code</li>
 <li>Gauss code for a labelled peer code or the closure of a braid word</li>
@@ -138,6 +159,24 @@ but that do not involve a braid representation.  However, in the absence of anyt
 <a href="#Command-Line-Options">command line options</a> to select a particular task. It is also possible 
 to supply an <a href="#Input-File-Format">input file</a> using a command of the form <kbd>braid &lt;inputfile> </kbd>, where &lt;inputfile> is a file
 containing the input codes and parameters that you wish to provide to the the programme.  A combination of command line and input file parameters may also be provided.</p>
+
+<p>The main programme task, plus any long options are indicated by '--', so for example, the Burau task to evaluate the Burau polynomial invariant is invoked using the command 
+<kbd> braid --burau</kbd>, whereas the invoking the Hamiltonian task with the option to count all the Hamiltonian circuits in diagram is specified as 
+<kbd>braid --hamiltonian --HC-count</kbd>.</p>
+
+<p>Short options are indicated by a '-', as in <kbd>braid -o --arrow-polynomial</kbd> which invokes the arrow-polynomial calculation with the additional output option.</p>
+ 
+<p>The following is an example of starting the programme to calculate the unoriented left preferred Gauss data for a set of input data contained in a file called test-codes.</p>
+
+<p><kbd>braid --gauss --ulpgd test-codes</kbd><p>
+
+<p>The following example starts the braid programme to evaluate the rack polynomial for a set of classical braids or peer codes contained in a file called infinity-test.</p>
+
+<p><kbd>braid --rack-polynomial --classical infinity-test</kbd><p>
+
+<p>This example starts an interactive session with the programme to carry out the Vogel algorithm for some labelled peer codes to be supplied by the user.</p>
+
+<p><kbd>braid --vogel</kbd><p>
 
 <p>Typing <kbd>q</kbd>, <kbd>Q</kbd> or <kbd>exit</kbd> at the input prompt will cause the programme to terminate.</p>
 <p>The word <kbd>help</kbd> may be entered at the prompt to display a list of the 
@@ -324,7 +363,7 @@ case.</p>
 
 <h4><a NAME="Gauss Codes"></a>Gauss Codes</h4>
 
-<p>The programme supports the standard Gauss codes based on numbering crossings and tracing around the components of a classical or virtual knot or link diagram.  Gauss codes are also supported for doodles and for flat knots and links, based on the definitions given in [14].</p>  
+<p>The programme supports the standard Gauss codes based on numbering crossings and tracing around the components of a classical or virtual knot or link diagram.  Gauss codes are also supported for doodles and for flat knots and links, based on the definitions given in [15].</p>  
 
 <p>Although Gauss
 codes are not quite label codes in the sense of the remainder of this section, where semi-arcs are numbered rather than crossings, the crossing numbers may be considered as labels, so they are included in this general class of input codes as far as the braid programme is concerned.</p>
@@ -378,7 +417,7 @@ requirements placed on the choice of numbering for the crossings.</p>
 
 <p>To indicate that a Gauss code represents a multi-linkoid rather than a virtual knot, the code is prefixed by "K(<kbd> &lt;num-segment-components> </kbd>):", where <kbd> &lt;num-segment-components> </kbd> indicates
 the number of segment, that is open, rather than closed components.  When representing a multi-linkoid with a Gauss code
-it is required that the segment components of the multi-knotoid are listed first that the code starts at the leg of a segment component.  There are no
+it is required that the segment components of the multi-knotoid are listed first and that crossings for each segment component are listed starting at the leg of the component.  There are no
 requirements placed on the choice of numbering for the crossings.</p>
 
 <p>Multi-linkoids are described by Gauss codes by requiring that the open components are listed first and by indicating the number of open segments in parentheses, as in the following example:</p>
@@ -444,27 +483,31 @@ it should be considered as a long knot.</p>
 
 <h3><a NAME="Switch Polynomials"></a>Switch Polynomials</h3>
 
-<h4>Finite switch polynomial invariants</h4>
+<h4><a NAME="Rack-polynomial"></a>Rack polynomial invariant </h4>
 
-<p>The finite switch polynomial invariant, or rack polynomial, is defined for a sequence of braids B<sub>0</sub>,B<sub>1</sub>,...,B<sub>k</sub>, where B<sub>0</sub> is a braid on n strings and  where B<sub>k</sub> is obtained from B<sub>k-1</sub> by appending the positive twist s<sub>n+k-1</sub> for k=1,...,n.</p>
+<p><b>Task: <kbd>rack-polynomial</kbd></b></p>
 
-<p>For a given finite switch the <a href="#Fixed-point Invariants">fixed point invariant</a> F<sub>i</sub> and writhe W<sub>i</sub> (the number of positive braid terms minus the number of negative braid terms) is determined for each braid B<sub>i</sub> and the resultant polynomial</p>
 
-<p style="margin-left: 1cm">
-F<sub>0</sub>t<sup>W<sub>0</sub></sup>,...,
-F<sub>k</sub>t<sup>W<sub>k</sub></sup></p>
+<p>The rack polynomial, sometimes known as a finite switch polynomial invariant, is defined for a classical knot or link, or rotational virtual knot or link, K, using a birack, 
+or a pair of biracks in the virtual case.  It is a polynomial of one variable, t, where the coefficient of t<sup>w</sup> is the number of colourings of a representative 
+diagram of K having writhe w.  These coefficients form a repeating sequence of length k, which depends only on the choice of birack used for the classical crossings.  The
+rack polynomial calculated by the programme therefore calculates only coefficients for diagrams of writhe 0,&nbsp;...,&nbsp;k-1.</p>  
 
-<p>is calculated.</p> 
+<p>The coefficients are calculated as the number of labelling fixed points determined by a sequence of braids B<sub>0</sub>,&nbsp;B<sub>1</sub>,&nbsp;...,&nbsp;B<sub>k</sub>, 
+each braid closes to K, and B<sub>i</sub> has writhe i.  The sequence is obtained by adding Markov stabilization twists to B<sub>0</sub>, so  
+if B<sub>0</sub> has n strings, B<sub>i</sub> is obtained from B<sub>i-1</sub> by appending the positive twist s<sub>n+i-1</sub> for i=1,...,k.</p>
 
-<p>The number, k, of positive and negative terms to consider for the finite switch polynomial invariant is referred to as the number of <b>rack terms</b>.  By default the braid programme sets k=n, where n is the size of finite switch being used, 
-but it is possible to override this either on a per-braid basis by adding the 
-<a href="#Braid Qualifiers">braid qualifier</a> <kbd>rack-terms=k</kbd>, or globally by using the <a href="#Command-Line-Options">command line option</a> <kbd>t=k</kbd>.  Setting the 
-number of rack terms using the <a href="#Command-Line-Options">command line option</a> overrides any 
-<a href="#Braid Qualifiers">braid qualifier</a> specified.</p>
+<p>The braid B<sub>0</sub> is derived automatically from a braid supplied by the user or is calculated automatically from a labelled peer code.  
+It is derived by adding sufficient Markov twists of the appropriate sign to adjust the input so that it zero writhe. </p>
+
+<p>The number of labelling fixed points determined by B<sub>i</sub> for a given finite switch is just the <a href="#Fixed-point Invariants">fixed point invariant</a>,
+F<sub>i</sub>, so if the writhe is w<sub>i</sub> the task evaluates the polynomial</p>
+
+<p style="margin-left: 1cm"> F<sub>0</sub>t<sup>w<sub>0</sub></sup>&nbsp;+&nbsp;...&nbsp;+&nbsp;F<sub>k</sub>t<sup>w<sub>k</sub></sup></p>
 
 <h4>Other switch polynomial invariants</h4>
 
-<p>In each case other than the finite-switch polynomial invariants the matrix representation of the knot or link determined by the <a href="#Active-switch">active switch</a> is evaluated.  If a braid word is used the matrix representation is in B<sub>n</sub> or VB<sub>n</sub>, otherwise it determines the invariant R-module described in [1].  In the case of a braid word, it is possible that the matrix representation is the identity, in which case the calculation stops since the braid is indistinguishable from the unkot (or unlink).</p>
+<p>In each case other than the rack-polynomial invariants the matrix representation of the knot or link determined by the <a href="#Active-switch">active switch</a> is evaluated.  If a braid word is used the matrix representation is in B<sub>n</sub> or VB<sub>n</sub>, otherwise it determines the invariant R-module described in [1].  In the case of a braid word, it is possible that the matrix representation is the identity, in which case the calculation stops since the braid is indistinguishable from the unkot (or unlink).</p>
 
 <p>Assuming the matrix representation is not the identity, the programme calculates Delta<sub>0</sub>, the 0<sup>th</sup> ideal polynomial, equal to det(M-I) if M is in B<sub>n</sub> or VB<sub>n</sub> and det(M) 
 otherwise.  The value of Delta<sub>0</sub> is displayed and then the programme proceeds to calculate Delta<sub>1</sub>, the 1<sup>st</sup> ideal polynomial (see [1]), regardless of the value of Delta<sub>0</sub>.</p>
@@ -493,6 +536,8 @@ The user may type <kbd> exit</kbd> at this prompt to leave the programme.</p>
 
 <h4><a NAME="Finite switches"></a>Finite switches</h4>
 
+<p><b>Task: <kbd>fixed-point</kbd></b></p>
+
 <p>A finite switch S of order n is a permutation of X<sub>n</sub> x X<sub>n</sub> written 
 S(x,y) = (y<sup>x</sup>,x<sub>y</sub>), where y<sup>x</sup> is the "up action" and x<sub>y</sub> is the "down action".  
 These switches are specified as two n x n matrices, row by row in the usual manner, with elements in X<sub>n</sub>.</p>
@@ -511,6 +556,9 @@ is used for each type of braid.</p>
 
 <h4>Linear switches used by the braid progamme</h4>
 
+<p><b>Tasks: <kbd>alexander</kbd>, <kbd>burau</kbd>, <kbd>matrix</kbd>, <kbd>quaternion</kbd>, <kbd>weyl</kbd></b></p>
+<p><b>Options: <kbd>complex-delta1</kbd>, <kbd>delta1-only</kbd>, <kbd>equality</kbd>, <kbd>mod-p=n</kbd>, <kbd>no-auto-delta1</kbd>,
+<kbd>normalize-quaternions</kbd>, <kbd>power=n</kbd>, <kbd>rho</kbd>, <kbd>wait</kbd></b></p>
 
 <p>The Burau switch is the only linear switch, as defined in [1], with entries in a commutative ring R.  It is defined by the matrix:</p>
 
@@ -541,7 +589,8 @@ where A-1 is invertible and where the fundamental equation</p>
 
 <p>Other quaternionic switches may be specified in an <a href="#Input-File-Format">input file</a>.</p>
 
-<p>Matrix switches are elements of a ring of <kbd>nxn</kbd> matrices with polynomial entries.  The default matrix switch is the "three-variable" switch determined by the matrices </p>
+<p>Matrix switches are elements of a ring of <kbd>nxn</kbd> matrices with polynomial entries, they are the image of switches belonging to quaternion algebras, as described in [7].  
+The default matrix switch is the "three-variable" switch determined by the matrices </p>
 
 <p style="margin-left: 1cm"><img SRC="braid-user-documentation-html-files/matrix_A.gif"></p>
 
@@ -551,11 +600,11 @@ where A-1 is invertible and where the fundamental equation</p>
 
 <p>Other matrix switches may be specified in an <a href="#Input-File-Format">input file</a>.</p>
 
-<p>Weyl algebra switches, which are described in [6], are based on <kbd>nxn</kbd> matrix representations of an extended Weyl algebra determined by invertible elements u and v in a commutative ring with the relation</p>
+<p>Weyl algebra switches, which are described in [7], are based on <kbd>nxn</kbd> matrix representations of an extended Weyl algebra determined by invertible elements u and v in a commutative ring with the relation</p>
 
 <p style="margin-left: 1cm">uv-vu=1.</p>
 
-<p>The quantum Weyl algebra described in [6] is also supported.  Quantum Weyl algebra switches are based on <kbd>nxn</kbd> matrix representations of the quantum Weyl algebra, which is determined by invertible elements u and v in a commutative ring with the relation</p>
+<p>The quantum Weyl algebra described in [7] is also supported.  Quantum Weyl algebra switches are based on <kbd>nxn</kbd> matrix representations of the quantum Weyl algebra, which is determined by invertible elements u and v in a commutative ring with the relation</p>
 
 <p style="margin-left: 1cm">uv-qvu=1.</p>
 
@@ -572,11 +621,13 @@ where A-1 is invertible and where the fundamental equation</p>
 <p style="margin-left: 1cm">A = V<sup>-1</sup>U<sup>-1</sup> and B=U,</p>
 
 
-<p>then proceed from the fundamental equation (see [6] for details).</p>
+<p>then proceed from the fundamental equation (see [7] for details).</p>
 
 <p>Other Weyl algebra switches may be specified in an <a href="#Input-File-Format">input file</a>.</p>
 
 <h4><a NAME="Commutative-Automorphism-Switches"></a>Commutative Automorphism Switches</h4>
+
+<p><b>Task: <kbd>automorphism</kbd></b></p>
 
 <p>A commutative automorphism switch,S , is the switch map of a sideways biquandle F(b,a) = (a<sub>b</sub>, b<sup>a</sup>), 
 a<sup>b</sup> = \phi(a)-\phi(b)+\psi(b), a<sub>b</sub> = \psi(a), where \phi and \psi are commutative automprphisms of an abelian group.
@@ -613,26 +664,48 @@ where <kbd>T</kbd> is the "twist matrix"</p>
 
 <p>In addition to handling closed knots the braid programme is able to calculate polynomial invariants of virtual (hence classical) long knots.  These are viewed as (virtual) closed knots on S<sup>2</sup> with a mid-point of a semi-arc being chosen as the point at infinity.</p>
 
-<p>The switch polynomial invariants calculated for long knots are two of the co-dimension zero mu-determinants described in [7].  The
-programme calculates both p<sup>(0)</sup> and op<sup>(0)</sup> (the determinant of the presentation matrix for the invariant module having generator x<sub>0</sub> set to zero).  The third invariant described in [7] is that of the closure of the long knot.  This is not calculated explicitly by the programme since it already handles closed knots: two separate inputs are therefore required to calculate all three, one for the two long-knot specific invariants and one for its closure.</p>
+<p>The switch polynomial invariants calculated for long knots are two of the co-dimension zero mu-determinants described in [8].  The
+programme calculates both p<sup>(0)</sup> and op<sup>(0)</sup> (the determinant of the presentation matrix for the invariant module having generator x<sub>0</sub> set to zero).  The third invariant described in [8] is that of the closure of the long knot.  This is not calculated explicitly by the programme since it already handles closed knots: two separate inputs are therefore required to calculate all three, one for the two long-knot specific invariants and one for its closure.</p>
 
 <p>Given our view of long knots as closed knots on S<sup>2</sup>, we may describe them using <a href="#Labelled Peer Code">labelled peer codes</a> or <a href="#Gauss Codes">Gauss 
 codes</a> by adopting the convention that the code starts at the semi-arc that contains the point at infinity.  This is consistent with the usual definition of a Gauss code 
 for a long knot.</p>
  
-<p>To specify that a <a href="#Labelled Peer Code">labelled peer code</a>, a <a href="#Gauss Codes">Gauss code</a> or a <a href="#Planar Diagrams">planar diagram</a> represents a long knot rather than a closed knot, the code is prefixed with <kbd>L:</kbd>, the detailed semantics for which are given in section <a href="#Long-Knot-Definitions">Long Knot Definitions</a>. As noted above,  to calculate the full set of invariants described in [7] two input codes are required, this may be achieved by using the same <a href="#Labelled Peer Code">labelled peer code</a> prefixed one with the long-knot specifier <kbd>L:</kbd> and one without.</p>
+<p>To specify that a <a href="#Labelled Peer Code">labelled peer code</a>, a <a href="#Gauss Codes">Gauss code</a> or a <a href="#Planar Diagrams">planar diagram</a> represents a long knot rather than a closed knot, the code is prefixed with <kbd>L:</kbd>, the detailed semantics for which are given in section <a href="#Long-Knot-Definitions">Long Knot Definitions</a>. As noted above,  to calculate the full set of invariants described in [8] two input codes are required, this may be achieved by using the same <a href="#Labelled Peer Code">labelled peer code</a> prefixed one with the long-knot specifier <kbd>L:</kbd> and one without.</p>
 
 <p>If a long knot is specified using a <a href="#Labelled Peer Code">labelled peer code</a>, the programme supports moving the point at infinity so that it is considered to belong to any semi-arc, not just the one labelled zero by the given code.  Moving the point at infinity can be useful, since different invariants are calculated for long knots dependent on the choice of infinity.  The syntax for long knots given in section <a href="#Long-Knot-Definitions">Long Knot Definitions</a> allows the point at infinity to be moved forwards or backwards by a number of semi-arcs with respect to the orientation determined by the <a href="#Labelled Peer Code">labelled peer code</a>.
 
 <p><a href="#Polynomial Invariants">back to matrix representations</a>
    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;   <a href="#_top">back to top</a>
+
 </p>
 
 <h3><a NAME="Doodle-Alexander"></a>Alexander type invariant for doodles</h3>
 
-<p>The Alexander type invariant for doodles [19] is not really a switch polynomial but the similarities it has with them has suggested that it be treated as such.  The polynomial is supported for braid words and labelled peer codes qualified with the <kbd>doodle</kbd> <a href="#Braid Qualifiers">qualifier</a>, when used with the <kbd>alexander</kbd> <a href="#Command-Line-Options">programme option</a>.</p>
+<p><b>Task: <kbd>mock</kbd></b></p>
+
+<p>The Alexander type invariant for doodles [20] is not really a switch polynomial but the similarities it has with them has suggested that it be treated as such.  The polynomial is supported for braid words and labelled peer codes qualified with the <kbd>doodle</kbd> <a href="#Braid Qualifiers">qualifier</a>, when used with the <kbd>alexander</kbd> <a href="#Command-Line-Options">programme option</a>.</p>
+
+<h3><a NAME="Fixed-point Invariants"></a>Fixed-point Invariants</h3>
+
+<p>The fixed point invariant determined by a pair of <a href="#Finite switches">finite switches</a> S and T over X<sub>n</sub>, where T<sup>2</sup> = I, of a braid with k strings is the number of fixed points Mv=v where v ranges through all vectors in X<sub>n</sub><sup>k</sup>.  Here M is the matrix representation of the braid determined by S and T.</p>
+
+<p>See also the section on the <a href="#Rack-polynomial">rack polynomial</a>, which makes use of the fixed point invariant.>/p> 
+
+<h4><a NAME="Doodle Colouring Invariants"></a>Colouring Number Invariants for Doodles</h4>
+
+<p>When a braid is regarded as a doodle, S is a doodle switch and T is the default twist, then the fixed-point invariant of the braid is the same as the <i>colouring number</i> defined in [14] of the braid's closure by S.  As shown in [14], the <i>doubled colouring number</i> of a doodle diagram by a doodle switch is the same as the colouring number of that diagram's Kamada double covering.  Thus, the fixed point invariant is also capable of evaluating the double colouring number for a doodle diagram, since that diagram may converted to braid form using the <kbd>vogel</kbd> task (i.e using the Vogel algorithm) and the resultant braid may then have the <kbd>double</kbd> <a href="#Braid Qualifiers">braid qualifier</a> added and the <kbd>fixed-point</kbd> task applied.</p>  
+
+<p>Note that in [14] the term "doodle switch" is used to refer to a non-essential doodle switch (i.e the definition includes flat virtual switches).  The braid programme requires doodle switches to be essential doodle switches (that is, ones that do <i>not</i> respect flat Reidemeister III moves).</p>
+
+
+<p>
+   <a href="#_top">back to top</a>
+</p>
 
 <h3><a NAME="HOMFLY Polynomial"></a>The HOMFLY Polynomial</h3>
+
+<p><b>Task: <kbd>homfly</kbd></b></p>
 
 <p>The "homfly" function uses the skein relation</p>
 
@@ -656,7 +729,9 @@ for a long knot.</p>
 
 <h3><a NAME="Kauffman Bracket Polynomial"></a>Kauffman Bracket Polynomial for Classical and Virtual Links</h3>
 
-<p>Although there are many implementations of the Kauffman bracket polynomial, as defined in [8], the one here arose from the code required to calculate <a href="#Knotoid Bracket Polynomial">Turaev's extended bracket polynomial for knotoids</a>, so it seemed natural to include the original bracket polynomial as well.</p>
+<p><b>Task: <kbd>kauffman-bracket</kbd></b></p>
+
+<p>Although there are many implementations of the Kauffman bracket polynomial, as defined in [9], the one here arose from the code required to calculate <a href="#Knotoid Bracket Polynomial">Turaev's extended bracket polynomial for knotoids</a>, so it seemed natural to include the original bracket polynomial as well.</p>
 
 <p>This implementation takes as input either a labelled peer code a Gauss code or a planar diagram and supports classical and virtual knots, links or (multi-)knotoids.</p>
 
@@ -672,6 +747,8 @@ for a long knot.</p>
 
 <h3><a NAME="Jones Polynomial"></a>The Jones Polynomial for Classical and Virtual Links</h3>
 
+<p><b>Task: <kbd>jones-polynomial</kbd></b></p>
+
 <p>The Jones polynomial is determined from the <a href="#Kauffman Bracket Polynomial">Kauffman bracket polynomial</a>, so it's inclusion was an immediate consequence of Kauffman polynomial.  It takes the same labelled peer code, Gauss code or planar diagram input as the Kauffman bracket polynomial calculation.</p>
 
 <p>Details of the programme's calculation of the Jones polynomial may be obtained by using the <kbd>#</kbd> <a href="#Debug-Option">summary debug option</a>.</p>
@@ -682,7 +759,9 @@ for a long knot.</p>
 
 <h3><a NAME="Knotoid Bracket Polynomial"></a>Turaev's Extended Bracket Polynomial for Knotoids</h3>
 
-<p>Turaev's extended bracket polynomial is defined in [9] for classical and virtual (multi-)knotoids, which are represented diagramatically as the immersion of the interval [0,1] together with zero or more copies of the 1-sphere into the interior of
+<p><b>Task: <kbd>knotoid-bracket</kbd></b></p>
+
+<p>Turaev's extended bracket polynomial is defined in [10] for classical and virtual (multi-)knotoids, which are represented diagramatically as the immersion of the interval [0,1] together with zero or more copies of the 1-sphere into the interior of
 a surface whose only singularities are double points endowed with over/under-crossing data.</p>
 
 <p>The extended bracket polynomial implementation accepts labelled peer codes, Gauss codes or planar diagram input.  Gauss codes and planar diagrams are converted to
@@ -704,14 +783,17 @@ specified as described in the sections <a href="#Labelled Peer Codes for Knotoid
 <h3><a NAME="Arrow Polynomial"></a>Arrow Polynomial for Classical and Virtual Knots, Links, Long Knots and Long Virtual Knots, 
 Knotoids and Multi-knotoids</h3>
 
-<p>The arrow polynomial, as defined for a variety of knots in [15], [16] [17] and [18], is supported for labelled peer codes, Gauss codes or planar diagrams. 
+<p><b>Task: <kbd>arrow-polynomial</kbd></b></p>
+<p><b>Options: <kbd>zig-zag-delta</kbd></b></p>
+
+<p>The arrow polynomial, as defined for a variety of knots in [16], [17] [18] and [19], is supported for labelled peer codes, Gauss codes or planar diagrams. 
 The sections on <a href="#Long-Knot-Definitions">long knots</a> and <a href="#Labelled Peer Codes for Knotoids">knotoids</a> describe the appropriate syntax definitions for
 those categories of knots. </p>
 
-<p>By default, this implementation of the arrow polynomial follows [18]: the number of loop delta -A<sup>2</sup>-A<sup>-2</sup> terms associated with a state is the number of components not containing any surviving cusps after, and those components that do retain one or more pairs of surviving cusps after reduction are assigned
+<p>By default, this implementation of the arrow polynomial follows [19]: the number of loop delta -A<sup>2</sup>-A<sup>-2</sup> terms associated with a state is the number of components not containing any surviving cusps after, and those components that do retain one or more pairs of surviving cusps after reduction are assigned
 only the appropriate variable K<sub>i</sub> or Lambda<sub>i</sub>.</p>
 
-<p>If the alternative convention (as orginally described in [15]) is desired, where the number of loop delta terms is one less than the number of state components, then 
+<p>If the alternative convention (as orginally described in [16]) is desired, where the number of loop delta terms is one less than the number of state components, then 
 adding the <kbd>zig-zag-delta</kbd> option as a <a href="#Command-Line-Options">command line option</a> or as an <a href="#Options-In-Input-Files">input file option</a> includes delta in addition to the K<sub>i</sub> or Lambda<sub>i</sub> variables.</p>
 
 <p>By default, the normalized version of the arrow polynomial is calculated but, if required, adding the <kbd>no-normalize-bracket</kbd> option as a <a href="#Command-Line-Options">command line option</a> or as an <a href="#Options-In-Input-Files">input file option</a> produces the non-normalized version.</p>
@@ -726,7 +808,10 @@ adding the <kbd>zig-zag-delta</kbd> option as a <a href="#Command-Line-Options">
 
 <h3><a NAME="Parity Bracket Polynomial"></a>The Parity Bracket Polynomial for Classical and Virtual Knots and Knotoids</h3>
 
-<p>Manturov's parity bracket polynomial ([20],[16],[18]) is supported for classical or virtual knots and knotoids.  Irreducible graphical components resulting from the bracket states may be considered as minimal virtual doodles, possibly containing Reidemeister I monogons.  This allows them to be
+<p><b>Task: <kbd>parity-bracket</kbd></b></p>
+<p><b>Options: <kbd>show-parity-peer-codes</kbd>, <kbd>show-varmaps</kbd></b></p>
+
+<p>Manturov's parity bracket polynomial ([21],[17],[19]) is supported for classical or virtual knots and knotoids.  Irreducible graphical components resulting from the bracket states may be considered as minimal virtual doodles, possibly containing Reidemeister I monogons.  This allows them to be
 represented and compared by evaluating their <a href="#Gauss-Code">unoriented left-preferred Gauss data</a>, which is invariant under isotopy of S<sup>2</sup>.</p>
 
 <p>Internally, the implementation maintains and manipulates irreducible graphical components as labelled peer codes, which allows the handling of virtual crossings 
@@ -738,10 +823,10 @@ crossings as part of any graphical components yielded by the calculation and the
 
 <p>By default, the normalized version of the parity bracket polynomial is calculated but, if required, adding the <kbd>no-normalize-bracket</kbd> option as a <a href="#Command-Line-Options">command line option</a> or as an <a href="#Options-In-Input-Files">input file option</a> produces the non-normalized version.</p> 
 
-<p> The implementation follows the approach of [16] and [18], including a loop delta -A<sup>2</sup>-A<sup>-2</sup> for each non-graphical component
+<p> The implementation follows the approach of [17] and [19], including a loop delta -A<sup>2</sup>-A<sup>-2</sup> for each non-graphical component
 of a smoothed state.</p>
 
-<p> By default, the normalization of the parity bracket polynomial follows the calculations shown in the appendix of [18] and uses the even writhe (that is the sum of the signs of the even crossings).  If required, adding the <kbd>no-even-writhe</kbd> option as a <a href="#Command-Line-Options">command line option</a> or as an <a href="#Options-In-Input-Files">input file option</a> causes the programme to use the full writhe, summing the signs of all crossings, as described in the text of [18] and in other descriptions of the parity bracket polynomial.</p>
+<p> By default, the normalization of the parity bracket polynomial follows the calculations shown in the appendix of [19] and uses the even writhe (that is the sum of the signs of the even crossings).  If required, adding the <kbd>no-even-writhe</kbd> option as a <a href="#Command-Line-Options">command line option</a> or as an <a href="#Options-In-Input-Files">input file option</a> causes the programme to use the full writhe, summing the signs of all crossings, as described in the text of [19] and in other descriptions of the parity bracket polynomial.</p>
 
 <p>Similarly, by default, the calculation of the parity bracket polynomial expands the loop delta -A<sup>2</sup>-A<sup>-2</sup> but, if required, adding the <kbd>no-expanded-bracket</kbd> option as a <a href="#Command-Line-Options">command line option</a> or as an <a href="#Options-In-Input-Files">input file option</a> causes the programme to represent delta using the single variable D.</p>
 
@@ -753,8 +838,11 @@ of a smoothed state.</p>
 
 <h3><a NAME="Parity Arrow Polynomial"></a>The Parity Arrow Polynomial for Classical and Virtual Knots and Knotoids</h3>
 
-<p>Kaestner and Kauffman's parity arrow polynomial ([18]) is supported for classical or virtual knots and, with a relaxation of conditions, classical or virtual knotoids. 
-As with the <a href="#Parity Bracket Polynomial">parity bracket polynomial</a>, irreducible graphical components are represented by <a href="#Left-Preferred">unoriented left-preferred Gauss data</a>, augmented for the parity arrow polynomial with a set of "zig-zag counters".  In the case of knots, described in [18], the zig-zag counters record the number of surviving cusps on each arc of the diagram, written as a sequence of integers in parentheses after the Gauss data, corresponding to the terms in the Gauss data, with the counters for each unicursal component separated with a comma.  Thus, the irreducible graph L1 L2, R1 R2 (1 1, 0 0) describes a graphical component with two unicursal components, including an irreducible cusp on the arc terminating at crossing 1 having left parity (the L1 term) and one on the arc terminating at the L2 term.</p>
+<p><b>Task: <kbd>parity-arrow</kbd></b></p>
+<p><b>Options: <kbd>relaxed-parity</kbd></b></p>
+
+<p>Kaestner and Kauffman's parity arrow polynomial ([19]) is supported for classical or virtual knots and, with a relaxation of conditions, classical or virtual knotoids. 
+As with the <a href="#Parity Bracket Polynomial">parity bracket polynomial</a>, irreducible graphical components are represented by <a href="#Left-Preferred">unoriented left-preferred Gauss data</a>, augmented for the parity arrow polynomial with a set of "zig-zag counters".  In the case of knots, described in [19], the zig-zag counters record the number of surviving cusps on each arc of the diagram, written as a sequence of integers in parentheses after the Gauss data, corresponding to the terms in the Gauss data, with the counters for each unicursal component separated with a comma.  Thus, the irreducible graph L1 L2, R1 R2 (1 1, 0 0) describes a graphical component with two unicursal components, including an irreducible cusp on the arc terminating at crossing 1 having left parity (the L1 term) and one on the arc terminating at the L2 term.</p>
 
 <! pIn the case that all of the unicursal components of the graphical component are loops, the graphical component is referred to as closed and may be regarded as a flat 
 virtual link. For such a closed component, the The number of zig-zag counters is the same as the number of terms in the Gauss data: >
@@ -768,7 +856,7 @@ corresponding edge when traversing that edge according to the orientation induce
 
 <! In this case there is also a zig-zag counter corresponding to the head of the segment component, written at the end of first component.  Thus R1 R2,L1 L2 (1 0 1, 0 2) describes an open graphical component with a surviving cusp on the leg and head arcs of the segment component and two surviving cusps on the arc of the second component that terminates at crossing 2. >
 
-<p> The implementation uses the same approach as for the parity bracket, including a loop delta -A<sup>2</sup>-A<sup>-2</sup> for each non-graphical component, consistent with [18].</p>
+<p> The implementation uses the same approach as for the parity bracket, including a loop delta -A<sup>2</sup>-A<sup>-2</sup> for each non-graphical component, consistent with [19].</p>
 
 <p>Details of the programme's calculation of the parity arrow polynomial may be obtained by using the <kbd>#</kbd> <a href="#Debug-Option">summary debug option</a>.</p>
 
@@ -778,7 +866,7 @@ corresponding edge when traversing that edge according to the orientation induce
 
 <h4><a NAME="Relaxed Parity Arrow Polynomial"></a>Relaxed parity arrow polynomial</h4>
 
-It is not possible to apply the definition of the parity arrow polynomial given in [18] to knotoids and obtain an invariant, since the reduction skein relations do not produce well defined irreducible graphical components for knotoids.  An example is shown below, where the choice of Reidemeister II move determines whether a surviving cusp occurs on the arc between the head of the knotoid and an odd crossing, or on an arc between odd crossings.
+It is not possible to apply the definition of the parity arrow polynomial given in [19] to knotoids and obtain an invariant, since the reduction skein relations do not produce well defined irreducible graphical components for knotoids.  An example is shown below, where the choice of Reidemeister II move determines whether a surviving cusp occurs on the arc between the head of the knotoid and an odd crossing, or on an arc between odd crossings.
 
 <p style="margin-left: 2cm"><img SRC="braid-user-documentation-html-files/knotoid.png"></p>
 
@@ -811,54 +899,108 @@ K[-3 -5 -1]/# # * (0,1 0 0 0 -1 0) describes an irreducible component that may b
 
 <h3><a NAME="Affine Index Polynomial"></a>Kauffman's Affine Index Polynomial for virtual knots or knotoids</h3>
 
-<p>Kauffman's affine index polynomial invariant for virtual knots is described in [10].  It is particularly useful 
+<p><b>Task: <kbd>affine-index</kbd></b></p>
+
+<p>Kauffman's affine index polynomial invariant for virtual knots is described in [11].  It is particularly useful 
 to distinguish virtual and classical knots, since the affine index polynomial takes the value zero for a classical knot.
 Although it is a simple polynomial to calculate by hand for a given knot diagram, it has been added because of its ability to distinguish classical and virtual knots.  However, it should be noted that there are virtual knots having zero affine index.</p> 
 
-<h2><a NAME="Fixed-point Invariants"></a>5. Fixed-point Invariants</h2>
+<h3><a NAME="Doodle Q-Polynomial"></a>Kim and Kim's Q polynomial for doodles with one component</h3>
 
-<p>The fixed point invariant determined by a pair of <a href="#Finite switches">finite switches</a> S and T over X<sub>n</sub>, where T<sup>2</sup> = I, of a braid with k strings is the number of fixed points Mv=v where v ranges through all vectors in X<sub>n</sub><sup>k</sup>.  Here M is the matrix representation of the braid determined by S and T.</p>
+<p><b>Task: <kbd>doodle-Q-poly</kbd></b></p>
 
-<h3><a NAME="Doodle Colouring Invariants"></a>Colouring Number Invariants for Doodles</h3>
+<p>The Q-polynomial discovered by Kim J. and Kim T-K. is the polynomial Q<sub>D</sub>(t) described in [22].  It is an invariant of single component virtual doodles and is interesting in that it is calculated from a virtual doodle diagram, D, taking into account the virtual crossings. This implementation requires a <a href="#Labelled Peer Code">labelled peer code</a> as input.</p>
 
-<p>When a braid is regarded as a doodle, S is a doodle switch and T is the default twist, then the fixed-point invariant of the braid is the same as the <i>colouring number</i> defined in [13] of the braid's closure by S.  As shown in [13], the <i>doubled colouring number</i> of a doodle diagram by a doodle switch is the same as the colouring number of that diagram's Kamada double covering.  Thus, the fixed point invariant is also capable of evaluating the double colouring number for a doodle diagram, since that diagram may converted to braid form using the <kbd>vogel</kbd> task (i.e using the Vogel algorithm) and the resultant braid may then have the <kbd>double</kbd> <a href="#Braid Qualifiers">braid qualifier</a> added and the <kbd>fixed-point</kbd> task applied.</p>  
+<h2><a NAME="The-Vogel-Algorithm"></a>5. The Vogel Algorithm</h2>
 
-<p>Note that in [13] the term "doodle switch" is used to refer to a non-essential doodle switch (i.e the definition includes flat virtual switches).  The braid programme requires doodle switches to be essential doodle switches (that is, ones that do <i>not</i> respect flat Reidemeister III moves).</p>
+<p><b>Task: <kbd>vogel</kbd></b></p>
+<p><b>Options: <kbd>flat-crossings</kbd></b></p>
 
-
-<p>
-   <a href="#_top">back to top</a>
-</p>
-
-<h2><a NAME="The-Vogel-Algorithm"></a>6. The Vogel Algorithm</h2>
-
-<p>This task takes the description of a diagram in the form of a <a href="#Labelled Peer Code">labelled peer code</a> and applies the Vogel algorithm to determine an equivalent braid word representation of the knot or link.  A complete description of the Vogel Algorithm applied to both the classical and virtual case is given in [2], which is available as <a href="http://www.layer8.co.uk/maths/download/vogel.pdf">
+<p>The Vogel task takes the description of a diagram in the form of a <a href="#Labelled Peer Code">labelled peer code</a> and applies the Vogel algorithm to determine an equivalent braid word representation of the knot or link.  A complete description of the Vogel Algorithm applied to both the classical and virtual case is given in [2], which is available as <a href="http://www.layer8.co.uk/maths/download/vogel.pdf">
 vogel.pdf</a> from the braid programme website.</p>
 
 <p>By default, the implementation uses classical crossings for the Reidemeister II moves introduced by Vogel's algorithm, unless all of the crossings in the input code are flat crossings, in which case it uses flat crossings.  If the input code contains a mixture of flat and other crossing types, the
 <kbd>flat</kbd> <a href="#Command-Line-Options">programme option</a> must be provided if it is desired to use flat crossings for these moves.</p>
 
-
-<h3><a NAME="Vogel-Labelled-Peer-Codes"></a>Entering Labelled Peer Codes</h3>
-
-<p>The syntax for labelled peer codes is described under the section on polynomial invariants <a href="#Labelled Peer Code">here</a>.</p>
-
 <p>
    <a href="#_top">back to top</a>
 </p>
 
+<h2><a NAME="Turning-Number"></a>6. Evaluating the turning number of a given diagram</h2>
+
+<p><b>Task: <kbd>turning-number</kbd></b></p>
+
+<p>The turning number, or Whitney index, of a planar knot or link diagram is defined by considering the shadow of a knot in the projection plane.  In 
+the case of a virtual knot or link this defines a <i>flattened virtual knot</i>; that is, a flat knot where some of the crossings are the image of 
+classical crossings and some are the image of virtual crossings. We assume that the image is smooth so it has a unit tangent at every point. 
+Then following some chosen orientation defines a map from a unicursal component of the shadow to the circle and the integer corresponding to the
+resulting homotopy class of this map is the turning number of that component. If there are multiple components the total turning number is the sum 
+over all components.</p>
+
+<p>Note in particular that the turning number for a diagram is defined independently of the crossing types involved in that diagram.  Thus, any 
+diagram that may be described by a <a href="#Labelled Peer Code">labelled peer code</a> may be assigned a turning number.</p>
+
+<p>The programme calculates the turning number by considering the orientation of the Seifert circles obtained by smoothing the 
+crossings of the flattened virtual knot shadow.  We attach a sign to each a Seifert circle by assigning +1 if it is oriented 
+anti-clockwise and -1 if it is oriented clockwise.  The turning number of the diagram may then be seen to 
+equal to the sum of the Seifert circle signs.</p>
+
 <h2><a NAME="Sawollek"></a>7. Sawollek Normalized Conway polynomial</h2>
 
+<p><b>Task: <kbd>sawollek</kbd></b></p>
+
 <p>The Sawollek task evaluates the normalized Conway polynomial described in [3], taking a braid word as input.  Whilst the Sawollek polynomial is actually an example of a switch polynomial, the implementation
-here is separate and currently supports only braid input.  The reason for this is simply to avoid using the terms "Delta<sub>0</sub>" and "Delta<sub>1</sub>" in the output, which would be the case if the invariant were calculated as a switch polynomial invariant.  These "Delta" terms are more applicable to quaternionic invariants and, given that other input formats may be converted to braids in advance of calculating the Sawollek polynomial, this approach seemed preferable.  (It also avoided having to handle Sawolek's normalization along with the switch polynomial calculation code.)  It is also the case that, with a change of variable, the Sawollek polynomial is the same as the generalized Alexander polynomial, which is available via the <kbd>burau</kbd> option.</p>
+here is separate and currently supports only braid input.  The reason for this is simply to avoid using the terms "Delta<sub>0</sub>" and "Delta<sub>1</sub>" in the output, which would be the case if the invariant were calculated as a switch polynomial invariant.  These "Delta" terms are more applicable to quaternionic invariants and, given that other input formats may be converted to braids in advance of calculating the Sawollek polynomial, this approach seemed preferable.  (It also avoided having to handle Sawollek's normalization along with the switch polynomial calculation code.)  It is also the case that, with a change of variable (x=st, y=-t), 
+the Sawollek polynomial is the same as the generalized Alexander polynomial, which is available here as the <kbd>burau</kbd> option.</p>
+
+<p>Sawollek considers vertical braids: his invariant calculates an R-module representation of the braid closure using the switch</p>
+<p style="margin-left: 1cm"><img SRC="braid-user-documentation-html-files/Sawollek_S.png"></p>
+<p>which is the Burau switch S with the above variable substitution.  However, whilst the Burau invariant considers S(a,b) = (b<sup>a</sup>,a<sub>b</sub>), Sawollek enumerates his R-module 
+variables (1,l),&nbsp;(1,r),&nbsp;(2,l),&nbsp;(2,r),... which has the effect of regarding the action of the switch M as M(a,b) = (a<sub>b</sub>,b<sup>a</sup>), thereby interchanging the up and down operations.</p>
 
 <h2><a NAME="Dynnikov-Test"></a>8. Dynnikov Test for Trivial Braids</h2>
 
+<p><b>Task: <kbd>dynnikov</kbd></b></p>
+
 <p>The Dynnikov test uses the action defined by the braid group B<SUB>n</SUB> on Z<sup>2n</SUp> given by Dynnikov's formulae in [4] to determine whether the given braid is trivial.</p>
 
-<h2><a NAME="Hamiltonian-circuits"></a>9. Hamiltonian Circuits</h2>
+<h2><a NAME="Prime-Test"></a>9. Prime Test</h2>
 
-<p>The <kbd>hamiltonian</kbd> task searches for Hamiltonian circuits in a classical or flat diagram of a knot or link.  By default the programme searches for a Hamiltonian circuit and stops as soon as one is found.
+<p><b>Task: <kbd>prime</kbd></b></p>
+
+<p> The prime task evolved from a test for classical knots and links to decide whether they represented a connected sum.  It checked whether a simple closed curve could be constructed that 
+met the diagram transversely in exactly two points that were the interior points of a pair of edges.  The test was adapted to provide an analogous test for planar doodles, for which 
+there is no well-defined notion of connected sum but one can ask whether a doodle is 3-connected when regarded as a 4-valent graph.  A graph with at least four crossings is 3-connected if it is not 2-separable; 
+that is, removing two or fewer vertices separates the remaining vertices of the graph.  If a doodle is the shadow of a classical connected sum then it is 2-separable, since one can remove two of the vertices at 
+the ends of the edges meeting the simple closed curve.  In addition, a doodle is 2-separable if a simple closed curve can be constructed that meets 
+the doodle in two distinct crossings, is incident with opposite regions of those crossings and for which there is a crossing in the interior of each disc bounded by the simple closed curve.  An example of such 
+a curve is shown below.</p>
+
+<p style="margin-left: 2cm"><img SRC="braid-user-documentation-html-files/crossing-connected-sum.png"></p>
+    
+<p>Therefore, by default, when presented with a classical knot or link, the <kbd>prime</kbd> task remains a test for a connected sum.  If presented with a planar doodle the task looks for a simple closed curve that meets
+the diagram in two points, either in the interior of edges, or in a pair of crossings as above.  For the latter case, the test requires that the two crossings are not adjacent in both regions of the diagram's complement,
+which would indicate a bigon and therefore not detect that the diagram were 2-separable.</p>
+
+<p>There is a <kbd>flat-crossings</kbd> option that causes the crossing test to be applied for classical knot and link diagrams as well as the default edge test.</p>
+
+<p>If the <kbd>flat-crossings</kbd> option is used, the <kbd>prime</kbd> task can also be presented with virtual knots or links, or (virtual) knotoids or multi-linkoids.  In this case, the test works
+through all combinations of pairs of (flattened) classical crossings to see if they separate the remaining classical vertices.  If there are virtual crossings in the diagram, the test considers Gauss arcs
+between the non-virtual crossings, if there are no virtual crossings, it uses immersion edges.  In the case of knotoids or multi-linkoids, the shortcuts or virtual closures that are stored with the diagram
+are not considered when deciding the connectivity between remaining vertices.</p>
+
+<p>It is even possible to present the <kbd>prime</kbd> task with a diagram representing a knotoid-like or multi-linkoid-like doodle, that is with flat rather than classical crossings and such a diagram may 
+even contain virtual crossings that are not part of the virtual closure of the diagram.  The task will decide whether the diagram may be 2-separated, though it is noted that to date, there appears to have been 
+no systematic study of these knot classes.</p>
+
+<p>The task will indicate that an input code is prime if the test finds that the diagram is 3-connected and indicates that it is not prime if the diagram is 2-separable.</p>
+
+<h2><a NAME="Hamiltonian-circuits"></a>10. Hamiltonian Circuits</h2>
+
+<p><b>Task: <kbd>hamiltonian</kbd></b></p>
+<p><b>Options: <kbd>HC-count</kbd>, <kbd>HC-edges</kbd>, <kbd>HC-list-all</kbd></b></p>
+
+<p>The Hamiltonian circuits task searches for Hamiltonian circuits in a classical or flat diagram of a knot or link.  By default the programme searches for a Hamiltonian circuit and stops as soon as one is found.
 If the <kbd>HC-list-all</kbd> option is provided it continues until it has found all possible circuits.  If the option <kbd>HC-count</kbd> is given, the programme simply counts the number of circuits in the 
 diagram.</p>
 
@@ -866,19 +1008,29 @@ diagram.</p>
 not a labelled peer code, the programme will have converted the given input to a labelled peer code internally.  If the option <kbd>HC-edges</kbd> is given, the programme will describe circuits as a sequence
 of edges, again corresponding to the labelled peer code.</p>
 
-<h2><a NAME="Knot-Link-Code-Tasks"></a>10. Knot and Link Code Conversion</h2>
+<h2><a NAME="Knot-Link-Code-Tasks"></a>11. Knot and Link Code Conversion</h2>
 
 <p>There are several tasks in this category, used for converting one form of diagramatic representation into another, or calculating the result of some transformation performed on a diagram.  These tasks take their input either from the user or from an <a href="#Input-File-Format">input file</a>.</p>
 
+<h3><a NAME="Dowker-Code"></a>Dowker-Thistlethwaite Codes</h3> 
+
+<p><b>Task: <kbd>dowker</kbd></b></p>
+
 <p>The Dowker code calculated by the programme is the Dowker-Thistlethwaite code as used by the programme 
-<a href="http://www.math.utk.edu/~morwen/knotscape.html">knotscape</a>. The Dowker code option takes either a braid word
+<a href="http://www.math.utk.edu/~morwen/knotscape.html">knotscape</a> ([23]). The Dowker code option takes either a braid word
 a labelled peer code, or a labelled immersion code as input.  In the case of braids it only yields a code if the closure of the braid is a knot, 
 it may therefore be used as test that the closure is indeed connected.</p>
+
+<h3><a NAME="Immersion-Code"></a>Labelled Immersion Codes</h3>
+
+<p><b>Task: <kbd>immersion</kbd></b></p>
 
 <p>The <a href="#Labelled Immersion Code">labelled immersion code</a> has been deprecated by labelled peer codes but continues to be supported for backwards compatibility.  Full details of  <a href="#Labelled Immersion Code">labelled immersion codes</a> are provided in a <a href="http://www.layer8.co.uk/maths/download/labelled-immersion-code.pdf">pdf document</a> from the braid programme website, and there is a brief description in the section
 <a href="#Labelled Immersion Code"> Labelled Immersion Code</a>.</p>
 
-<h3>Labelled Peer Code</h3></p>
+<h3><a NAME="Peer-Code"></a>Labelled Peer Codes</h3></p>
+
+<p><b>Task: <kbd>peer</kbd></b></p>
 
 <p>The <a href="#Labelled Peer Code">labelled peer code</a> is described in a <a href="http://www.layer8.co.uk/maths/download/labelled-peer-code.pdf">pdf document</a> from the braid programme website, and there is a brief description in the section <a href="#Labelled Peer Code"> Labelled Peer Code</a>.  The peer code option will determine a labelled peer code from a braid word or a labelled immersion code, or may be used to renumber a link diagram described by a labelled peer code.</p>
 
@@ -893,6 +1045,9 @@ considering all possible choices of initial crossing and optimizing the gatherin
 </p>
 
 <h3><a NAME="Gauss-Code"></a>Gauss Code and Gauss Data</h3>
+
+<p><b>Task: <kbd>gauss</kbd></b></p>
+<p><b>Options: <kbd>lpgd</kbd>, <kbd>opgc</kbd>, <kbd>OU-format</kbd>, <kbd>PD-format</kbd>, <kbd>ulpgd</kbd>, <kbd>uopgc</kbd></b></p>
 
 <p>The Gauss code task accepts a labelled peer code, labelled immersion code, Gauss code, planar diagram or braid word as input.  The input code may describe either a classical or virtual knot or 
 link, or a classical or virtual (multi-)knotoid.  The default Gauss code task calculates the standard Gauss code based on either classical or flat crossings, together with an 
@@ -932,7 +1087,7 @@ component (that is, it is a digram of a knotoid or a long knot), then the diagra
 
 <p>For an open digram, Gauss data always starts with the segment component and always proceeds from the leg of a knotoid toward the head or from the left end of a long knot towards the right end.  Other (loop) components have starting points and orientations chosen as above and may be considered in any order.</p>
 
-<p>Adding the <kbd>lpgd</kbd> option as a <a href="#Command-Line-Options">command line option</a> or as an <a href="#Options-In-Input-Files">input file option</a> causes the programme to evaluate the (oriented) left preferred Gauss data, described in [14], corresponding to the orientation of the unicursal components implicitly described by the input code.  The left preferred Gauss data of a diagram is Gauss data for the diagram that contains L1,...,Ln as a subsequence that is minimal, lexicographically (where L < R), amongst all such Gauss codes that respect the orientation of the diagram determined by the labelled peer code, labelled immersion code, or braid word supplied as input.</p>
+<p>Adding the <kbd>lpgd</kbd> option as a <a href="#Command-Line-Options">command line option</a> or as an <a href="#Options-In-Input-Files">input file option</a> causes the programme to evaluate the (oriented) left preferred Gauss data, described in [15], corresponding to the orientation of the unicursal components implicitly described by the input code.  The left preferred Gauss data of a diagram is Gauss data for the diagram that contains L1,...,Ln as a subsequence that is minimal, lexicographically (where L < R), amongst all such Gauss codes that respect the orientation of the diagram determined by the labelled peer code, labelled immersion code, or braid word supplied as input.</p>
 
 <p>To evaluate the left preferred Gauss data we consider every possible re-numbering of the crossings.   If the diagram is open, we always start with the first component 
 as indicated by the input code (following the same convention for ordering components as used by Gauss codes above), and always consider the segment component by starting at the leg or left end, as described above.</p>
@@ -942,7 +1097,7 @@ component order and component cycle determines a crossing permutation that resul
 permutation to the 'R' instances to obtain the corresponding overall sequence.  We then compare the Gauss data in each case lexicographically to determine the component order
 and component cycle combination that yields the minimal sequence.</p> 
    
-<p>In the case where the the diagram is closed, this approach will always produce a left_preferred Gauss code that starts with the term L1 (as in [14]).  If the diagram is a
+<p>In the case where the the diagram is closed, this approach will always produce a left_preferred Gauss code that starts with the term L1 (as in [15]).  If the diagram is a
 knotoid or a long knot, this may not be the case.</p>
    
       
@@ -969,6 +1124,7 @@ and the resulting codes compared lexicographcally.</p>
 
 <p>
    <a href="#_top">back to top</a>
+
 </p>
 
 <h3><a NAME="Satellites"></a>Satellite links</h3>
@@ -994,6 +1150,7 @@ of n defaults to 2.  If a peer code qualifier is provided, the number of strands
 
 <p>
    <a href="#_top">back to top</a>
+
 </p>
 
 <h3><a NAME="Renumbering-Labelled-Peer-Codes"></a>Renumbering Labelled Peer Codes</h3>
@@ -1033,9 +1190,10 @@ The shift vector is appended to the labelled peer code input in the form of a <i
       
 <p>
    <a href="#_top">back to top</a>
+
 </p>
 
-<h2><a NAME="Command-Line-Options"></a>11. Command Line Options</h2>
+<h2><a NAME="Command-Line-Options"></a>12. Command Line Options</h2>
 
 <p>The programme may be started with a number of command line options that override the default operation and select a task directly, as follows:</p>
 
@@ -1065,10 +1223,12 @@ The shift vector is appended to the labelled peer code input in the form of a <i
 <kbd>parity-arrow</kbd>: evaluate Kaestner and Kauffman's the parity arrow polynomial<br>
 <kbd>parity-bracket</kbd>: evaluate Manturov's parity bracket polynomial<br>
 <kbd>peer</kbd>: evaluate a labelled peer code<br>
+<kbd>prime</kbd>: determine whether a given diagram is prime; i.e has a 3-connected shadow<br>
 <kbd>quaternion</kbd>: evaluate quaternionic switch polynomial invariants<br>
-<kbd>rack-polynomial</kbd>: evaluate the finite switch polynomial invariants<br>
+<kbd>rack-polynomial</kbd>: evaluate a rack polynomial invariant based on one or more finite switches<br>
 <kbd>sawollek</kbd>: evaluate Sawollek's normalized Conway polynomial <br>
 <kbd>vogel</kbd>: apply the vogel algorithm to a labelled peer code<br>
+<kbd>turning-number</kbd>: evaluate the turning number of a given diagram<br>
 <kbd>weyl</kbd>: evaluate Weyl algebra switch polynomial invariants<br>
 </p>
 
@@ -1093,7 +1253,6 @@ The shift vector is appended to the labelled peer code input in the form of a <i
 <KBD>P</KBD>:   display the polynomial wait indicator<BR>
 <KBD>R</KBD>:   use the rho-mapping for Study determinants<br>
 <KBD>S</KBD>:   silent operation<br>
-<KBD>t=n</KBD>:   set the global number of terms for finite switch polynomial invariants.<br>
 <KBD>V</KBD>:   Do not use the t-variable with the default quaternionic switch<BR>
 <KBD>W[=n]</KBD>:   force <A HREF="#Wait-information">wait information</A> to be displayed, if <KBD>n</KBD> is supplied, set the wait threshold to <KBD>n</KBD><BR>
 <KBD>z</KBD>:   do not calculate Delta<sub>1</sub> when Delta<sub>0</sub> is non-zero<BR>
@@ -1149,6 +1308,7 @@ input braid.   In both cases, the programme displays wait informaiton, or "comfo
 <p><a href="#Command-Line-Options">back to command line options</a>
    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
    <a href="#_top">back to top</a>
+
 </p>
 
 <h3><a NAME="Debug-Option"></a>Generating debugging output</h3>
@@ -1215,6 +1375,7 @@ bracket_polynomial: bracket_polynomial = -A^-2-A^2
 
 <p>
    <a href="#_top">back to top</a>
+
 </p>
 
 <h3>Example command lines</h3>
@@ -1241,9 +1402,10 @@ the display of <a href="#Wait-information">wait information</a> with the wait th
 <p><a href="#Command-Line-Options">back to command line options</a>
    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
    <a href="#_top">back to top</a>
+
 </p>
 
-<h2><a NAME="Input-File-Format"></a>12. Input File Format</h2>
+<h2><a NAME="Input-File-Format"></a>13. Input File Format</h2>
 
 <p>An input file may be specified on the command line to provide batched input to the braid programme.  An input 
 file is a normal text file that may contain 
@@ -1305,6 +1467,7 @@ last of which is associated with the next switch or data input line it finds.</p
 <p><a href="#Input-File-Format">back to input file format</a>
    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
    <a href="#_top">back to top</a>
+
 </p>
 
 <h3><a NAME="Braid-Definitions"></a>Braid Definitions</h3>
@@ -1394,12 +1557,11 @@ not faithful for n=5</p>
 <p style="margin-left: 1cm">
 <ul>
 <li><kbd>doodle</kbd>: identifies that the braid should be regarded as a doodle knot</li>
-<li><kbd>double</kbd>: identifies that the braid should be replaced by the Kamada double covering of the braid ([13]).</li> 
+<li><kbd>double</kbd>: identifies that the braid should be replaced by the Kamada double covering of the braid ([14]).</li> 
 <li><kbd>flip</kbd>: indicates that the braid strands should be renumbered in the opposite direction before the braid is processed.</li>
 <li><kbd>invert</kbd>: indicates that the braid should be reflected in a vertical line (see the <a href="#Braid-convention">braid convention</a>) before the braid is processed.  Thus, the order of the generators is reversed and the sign of classical crossings toggled.</li>
 <li><kbd>line-reflect</kbd>: indicates that the braid strands should be reflected in a horizontal line drawn below the braid (see the <a href="#Braid-convention">braid convention</a>) before the braid is processed.  Thus, the strand numbering of a braid is reversed and the classical crossing types toggled.</li>
 <li><kbd>plane-reflect</kbd>: indicates that the braid strands should be reflected in the plane of the diagram before the braid is processed.  Thus, the signs of classical crossings are toggled .</li>
-<li><kbd>rack-terms=k</kbd>: identifies that k additional positive and negative terms should be considered when evaluating the rack polynomial.</li> 
 <li><kbd>welded</kbd>: identifies that the braid should be regarded as a welded knot</li>
 </ul>
 </p>
@@ -1407,18 +1569,17 @@ not faithful for n=5</p>
 <p>Braid qualifiers are specified within braces immediately following the braid statement, multiple qualifiers may be included within one pair of braces, separated by spaces, or multiple pairs of braces may be used.  Here are some examples of braid qualifiers:</p>
 
 <p style="margin-left: 1cm"><kbd>
-s1s1s1{rack-terms=4}<br>
 -s1-s2s1t2-s1s2s1t2{welded}<br>
-s1s2-s3t1s4-s3-s2t4-s1-s3-s2t3{welded,rack-terms=4}<br>
 s1s2t1t2s2s1 {flip}<br>
 s1s2t1t2s2s1 {welded}{flip}<br>
 s1s3s2s1s3s2s1s3s2{doodle}
 </kbd></p>
 
-<p>The braid programme ignores any braid qualifiers that are irrelevant to the task in hand, for example the welded qualifier is not relevant to the calculation of a labelled immersion code, or the rack-terms qualifier is irrelevant to the determining of the Alexander polynomial.</p>
+<p>The braid programme ignores any braid qualifiers that are irrelevant to the task in hand, for example the welded qualifier is not relevant to the calculation of a labelled peer code.</p>
 
 <p><a href="#Input-File-Format">back to input file format</a>
    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;   <a href="#_top">back to top</a>
+
 </p>
 
 <h3><a NAME="Switch-Definitions"></a>Switch Definitions</h3>
@@ -1481,17 +1642,17 @@ S = a, 0, 0, a/a-1, b, c, b^2+a-1/c-ca b/1-a
 
 <h4><a NAME="Weyl-Switches"></a>Weyl algebra Switches</h4>
 
-<p>There are four types of Weyl algebra switch supported by the programme: three are optimized descriptions of example algebras given in [6] and the fourth provides support for arbitrary Weyl algebras, referred to here as "custom" Weyl algebras.</p>
+<p>There are four types of Weyl algebra switch supported by the programme: three are optimized descriptions of example algebras given in [7] and the fourth provides support for arbitrary Weyl algebras, referred to here as "custom" Weyl algebras.</p>
 
-<p>In [6] an example is given of an <kbd>nxn</kbd> matrix representation of extended Weyl algebra over a ring of characteristic prime p, where p divides n.  Examples of this class of switch may be specified in an input file using the syntax</p>
+<p>In [7] an example is given of an <kbd>nxn</kbd> matrix representation of extended Weyl algebra over a ring of characteristic prime p, where p divides n.  Examples of this class of switch may be specified in an input file using the syntax</p>
 
 <p style="margin-left: 1cm"><kbd>S=WP,n,p.</kbd></p>
 
-<p>Another example from [6] is a switch derived from a ring of truncated polynomials, with <kbd>x<sup>n</sup>=0</kbd>, over a ring of characteristic p, where p is a prime dividing n.  Examples of this class of switch may be specified in an input file using the syntax</p>
+<p>Another example from [7] is a switch derived from a ring of truncated polynomials, with <kbd>x<sup>n</sup>=0</kbd>, over a ring of characteristic p, where p is a prime dividing n.  Examples of this class of switch may be specified in an input file using the syntax</p>
 
 <p style="margin-left: 1cm"><kbd>S=WT,n,p.</kbd></p>
 
-<p>The third example from [6] is a switch derived from the quantum Weyl algebra.  In fact, [6] gives two 
+<p>The third example from [7] is a switch derived from the quantum Weyl algebra.  In fact, [7] gives two 
 families of <kbd>nxn</kbd> matrices that give representations of the quantum Weyl algebra, the one used as the
 standard representation by the programme is the first family, in variables a,b,c,d,e, and q; examples of this 
 class of switch may be specified in an input file using the syntax</p>
@@ -1591,6 +1752,17 @@ control characters F, T and W.  The braid programme simply reads a matrix elemen
 any number of non-digit charaters and reads the next element.  This approach allows the user to cut and paste
 integer matrix descriptions from other formats, such as TeX source code.</p>
 
+<p>Here are some simple examples of finite switches, together with switch titles</p>
+
+<pre>
+-- R^5_40 racks of size 5 that are not quandles
+S=F 3 2 1 4 5  1 2 3 5 4  3 2 1 4 5  1 5 3 4 2  1 4 3 2 5  1 2 3 4 5  1 2 3 4 5  1 2 3 4 5  1 2 3 4 5  1 2 3 4 5 
+-- R^6_114 racks of size 6 that are not quandles
+S=F 1 3 2 5 6 4  1 3 2 4 5 6  1 3 2 4 5 6  6 3 2 4 1 5  4 3 2 6 5 1  5 3 2 1 4 6  1 2 3 4 5 6  1 2 3 4 5 6  1 2 3 4 5 6  1 2 3 4 5 6  1 2 3 4 5 6  1 2 3 4 5 6 
+-- BR^6_125 quandle-related biracks of size 6 that are not biquandles and not racks
+S=F 1 2 4 6 5 3  1 2 4 6 5 3  5 1 3 4 2 6  5 1 3 4 2 6  1 2 4 6 5 3  5 1 3 4 2 6  5 1 6 3 2 4  5 1 6 3 2 4  1 2 3 6 5 4  1 2 6 4 5 3  5 1 6 3 2 4  1 2 4 3 5 6 
+</pre>
+
 <h4>Commutative Automorphism Switches</h4>
 
 <p>A <a href="#Commutative-Automorphism-Switches">commutative automorphism switch</a> is specified by giving the two matrices \phi followed by \psi, row by row, with the entries separated by columns.  The nature of the switch is indicated by a "A":</p>
@@ -1625,6 +1797,7 @@ definitions are likely to result in matrix representations whose determinants ta
 <p><a href="#Input-File-Format">back to input file format</a>
    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
    <a href="#_top">back to top</a>
+
 </p>
 
 
@@ -1784,6 +1957,7 @@ required when using the <kbd>alexander</kbd> <a href="#Command-Line-Options">pro
 <p><a href="#Input-File-Format">back to input file format</a>
    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
    <a href="#_top">back to top</a>
+
 </p>
 
 
@@ -1862,6 +2036,7 @@ diagram:</p>
 <p><a href="#Input-File-Format">back to input file format</a>
    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
    <a href="#_top">back to top</a>
+
 </p>
 
 <h3><a NAME="Options-In-Input-Files"></a>Putting Programme Options Into Input Files</h3>
@@ -1882,6 +2057,7 @@ diagram:</p>
 <kbd>arrow-polynomial</kbd>: evaluate the arrow polynomial invariant of a classical or virtual knot, link, knotoid or multi-knotoid<br>
 <kbd>automorphism</kbd>: evaluate a commutative automorphism switch polynomial invariant<br>
 <kbd>burau</kbd>: evaluate Burau switch polynomial invariants<br>
+<kbd>c1assical</kbd>: classical input data only, do not test finite switches for essential virtual pairs<br>
 <kbd>complex-delta1</kbd>: calculate Delta_1^C rather than Delta_1^H for quaternionic switches<br>
 <kbd>delta1-only</kbd>: display polynomial output for Delta_1 only<br>
 <kbd>double-braid</kbd>: calculate the Kamada double covering of all the braids in the input file <br>
@@ -1890,7 +2066,8 @@ diagram:</p>
 <kbd>equality</kbd>: test for the switch equality condition A=D and B=C<br>
 <kbd>extra-output</kbd>: display the matrix representation, M, of the braid and the elements of the adjoint adj(M-I) for the active switch<br>
 <kbd>fixed-point</kbd>: evaluate the fixed-point invariant of a braid <br>
-<kbd>flat</kbd>: create flat Reidemeister II moves when executing the Vogel algorithm <br>
+<kbd>flat-crossings</kbd>: create flat Reidemeister II moves when executing the Vogel algorithm, or 
+                           consider crossings to be flat when testing for prime knots, so include crossing test<br>
 <kbd>flip-braid</kbd>: flip all the braids in the input file <br>
 <kbd>format</kbd>: format the output file so that it may be used as an input file later <br>
 <kbd>gauss</kbd>: evaluate the Gauss code of a braid<br>
@@ -1920,11 +2097,11 @@ diagram:</p>
 <kbd>parity-bracket</kbd>: evaluate the normalized parity bracket polynomial <br>
 <kbd>PD-format</kbd>: write Gauss codes in planar diagram format<br>
 <kbd>peer</kbd>: evaluate labelled peer code<br>
+<kbd>prime</kbd>: determine whether a given diagram is prime; i.e has a 3-connected shadow<br>
 <kbd>plane-reflect</kbd>: reflect all the braids in the file in the plane of the page <br>
 <kbd>power=&lt;n&gt;</kbd>: causes the programme to evaluate the specified power of a switch and write the result to the output file<br>
 <kbd>quaternion</kbd>: evaluate quaternionic switch polynomial invariants<br>
 <kbd>rack-polynomial</kbd>: evaluate the rack polynomial for the specified braids<br>
-<kbd>rack-terms=&lt;k&gt;</kbd>: set the global value k for the number of terms used to calculate rack polynomials<br>
 <kbd>raw-output</kbd>: produce raw output, that is the result only without descriptive text<br>
 <kbd>reflect-braid</kbd>: reflect all the braids in the input file<br>
 <kbd>rho</kbd>: use the Study rho mapping for calculating Study determinants <br>
@@ -1934,6 +2111,7 @@ diagram:</p>
 <kbd>show-varmaps</kbd>: show variable mappings instead of substituting mapped variables in polynomial output<br>
 <kbd>silent</kbd>: do not generate any output to the command line (stdout), used for batch processing<br>
 <kbd>TeX-polynomials</kbd>: display output polynomials in TeX format (not supported for the Jones polynomial)<br>
+<kbd>turning-number</kbd>: evaluate the turning number of a given diagram<br>
 <kbd>ulpgd</kbd>: calculate the unoriented left preferred Gauss data, rather than a standard gauss code<br>
 <kbd>uopgc</kbd>: calculate the unoriented over preferred Gauss code, rather than a standard gauss code<br>
 <kbd>vogel</kbd>: apply the vogel algorithm to a labelled peer code <br>
@@ -1970,6 +2148,7 @@ links contained in <kbd>fred</kbd></p>
 <p><a href="#Input-File-Format">back to input file format</a>
    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
    <a href="#_top">back to top</a>
+
 </p>
 
 <h3><a NAME="Exit-In-Input-Files"></a>Premature Termination of an Input Files</h3>
@@ -1981,6 +2160,7 @@ links contained in <kbd>fred</kbd></p>
 <p><a href="#Input-File-Format">back to input file format</a>
    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
    <a href="#_top">back to top</a>
+
 </p>
 
 <h3>Example Input File</h3>
@@ -2060,9 +2240,10 @@ S = a, 0, 0, a/a-1, b, c, b^2+a-1/c-ca, b/1-a
 <p><a href="#Input-File-Format">back to input file format</a>
    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
    <a href="#_top">back to top</a>
+
 </p>
 
-<h2><a NAME="Version-History"></a>13. Version History</h2>
+<h2><a NAME="Version-History"></a>14. Version History</h2>
 <p>The first released version was 6.1.b1, supporting the Burau and quaternion matrix representations, calculation of Alexander polynomials, 0<SUp>th</SUp> and 1<SUp>st</SUp> ideal polynomials for quaternionic representations, 
 Dynnikov test and Dowker code calculation.</p>
 
@@ -2129,7 +2310,7 @@ the generic code data structure for Gauss codes to allow for the fact that Gauss
 crossings and not virtual crossings.  Version 17.0 also introduced support for the affine index polynomial invariant for virtual knots.  A tool for converting labelled peer codes or immersion codes was added to allow testing of the affine index polynomial.</p>
 
 <p>Version 18.0 (January 2015) introduced the fixed point invariant for virtual doodles and aligned the code for fixed-point invariants 
-from [11] to [12].</p>
+from [12] to [13].</p>
 
 <p>Version 18.1: (March 2015) Added invert-braid, line-reflect-braid and plane-reflect-braid options and {invert, line-reflect, plane-reflect} braid qualifiers.</p>
 
@@ -2145,7 +2326,7 @@ from [11] to [12].</p>
 
 <p>Version 22.0 (May 2020) Added support for the arrow polynomial for classical and virtual knots, links, long knots and long virtuals knots, 
 knotoids and multi-knotoids. Added no-expand-bracket and no-normalize-bracket options.  Added support for "An Alexander type invariant for 
-doodles [18]. Added mapped polynomials for improved arrow polynomial presentation and to prepare for the parity bracket polynomial.  Added support for knotoids 
+doodles [19]. Added mapped polynomials for improved arrow polynomial presentation and to prepare for the parity bracket polynomial.  Added support for knotoids 
 to the affine index polynomial, and the Gauss code task.  Added the lpgd and ulpgd options to the Gauss code task.  Added the parity bracket polynomial for classical 
 or virtual knots or knotoids.  Added the parity arrow polynomial for classical or virtual knots and the relaxed parity arrow polynomial for classical or virtual knotoids.</p>
 <p>
@@ -2170,11 +2351,14 @@ Added draft mock Alexander option for knotoids.  Added the ability to read Dowke
 <p>Version 25.2 (April 2023) Added support for multi-linkoids to the peer code and Gauss code input and output functions and modified gauss_to_peer_code to convert multi-knotoid Gauss codes to peer codes.</p>
 
 <p>Version 26.0 (October 2023) Added Hamiltonian task to find Hamiltonian circuits in a diagram of a classical or flat knot or link. Removed the start menu.</p>
+
+<p>Version 26.1 (October 2023) Added prime task to test whether (the shadow of) a diagram is prime; that is, 3-connected.  Cleaned up the handling of multi-linkoids.</p>
                   
    <a href="#_top">back to top</a>
+
 </p>
 
-<h2><a NAME="Bug-Tracker"></a>14. Bug Tracker</h2>
+<h2><a NAME="Bug-Tracker"></a>15. Bug Tracker</h2>
 
 <li>The braid word algebra of <a href="#Assignment-statements">assignment statements</a> and 
     <a href="#Braid-statements">braid statements</a> did not work in version 6.1.b1, since they were confused with 
@@ -2194,17 +2378,21 @@ caused the bigint division operator to generate a floating point exception.  Thi
 <li>In version 11.0 the HTML used to generate part of the web interface was incorrect: although some browsers tollerated the error, later versions of Firefox do not.  This was corrected in version 11.2.</li>
 <li>In version 11.0 the default behaviour was changed so that Delta<sub>1</sub> was calculated even when Delta<sub>0</sub> was non-zero.  However, in the non-commutative case Delta<sub>0</sub> was not included as a generator of Delta<sub>1</sub> which meant that when Delta<sub>0</sub> was non-zero the value calculated for Delta<sub>1</sub> was not always correct.  This error was corrected in version 12.0.</li>
 <li>Version 12.1 corrected a memory leak in the absolute function for scalars, abs(const scalar&#038; c).  It also corrected a memory leak in the function used to calculate R-module representations from labelled immersion codes. </li>
-<li>Reference [6] contains a typographic error in the description of a Weyl algebra over a truncated poynomial ring, interchanging the matrices u and v.  The error was included in version 11.0 and corrected in version 12.1.</li>
+<li>Reference [7] contains a typographic error in the description of a Weyl algebra over a truncated poynomial ring, interchanging the matrices u and v.  The error was included in version 11.0 and corrected in version 12.1.</li>
 <li>Version 12.1 also corrected an error for the cases n >= 3 in the setting up of the matrix v for the Weyl algebra over the truncated polynomial ring .</li>
 <li>Version 12.1 corrected an error that displayed polynomial coefficients equal to -1 mod p incorrectly for the case p > 2.</li>
 <li>Version 12.2 corrected an error in the renumbering of a labelled immersion code for long knots when the point at infinity is moved by an even number of semi-arcs.</li>
-<li>Version 18.0 corrected the ambiguity in the code described in [12].</li>
+<li>Version 18.0 corrected the ambiguity in the code described in [13].</li>
 <li>Version 25.1 corrected an error in the Vogel algorithm (lines 412 and 434) that could have resulted in a segmentation fault by using a negative value rather than an absolute value   
 in cases such as [-5 9 -11 -19 17 -15 -7 -1 3 -13]/* - * + * + * * * + .  These must be rare cases, given that support for the Vogel algorithm was added in version 8, some twenty years ago!</li>
+<li>Version 26.1 corrected an error in the evaluation of the Sawollek invariant where the strands associated with each crossing were considered in the wrong order when evaluating the permutation matrix P.
+It seems unlikely that this function had hardly ever been used since it would have evaluated non-zero values for classical braids! 
+</li>
 </ol>
 
 <p>
    <a href="#_top">back to top</a>
+
 </p>
 
 <h2>References:</h2>
@@ -2213,26 +2401,30 @@ in cases such as [-5 9 -11 -19 17 -15 -7 -1 3 -13]/* - * + * + * * * + .  These 
 <p>[3] J. Sawollek. On Alexander-Conway Polynomials For Virtual Knots and Links</p>
 <p>[4] P. Dehornoy. Braids and Self-Distributivity. Progress in Mathematics no 192 Birkha user,(2000)</p>
 <p>[5] P. Budden and R. Fenn. The equation [B,(A-1)(A,B)]=0 and Virtual Knots and Links Fund. Math 184 (2004).19 29</p>
-<p>[6] R. Fenn and V. Turaev. Weyl Algebras and Knots. J. Geometry and Physics 57 (2007) 1313-1324</p>
-<p>[7] A. Bartholomew, R. Fenn, N. Kamada, S. Kamada, New Invariants of Long Virtual Knots, Kobe J. Math 27 (2010) 21-33</p>
-<p>[8] L. H. Kauffman. Introduction to Virtual Knot Theory, arXiv:1101.0665v1</p>
-<p>[9] V. Turaev. Knotoids, arXiv:1002.4133v4</p>
-<p>[10] L. H. Kauffman. An Affine Index Polynomial Invariant of Virtual Knots, arXiv:1211.1601v1</p>
-<p>[11] A. Bartholomew and R. Fenn. Biquandles and Welded Knot Invariants of Small Size (arXiv:1001.5127v1).</p>
-<p>[12] A. Bartholomew and R. Fenn. Erratum: Biquandles of Small Size and some Invariants of Virtual and Welded Knots
+<p>[6] P. Budden and R. Fenn. The equation [B,(A-1)(A,B)]=0 and Virtual Knots and Links Fund. Math 184 (2004).19 29</p>
+<p>[7] R. Fenn.  Quaternion Algebras and Invariants of Virtual Knots and Links I: The Elliptic Case (J Knot Theory and Its Ramifications Vol. 17 No. 3 (2008) 279-304).</p>
+<p>[8] A. Bartholomew, R. Fenn, N. Kamada, S. Kamada, New Invariants of Long Virtual Knots, Kobe J. Math 27 (2010) 21-33</p>
+<p>[9] L. H. Kauffman. Introduction to Virtual Knot Theory, arXiv:1101.0665v1</p>
+<p>[10] V. Turaev. Knotoids, arXiv:1002.4133v4</p>
+<p>[11] L. H. Kauffman. An Affine Index Polynomial Invariant of Virtual Knots, arXiv:1211.1601v1</p>
+<p>[12] A. Bartholomew and R. Fenn. Biquandles and Welded Knot Invariants of Small Size (arXiv:1001.5127v1).</p>
+<p>[13] A. Bartholomew and R. Fenn. Erratum: Biquandles of Small Size and some Invariants of Virtual and Welded Knots
         (J Knot Theory and Its Ramifications Vol. 26 No. 8 (2017)).</p>
-<p>[13] A. Bartholomew, R. Fenn, N. Kamada, S. Kamada, Colorings and Doubled colorings of Virtual Doodles (arXiv:1809:04205).</p>
-<p>[14] A. Bartholomew, R. Fenn, N. Kamada, S. Kamada, On Gauss codes of virtual doodles (Journal of Knot Theory and Its Ramifications Vol. 27, No. 11, 1843013 (2018), arXiv:1806.05885
+<p>[14] A. Bartholomew, R. Fenn, N. Kamada, S. Kamada, Colorings and Doubled colorings of Virtual Doodles (arXiv:1809:04205).</p>
+<p>[15] A. Bartholomew, R. Fenn, N. Kamada, S. Kamada, On Gauss codes of virtual doodles (Journal of Knot Theory and Its Ramifications Vol. 27, No. 11, 1843013 (2018), arXiv:1806.05885
 ).</p>
-<p>[15] H. A. Dye, L. H. Kauffman, Virtual Crossing Number and the Arrow Polynomial arXiv:0810.3858</p>
-<p>[16] N. Gugumcu, L, H. Kauffman, New invariants of knotoids, European Journal of Combinatorics 65 (2017) 186–229</p>
-<p>[17] L. H. Kauffman, An Extended Bracket Polynomial for Virtual Knots and Links, arXiv:0712.2546</p>
-<p>[18] A. Kaestner, L, H, Kauffman, Parity, Skein Polynomials and Categorification, arXiv:1110.4911v1</p>
-<p>[19] B. Cisneros, M. Flores, J. Juyumaya, C.Roque-Márquez, An Alexander type invariant for doodles, arXiv:2005.06290v1</p>
-<p>[20] V. O. Manturov. Parity in knot theory. (Russian) Mat. Sb. 201 (2010), no. 5, 65–110; translation in Sb. Math. 201 (2010), no. 5-6, 693733.</p>
+<p>[16] H. A. Dye, L. H. Kauffman, Virtual Crossing Number and the Arrow Polynomial arXiv:0810.3858</p>
+<p>[17] N. Gugumcu, L, H. Kauffman, New invariants of knotoids, European Journal of Combinatorics 65 (2017) 186–229</p>
+<p>[18] L. H. Kauffman, An Extended Bracket Polynomial for Virtual Knots and Links, arXiv:0712.2546</p>
+<p>[19] A. Kaestner, L, H, Kauffman, Parity, Skein Polynomials and Categorification, arXiv:1110.4911v1</p>
+<p>[20] B. Cisneros, M. Flores, J. Juyumaya, C.Roque-Márquez, An Alexander type invariant for doodles, arXiv:2005.06290v1</p>
+<p>[21] V. O. Manturov. Parity in knot theory. (Russian) Mat. Sb. 201 (2010), no. 5, 65–110; translation in Sb. Math. 201 (2010), no. 5-6, 693733.</p>
+<p>[22] Kim J. and Kim T-K., Some polynomial invariants of virtual doodles. Journal of Knot Theory and Its Ramifications Vol. 33, No. 04, 2450010 (2024)</p>
+<p>[23] Hoste, J., and Thistlethwaite, M., { Knotscape 1.01}. <a href="https://web.math.utk.edu/~morwen/knotscape.html">https://web.math.utk.edu/~morwen/knotscape.html</a></p>
 
 <p>
    <a href="#_top">back to top</a>
+
 </p>
 
 </body>
