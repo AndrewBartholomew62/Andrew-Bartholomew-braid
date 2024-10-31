@@ -1,5 +1,5 @@
 
-;                          Input file for braid programme version 26.0
+;                          Input file for braid programme version 28.0
 
 
 ; An input file may contain one or more braid definitions together with
@@ -27,6 +27,7 @@
 ;[burau]                  ; Burau polynomial invariant
 ;[complex-delta1]         ; calculate Delta_1^C rather than Delta_1^H for quaternionic switches
 ;[delta1-only]            ; display polynomial output for Delta_1 only
+;[doodle-Q-poly]          ; the Q-polynomial for doodles with one component
 ;[double-braid]           ; calculate the Kamada double covering of all the braids in the input file
 ;[dowker]                 ; evaluate Dowker(-Thistlethwaite) code
 ;[dynnikov]               ; carry out  Dunnikiv test
@@ -51,6 +52,7 @@
 ;[line-reflect]           ; reflect all the braids in the file in a horizontal line drawn south of the braid
 ;[lpgd]                   ; calculate the left preferred Gauss code, rather than a standard gauss code
 ;[matrix]                 ; matrix switch polynomial invariant
+;[mock]                   ; mock Alexander polynomial invariants of knotoids
 ;[mod-p=n]                ; calculate mod p with p=n (only used for non-Weyl algebra switches)
 ;[no-auto-delta1]         ; only calculate Delta_1 if Delta_0 is zero
 ;[no-even-writhe]         ; normalize the parity bracket polynomial with the full writhe rather than the even writhe
@@ -65,9 +67,9 @@
 ;[peer]                   ; evaluate labelled peer code
 ;[plane-reflect]          ; reflect all the braids in the file in the plane of the page
 ;[power=n]                ; evaluate the nth power of the switch when calculating switch polynomial invariants
+;[prime]                  ; determine whether a given diagram is prime; i.e is not a connected sum or has a 3-connected shadow
 ;[quaternion]             ; quaternionic polynomial invariant
 ;[rack-polynomial]        ; evaluate the rack polynomial for the specified braids
-;[rack-terms=k]           ; set the global valu k for the number of terms to consider for rack-polynomials
 ;[raw-output]             ; produce raw output, that is the result only without descriptive text
 ;[reflect-braid]          ; reflect all the braids in the input file
 ;[relaxed-parity]         ; evaluate the relaxed variant of the parity arrow polynomial
@@ -79,6 +81,7 @@
 ;[show-varmaps]           ; show variable mappings instead of substituting mapped variables in polynomial output
 ;[silent]                 ; do not generate any output to the command line (stdout)
 ;[TeX-polynomials]        ; display output polynomials in TeX format (not supported for the Jones polynomial)
+;[turning-number]         ; evaluate the turning number of a given diagram
 ;[ulpgd]                  ; calculate the unoriented left preferred Gauss data, rather than a standard gauss code
 ;[uopgc]                  ; calculate the unoriented over preferred Gauss code, rather than a standard gauss code
 ;[vogel]                  ; use the Vogel algorithm to determine an equivalent braid word
@@ -268,7 +271,7 @@ S=WQUV, 0, q^2, 1, 0, 0, q, 1, 0, 0, 1, 1/(-q^3+q^2), 1, 0, 0, 1/(-q^2+q), q, 0,
 ; s1s2s3
 
 ; Here are some examples of braid statements with qualifiers
-; Currently supported qualifiers are: "doodle", "welded", "flip", "invert", "plane-reflect", "line-reflect", "double" and "rack-terms=n".
+; Currently supported qualifiers are: "doodle", "welded", "flip", "invert", "plane-reflect", "line-reflect", and "double".
 
 ; s1s2s1s2s1s2s1s2{doodle}; requires that the braid be treated as a doodle (with flat crossings)
 ; -w3s1s2t3-s2-s1w3 {welded}; requires that the braid be treated as a welded knot
@@ -276,7 +279,7 @@ S=WQUV, 0, q^2, 1, 0, 0, q, 1, 0, 0, 1, 1/(-q^3+q^2), 1, 0, 0, 1/(-q^2+q), q, 0,
 ; s2s1t3-s4 {invert} ; reflect braid in a vertical line before processing this braid, produces s4t3-s1-s2.
 ; s2s1t3-s4 {line-reflect} ; reflect braid in a horizontal line drawn south of the braid before processing this braid, produces -s3-s4t2s1.
 ; s2s1t3-s4 {plane-reflect} ; reflect braid in the plane of the diagram before processing this braid, produces -s2-s1t3s4.
-; s1-s2-s1t2s1s2-s1t2 {rack-terms=6}; calculate fixed-point invariants by adding sequentially s3, s4, s5, s6, s7, and s8
+
 
 ; Once a braid statement is encountered, the programme checks that braid
 ; then returns to the input file to check for another braid definition.

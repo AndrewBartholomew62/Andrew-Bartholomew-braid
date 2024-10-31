@@ -1,4 +1,4 @@
-                     Braid v26.0 Help Information
+                     Braid v28.0 Help Information
 
 The full syntax of the programme is
 
@@ -12,6 +12,7 @@ The <task> is a keyword identifying the required task, valid task keywords are:
 	                    link, knotoid or multi-knotoid	
     automorphism        evaluate commutative automorphism switch polynomial invariants
     burau               evaluate Burau switch polynomial invariants
+    doodle-Q-poly       the Q-polynomial for doodles with one component
     dowker              calculate the Dowker code for the closure of a braid, provided 
                         it is a knot, or of a labelled peer code or labelled immersion code
     dynnikov            carry out the Dynnikov test to determine whether the braid is 
@@ -26,12 +27,15 @@ The <task> is a keyword identifying the required task, valid task keywords are:
     kauffman-bracket    evaluate the normalized Kauffman bracket polynomial
     knotoid-bracket     evaluate Turaev's extended bracket polynomial for a knotoid
     matrix              evaluate matrix switch polynomial invariants
+    mock                mock Alexander polynomial invariants of knotoids
     parity-arrow        evaluate Kaestner and Kauffman's parity arrow polynomial
     parity-bracket      evaluate Manturov's parity bracket polynomial
     peer                evaluate a labelled peer code
+    prime               determine whether a given diagram is prime; i.e is not a connected sum or has a 3-connected shadow
     quaternion          evaluate quaternionic switch polynomial invariants
     rack-polynomial     evaluate the finite switch polynomial invariants
     sawollek            evaluate Sawollek's normalized Conway polynomial 
+    turning-number      evaluate the turning number of a given diagram
     vogel               apply the Vogel algorithm to a labelled peer code
     weyl                evaluate Weyl algebra switch polynomial invariants
 
@@ -44,7 +48,8 @@ file programme option may be used as a <long_option>.  The other <long_options> 
     equality                test for A=D or B=C in switch when calculating switch polynomial invariants
     extra-output            display additional polynomial invariant output
     fixed-point             finite biquandle fixed point invariant
-    flat                    create flat Reidemeister II moves when executing the Vogel algorithm 
+    flat-crossings          create flat Reidemeister II moves when executing the Vogel algorithm 
+                            consider crossings to be flat when testing for prime knots, so include crossing test
     flip-braid              flip all the braids in the input file
     format                  format the output file so that it may be used as an input file later
     invert-braid            invert all the braids in the input file
@@ -64,7 +69,6 @@ file programme option may be used as a <long_option>.  The other <long_options> 
     PD-format               write Gauss code as a planar diagram
     plane-reflect           reflect all the braids in the file in the plane of the page
     power=n                 evaluate the nth power of the switch when calculating switch polynomial invariants
-    rack-terms=k            set the global valu k for the number of terms to consider for rack-polynomials
     raw-output              produce raw output, that is the result only without descriptive text
     relaxed-parity          evaluate the relaxed variant of the parity arrow polynomial
     remove=n                remove the n-th component from a peer code
@@ -82,6 +86,7 @@ file programme option may be used as a <long_option>.  The other <long_options> 
 
 The supported <short_options> are:
 
+    #      debug    
     c[{2}] calculate Delta_i^C rather than Delta_i^H for quaternionic switches
       {2}  always calculate codimension 2 determinant from complex Study Delta_1
     d      evaluate the Kamada double covering for braids (used only by the fixed-point task)
@@ -157,8 +162,8 @@ Input format
 Since the programme deals with virtual braids, we cannot use the alphabetical notation for braids.  Instead we use the syntax s1, s2, s3 to
 denote a, b, c, and -s1, -s2, -s3 for A, B, C.  This allow us to introduce virtual crossings as t1, t2, t3, etc.
 
-A braid word may be followed by one or more braid qualifiers that provide additional information about the braid.  Two braid qualifiers are currently 
-defined, welded and rack-terms.  Braid qualifiers are specified within braces immediately following the braid statement, multiple qualifiers may be included, 
+A braid word may be followed by one or more braid qualifiers that provide additional information about the braid.  
+Braid qualifiers are specified within braces immediately following the braid statement, multiple qualifiers may be included, 
 separated by spaces or commas.  
 
  - The "doodle" qualifier indicates that the braid should be regarded as a doodle rather than a knot
@@ -169,20 +174,16 @@ separated by spaces or commas.
  - The "line-reflect" qualifier that indicates that the braid should be reflected in a horizontal line south of the braid (strands renumbered 
    and signs of classical crossings toggled)
  - The "plane-reflect" qualifier that indicates that the braid should be reflected in the plane of the diagram (signs of classical crossings toggled)
- - The "rack-terms=n" qualifier indicates the number of terms, n, that should be used when calculating a rack-polynomial for this braid
  - The "welded" qualifier indicates that the braid should be regarded as a welded knot or link
 
 Here are some examples of braid qualifiers: 
 
-    s1s1s1{rack-terms=4}
     -s1-s2s1t2-s1s2s1t2{welded}
-    s1s2-s3t1s4-s3-s2t4-s1-s3-s2t3{welded rack-terms=4}
     s1s2t1t2s2s1 {flip}
     s1s2t1t2s2s1 {flip,invert}
     s1s2t1t2s2s1 {flip,invert,line-reflect}
     s1s3s2s1s3s2s1s3s2{doodle}
 	
-The rack-terms qualifier must be specified with a value.  Setting the t option at the command line overrides any rack-terms value specified in a braid qualifier.
 
 Labelled peer codes
 +++++++++++++++++++

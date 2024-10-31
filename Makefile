@@ -1,6 +1,6 @@
 
 OBJFILES = util.o debug.o bigint-scalar.o class-control.o input.o \
-           braid-util.o gauss-to-peer.o generic-code-util.o gauss-orientation.o reidemeister.o \
+           braid-util.o gauss-to-peer.o generic-code-io.o generic-code-util.o gauss-orientation.o reidemeister.o \
            main.o bracket.o braid.o  braidfns.o generic-code.o hamiltonian.o vogel.o vogelfns.o 
                     
 DEPS     = ./include/* 
@@ -29,6 +29,9 @@ braid-util.o: ./src/braid-util.cpp $(DEPS)
 	$(COMPILE)
 
 gauss-to-peer.o: ./src/gauss-to-peer.cpp $(DEPS)
+	$(COMPILE)
+
+generic-code-io.o: ./src/generic-code-io.cpp $(DEPS)
 	$(COMPILE)
 
 generic-code-util.o: ./src/generic-code-util.cpp $(DEPS)
