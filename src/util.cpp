@@ -12,6 +12,8 @@ This file is intended to hold common utilities
 
 using namespace std;
 
+#include <util.h>
+
 int num_len (long n)
 {
     int i = 0;
@@ -163,3 +165,46 @@ string itos (long n)
 	return res;
 }
 }
+
+
+int least_common_multiple (list<int>& l)
+{
+	if (l.size() == 0)
+		return 0;
+	
+	list<int>::iterator lptr = l.begin();
+	
+	int lcm = *lptr;
+	
+	while (lptr != l.end())
+	{
+		if (*lptr != 1 && *lptr != lcm)
+		{
+			int g=gcd(lcm, *lptr);
+			lcm *= *lptr;
+			lcm /= g;
+		}
+		
+		lptr++;
+	}
+	
+	return lcm;
+}
+
+int least_common_multiple (vector<int>& v)
+{
+	int lcm = v[0];
+	
+	for (size_t i=1; i< v.size(); i++)
+	{
+		if (v[i] != 1 && v[i] != lcm)
+		{
+			int g=gcd(lcm, v[i]);
+			lcm *= v[i];
+			lcm /= g;
+		}
+	}
+	
+	return lcm;
+}
+

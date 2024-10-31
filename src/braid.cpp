@@ -17,11 +17,11 @@ void set_component_record (int action, vector<int>& braid_num, vector<int>& type
                            int base_crossing, int basepoint, int datum)
 void write_braid (ostream& s, vector<int>& braid_num, vector<int>& type)
 void fixed_point_invariant(matrix<int>& Su, matrix<int>& Sd, matrix<int>& invSu, matrix<int>& invSd, 
-						   matrix<int>& Tu, matrix<int>& Td, ST_pair_type pair_type, string input_string, string title)
+						   matrix<int>& Tu, matrix<int>& Td, braid_control::ST_pair_type pair_type, string input_string, string title)
 int num_fixed_points(matrix<int>& Su, matrix<int>& Sd, matrix<int>& invSu, matrix<int>& invSd, 
-						   matrix<int>& Tu, matrix<int>& Td, string input_string)
+						   matrix<int>& Tu, matrix<int>& Td, string input_string, int num_terms, int num_strings)
 void rack_poly_invariant(matrix<int>& Su, matrix<int>& Sd, matrix<int>& invSu, matrix<int>& invSd, matrix<int>& Tu, 
-						 matrix<int>& Td, ST_pair_type pair_type, string input_string, string title)
+						 matrix<int>& Td, braid_control::ST_pair_type pair_type, string input_string, string title, int writhe, int turning_number)
 
 	
  **************************************************************************/
@@ -71,85 +71,20 @@ hpolynomial virtual_homfly(vector<int> braid_num, vector<int> type, vector<int> 
 void set_component_record (int action, vector<int>& braid_num, vector<int>& type, vector<int>& component_record,
                            int base_crossing=0, int basepoint=0, int datum=0);
 void write_braid (ostream& s, vector<int>& braid_num, vector<int>& type);
-int num_fixed_points(matrix<int>& Su, matrix<int>& Sd, matrix<int>& invSu, matrix<int>& invSd, 
-						   matrix<int>& Tu, matrix<int>& Td, string input_string);
+int num_fixed_points(matrix<int>& Su, matrix<int>& Sd, matrix<int>& invSu, matrix<int>& invSd, matrix<int>& Tu, matrix<int>& Td, 
+                     string input_string, int num_terms, int num_strings);
 bool distinguish_modified_string (matrix<int>& Su, matrix<int>& Sd, matrix<int>& invSu, matrix<int>& invSd, 
-						   matrix<int>& Tu, matrix<int>& Td, string input_string, int num_terms);
-//void flip_braid(string& braid);
-//void invert_braid(string& braid);
-//void line_reflect_braid(string& braid);
-//void plane_reflect_braid(string& braid);
-void Kamada_double_covering(string& braid);
+						   matrix<int>& Tu, matrix<int>& Td, string input_string, int num_terms,int num_strings);
+void Kamada_double_covering(string& braid, int num_terms, int num_strings);
 void generic_code(string input_string, string title);
 //int remove_Reidemeister_II(generic_code_data& code_data, vector<int>& component_flags);
-list<vector<int> > hamiltonian_circuit(generic_code_data& code_data, bool list_all_circuits, bool count_circuits_only, bool edge_circuit);
-
+list<vector<int> > hamiltonian_circuit(generic_code_data& code_data, bool list_all_circuits, bool count_circuits_only, bool edge_circuit, int include_edge);
 
 void braid(string input_string, string title)
 {
 	int num_terms;
 	int num_strings;
-	bool flip_braid_qualifier = false;
-	bool invert_braid_qualifier = false;
-	bool plane_reflect_braid_qualifier = false;
-	bool line_reflect_braid_qualifier = false;
 	
-	/* first read and then remove braid qualifiers from the input string */
-	string::size_type pos = input_string.find('{');
-
-   	if (pos != string::npos)
-   	{
-   		if (input_string.substr(pos).find("flip") != string::npos)
-   			flip_braid_qualifier = true;
-
-   		if (input_string.substr(pos).find("invert") != string::npos)
-   			invert_braid_qualifier = true;
-
-   		if (input_string.substr(pos).find("plane-reflect") != string::npos)
-   			plane_reflect_braid_qualifier = true;
-
-   		if (input_string.substr(pos).find("line-reflect") != string::npos)
-   			line_reflect_braid_qualifier = true;
-    			
-   		input_string = input_string.substr(0,pos);
-
-if (debug_control::DEBUG >= debug_control::DETAIL)
-  	debug << "braid: after removing braid qualifiers, input_string =  " << input_string << endl;
-
-   	}
-
-	if (braid_control::FLIP_BRAID || flip_braid_qualifier)
-	{
-if (debug_control::DEBUG >= debug_control::SUMMARY)
-    debug << "braid: flipping braid " << input_string << endl;
-    
-				flip_braid(input_string);    
-	}
-
-	if (braid_control::INVERT_BRAID || invert_braid_qualifier)
-	{
-if (debug_control::DEBUG >= debug_control::SUMMARY)
-    debug << "braid: inverting braid " << input_string << endl;
-    
-				invert_braid(input_string);    
-	}
-
-	if (braid_control::PLANE_REFLECT_BRAID || plane_reflect_braid_qualifier)
-	{
-if (debug_control::DEBUG >= debug_control::SUMMARY)
-    debug << "braid: plane-reflecting braid " << input_string << endl;
-    
-				plane_reflect_braid(input_string);    
-	}
-
-	if (braid_control::LINE_REFLECT_BRAID || line_reflect_braid_qualifier)
-	{
-if (debug_control::DEBUG >= debug_control::SUMMARY)
-    debug << "braid: line-reflecting braid " << input_string << endl;
-    
-				line_reflect_braid(input_string);    
-	}
-
 	if (title.length())
    	{
 		if (!braid_control::SILENT_OPERATION)
@@ -166,6 +101,66 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 						
 	if (valid_braid_input(input_string, num_terms, num_strings, braid_control::SILENT_OPERATION, braid_control::RAW_OUTPUT, braid_control::OUTPUT_AS_INPUT))
 	{
+		/* first read and then remove braid qualifiers from the input string */
+		bool flip_braid_qualifier = false;
+		bool invert_braid_qualifier = false;
+		bool plane_reflect_braid_qualifier = false;
+		bool line_reflect_braid_qualifier = false;
+		string::size_type pos = input_string.find('{');
+
+	   	if (pos != string::npos)
+	   	{
+	   		if (input_string.substr(pos).find("flip") != string::npos)
+	   			flip_braid_qualifier = true;
+	
+	   		if (input_string.substr(pos).find("invert") != string::npos)
+	   			invert_braid_qualifier = true;
+	
+	   		if (input_string.substr(pos).find("plane-reflect") != string::npos)
+	   			plane_reflect_braid_qualifier = true;
+	
+	   		if (input_string.substr(pos).find("line-reflect") != string::npos)
+	   			line_reflect_braid_qualifier = true;
+	    			
+	   		input_string = input_string.substr(0,pos);
+	
+if (debug_control::DEBUG >= debug_control::DETAIL)
+  	debug << "braid: after removing braid qualifiers, input_string =  " << input_string << endl;
+	
+	   	}
+
+		if (braid_control::FLIP_BRAID || flip_braid_qualifier)
+		{
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+    debug << "braid: flipping braid " << input_string << endl;
+    
+					flip_braid(input_string,num_terms,num_strings);    
+		}
+	
+		if (braid_control::INVERT_BRAID || invert_braid_qualifier)
+		{
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+    debug << "braid: inverting braid " << input_string << endl;
+    
+					invert_braid(input_string,num_terms);    
+		}
+
+		if (braid_control::PLANE_REFLECT_BRAID || plane_reflect_braid_qualifier)
+		{
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+    debug << "braid: plane-reflecting braid " << input_string << endl;
+    
+					plane_reflect_braid(input_string,num_terms);    
+		}
+	
+		if (braid_control::LINE_REFLECT_BRAID || line_reflect_braid_qualifier)
+		{
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+    debug << "braid: line-reflecting braid " << input_string << endl;
+    
+					line_reflect_braid(input_string,num_terms,num_strings);    
+		}
+
 		if (braid_control::DOWKER_CODE)
 		{
 			int*		dowker_code;
@@ -236,7 +231,7 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 			else if (braid_control::ULPGD)
 			{
 				gauss_orientation_data gauss_data(code_data);
-				gauss_orientation_data lp_gauss_data = left_preferred(gauss_data,true, code_data.immersion); //unoriented = true;
+				gauss_orientation_data lp_gauss_data = left_preferred(gauss_data,true, code_data.immersion_character); //unoriented = true;
 				write_gauss_data(lp_gauss_data,oss); 
 			}
 			else		
@@ -269,7 +264,7 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 			generic_code_data code_data;
 			read_peer_code (code_data, pcode);
 
-			if (code_data.immersion != generic_code_data::character::CLOSED)
+			if (code_data.immersion_character != generic_code_data::character::CLOSED)
 			{
 				if (!braid_control::SILENT_OPERATION)
 					cout << "\n\nHamiltonian circuits only defined for closed immersions, skipping";
@@ -287,7 +282,7 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 			}
 			else
 			{
-				list<vector<int> > circuit_list = hamiltonian_circuit(code_data, braid_control::HC_LIST_ALL, braid_control::HC_COUNT, braid_control::HC_EDGES);
+				list<vector<int> > circuit_list = hamiltonian_circuit(code_data, braid_control::HC_LIST_ALL, braid_control::HC_COUNT, braid_control::HC_EDGES, braid_control::HC_INCLUDE_EDGE);
 				
 				if (circuit_list.size() != 0)
 				{
@@ -1040,22 +1035,21 @@ polynomial<int> sawollek(string braid, int num_terms)
     int crossing;
     int real_crossing;
     int num_real_crossings = 0;
-    int* height;
-    int* crossing_num;
+//    int* height;
+//    int* crossing_num;
     bool string_found;
 
-	height = new int[num_terms];
-    
-    crossing_num = new int[num_terms];
+//	height = new int[num_terms];   
+ //   crossing_num = new int[num_terms];
+	vector<int> height(num_terms);   
+    vector<int> crossing_num(num_terms);
 	
 	typedef polynomial<int> Polynomial;
 	
-    /* record the signed height of each crossing in height,
-       and the number of the crossing in crossing_num - zero in
-       crossing_num will indicate a virtual crossing.  The sign will be
-       used to initialize the Sawollek matrix M and to calculate the value
-       w_power, the difference between the number of positive and negative
-       crossings. After this it the sign will be set to positive.
+    /* record the signed height of each crossing in height, and the number of the crossing in crossing_num - zero in
+       crossing_num will indicate a virtual crossing.  The sign will be used to initialize the Sawollek matrix M and 
+       to calculate the value w_power, the difference between the number of positive and negative  crossings. 
+       After this it the sign will be set to positive.
     */
     char* inbuf = c_string(braid);
     char *cptr = inbuf;
@@ -1104,10 +1098,10 @@ polynomial<int> sawollek(string braid, int num_terms)
 
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 {
-    debug << "sawolleck: braid crossing heights\n";
+    debug << "sawolleck: braid crossing heights: ";
     for (int i=0; i<num_terms; i++)
 		debug <<  height[i] << " ";		
-    debug << "\nsawolleck: braid crossing numbers\n";
+    debug << "\nsawolleck: braid crossing numbers (0=virtual): ";
     for (int i=0; i<num_terms; i++)
 		debug <<  crossing_num[i] << " ";
     debug << "\nsawolleck: difference between positive and negative crossings = " << w_power << endl;
@@ -1122,13 +1116,19 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 		Smatrix[i][j] = Polynomial("0");
     }
 
-    /* Initialize the Sawollek matrix to be the 2Nx2n diagonal
-       matrix diag(M1,M2,...,MN) where N is the number of real
-       crossings and Mi is either M+ or M- depending upon the
-       sign of real crossing i, and M+ and M- are given by
+    /* Initialize the Sawollek matrix to be the 2Nx2n diagonal matrix diag(M1,M2,...,MN) where N is the number of real
+       crossings and Mi is either M+ or M- depending upon the sign of real crossing i, and M+ and M- are given by
 
        M+ =   1-x    -y        M- = 0    -x^-1y
 		     -xy^-1   0            -y^-1  1-x^-1
+		     
+	   Notice that Sawollek creates an R-module representation of the diagram using M+ and M- enumerating the variables
+	   with the opposite convention to the one we use elsewhere; that is, he enumerates left then right for vertical braids,
+	   which is equivalent to down then up for horizontal braids.  Consequently the top row of M describes the down action
+	   contrary to our usual convention so M(a,b) = (a_b, b^a).
+	   
+	   Another way to think of this is that Sawollek, with a change of variable x=st y=-t reverses the UP and DOWN action
+	   of our implementation of the Burau representation.
 
     */
     real_crossing = 0;
@@ -1159,11 +1159,22 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 		}
     }
 
+if (debug_control::DEBUG >= debug_control::DETAIL)
+{
+    debug << "sawolleck: Sawollek matrix M\n";
+    debug << Smatrix;
+    debug << endl;
+}
+
     /* Now determine the permutation matrix P and at the same time evaluate the matrix M-P.  The matrix P is the identity matrix whose columns are 
        permuted according to the permutation described by Sawollek.
        
-       The ingress arcs at the real crossings in the diagram are enumerated (1,d),(1,u),(2,d),2(u),... where d=down and u=up; that is the left and 
-       right enumeration used by Sawollek rotated to coincide with our usual horizontal view of a braid.  Each upper and lower egress arc at a real 
+       Sawollek enumerates the ingress arcs at the real crossings (1,d),(1,u),(2,d),2(u),... where d=down and u=up; that is the left and 
+       right enumeration used by Sawollek rotated to coincide with our usual horizontal view of a braid.  That means that the first row of 
+       Smatrix corresponding to crossing i describes the effect of the DOWN action, so for his switch M(a,b) = (a_b,b^a), the reverse of 
+       our usual convention.  Thus the variable associated with the down action has the lower index in Smatrix.
+       
+       Each upper and lower egress arc at a real 
        crossing, i, of the braid corresponds to an element of the above enumeration determined by the real crossing number of the braid crossing and 
        whether we are considering the upper (u) or lower (d).  That is the egress arc is identified with a variable associated with the enumeration.
        By tracing along the braid to the next real crossing, j, (ingress arc) we obtain the permuation value (i,u|d) -> (j,u|d)
@@ -1183,16 +1194,18 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 		    }
 		}
 
-		/* The rows of Smatrix occur in pairs with the up action relation first and the down action second.  That means
-		   that when we create the permutation matrix for each crossing, we need to consider the top string first and
-		   then the lower string
+		/* The rows of Smatrix occur in pairs with the down action relation first and the up action second.  That means
+		   that when we create the permutation matrix for each crossing, we need to consider the lower string first and
+		   then the upper string
+		   
+		   strings are numbered from 1, so the lower stand at a crossing coincides with the height of the braid term.
 		*/
-		if (i%2)
+		if (i%2==0)
 			string_num = height[crossing];  // lower output string
 		else
 			string_num = height[crossing] + 1;  // upper output string
 
-		/* look along braid to find the next real crossing involving string.  We need the do loop because we may switch 
+		/* look along braid to find the next real crossing involving string_num.  We need the do loop because we may switch 
 		   strands through virtual crossings and need to follow the braid around more than once.
 		*/
 		
@@ -1216,7 +1229,7 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 
 						string_found = true;
 						/* subtract non-zero permutation element from M */
-						Smatrix[i][2*(crossing_num[j]-1)] -= 1;
+						Smatrix[i][2*(crossing_num[j]-1)] -= 1; // lower strand
 						break;
 		    		}
 				}
@@ -1230,7 +1243,7 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
     debug << " terminates at upper strand of crossing " << crossing_num[j] << endl;		
 						string_found = true;
 						/* subtract non-zero permutation element from M */
-						Smatrix[i][2*(crossing_num[j]-1)+1] -= 1;
+						Smatrix[i][2*(crossing_num[j]-1)+1] -= 1; // upper strand
 						break;
 		    		}
 				}
@@ -1354,7 +1367,7 @@ if (debug_control::DEBUG >= debug_control::BASIC)
 	    	poly *= Polynomial(oss.str());
 
 if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
-    debug << "sawolleck: normalizing poly here= " << Polynomial(oss.str()) << endl;
+    debug << "sawolleck: normalizing poly= " << Polynomial(oss.str()) << endl;
 
         }
         
@@ -1364,8 +1377,8 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
     }
 
 	delete[] inbuf;
-    delete[] height;
-    delete[] crossing_num;
+//    delete[] height;
+//   delete[] crossing_num;
 	
 	return poly;
 }
@@ -1559,14 +1572,14 @@ string braid_to_gauss_code (string braid, int num_terms)
 	{
 	    if (*cptr == '-')
 	    {
-			type[i] = braid_crossing_type::NEGATIVE;
+			type[i] = generic_braid_data::crossing_type::NEGATIVE;
 			cptr++;
 	    }
 	    else
-			type[i] = braid_crossing_type::POSITIVE;
+			type[i] = generic_braid_data::crossing_type::POSITIVE;
 
 		if (*cptr == 't' || *cptr == 'T')
-			type[i] = braid_crossing_type::VIRTUAL;
+			type[i] = generic_braid_data::crossing_type::VIRTUAL;
 		else
 			real_crossing_num++;  // so not incremented for virtual crossings
 		
@@ -1732,11 +1745,11 @@ if (debug_control::DEBUG >= debug_control::BASIC)
 			}
 			else
 			{
-			    if (type[crossing] != braid_crossing_type::VIRTUAL)  
+			    if (type[crossing] != generic_braid_data::crossing_type::VIRTUAL)  
 				{
 					gcode[place] = crossing_perm[crossing];
-					if ( (type[crossing] == braid_crossing_type::POSITIVE && braid_num[crossing] == string_num)
-					|| (type[crossing] == braid_crossing_type::NEGATIVE && braid_num[crossing] == string_num - 1) )
+					if ( (type[crossing] == generic_braid_data::crossing_type::POSITIVE && braid_num[crossing] == string_num)
+					|| (type[crossing] == generic_braid_data::crossing_type::NEGATIVE && braid_num[crossing] == string_num - 1) )
 
 						gcode[place]*= -1;
 
@@ -1830,14 +1843,14 @@ if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 	{
 	    if (*cptr == '-')
 	    {
-			braid_type[i] = braid_crossing_type::NEGATIVE;
+			braid_type[i] = generic_braid_data::crossing_type::NEGATIVE;
 			cptr++;
 	    }
 	    else
-			braid_type[i] = braid_crossing_type::POSITIVE;
+			braid_type[i] = generic_braid_data::crossing_type::POSITIVE;
 
 		if (*cptr == 't' || *cptr == 'T')
-			braid_type[i] = braid_crossing_type::VIRTUAL;
+			braid_type[i] = generic_braid_data::crossing_type::VIRTUAL;
 
 		cptr++;
 		char* mark = cptr; /* mark where we start the number */
@@ -2014,9 +2027,9 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 					int peer_code_crossing = edge/2;
 					code_table[generic_code_data::table::TYPE][peer_code_crossing] = generic_code_data::TYPE1; 
 	
-					if (braid_type[crossing] == braid_crossing_type::VIRTUAL)
+					if (braid_type[crossing] == generic_braid_data::crossing_type::VIRTUAL)
 						code_table[generic_code_data::table::LABEL][peer_code_crossing] = generic_code_data::VIRTUAL;
-					else if (braid_type[crossing] == braid_crossing_type::NEGATIVE)
+					else if (braid_type[crossing] == generic_braid_data::crossing_type::NEGATIVE)
 						code_table[generic_code_data::table::LABEL][peer_code_crossing] = generic_code_data::POSITIVE; 
 					else
 						code_table[generic_code_data::table::LABEL][peer_code_crossing] = generic_code_data::NEGATIVE; 
@@ -2038,9 +2051,9 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 					int peer_code_crossing = edge/2;
 					code_table[generic_code_data::table::TYPE][peer_code_crossing] = generic_code_data::TYPE2;
 	
-					if (braid_type[crossing] == braid_crossing_type::VIRTUAL)
-						code_table[generic_code_data::table::LABEL][peer_code_crossing] = braid_crossing_type::VIRTUAL;
-					else if (braid_type[crossing] == braid_crossing_type::POSITIVE)
+					if (braid_type[crossing] == generic_braid_data::crossing_type::VIRTUAL)
+						code_table[generic_code_data::table::LABEL][peer_code_crossing] = generic_braid_data::crossing_type::VIRTUAL;
+					else if (braid_type[crossing] == generic_braid_data::crossing_type::POSITIVE)
 						code_table[generic_code_data::table::LABEL][peer_code_crossing] = generic_code_data::POSITIVE;
 					else
 						code_table[generic_code_data::table::LABEL][peer_code_crossing] = generic_code_data::NEGATIVE;
@@ -2110,6 +2123,13 @@ if (debug_control::DEBUG >= debug_control::BASIC)
 	{
 		code_table[generic_code_data::table::OPEER][i] = code_table[generic_code_data::table::ODD_TERMINATING][braid_crossing_num[i]];
 		code_table[generic_code_data::table::EPEER][(code_table[generic_code_data::table::OPEER][i]-1)/2] = 2*i;
+	}
+
+	/* re-write the odd and even terminating edges in terms of peer code crossings for the call to write_code_data */
+	for (int i=0; i< num_terms; i++)
+	{
+		code_table[generic_code_data::table::ODD_TERMINATING][i] = code_table[generic_code_data::table::OPEER][i];
+		code_table[generic_code_data::table::EVEN_TERMINATING][i] = 2*i;
 	}
 	
 	generic_code_data code_data;
@@ -2412,10 +2432,10 @@ if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 }
 				if (!crossing_visited[j] && !temp_crossing_visited[j])
 				{		
-					if ( type[j] != braid_crossing_type::VIRTUAL  && // we're at a real crossing
+					if ( type[j] != generic_braid_data::crossing_type::VIRTUAL  && // we're at a real crossing
 					     passed_basepoint && // otherwise we know it's good
-			    	     ( (braid_num[j] == string_num && type[j] == braid_crossing_type::POSITIVE) ||
-					      (braid_num[j] != string_num && type[j] == braid_crossing_type::NEGATIVE) // we've just arrived on an under-arc
+			    	     ( (braid_num[j] == string_num && type[j] == generic_braid_data::crossing_type::POSITIVE) ||
+					      (braid_num[j] != string_num && type[j] == generic_braid_data::crossing_type::NEGATIVE) // we've just arrived on an under-arc
                          )
 					   )
 					{
@@ -2508,13 +2528,13 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 	{
 		bad_crossing--; // adjust so it refers to the correct offset in braid_num and type
 
-		bool bad_crossing_positive = (type[bad_crossing] == braid_crossing_type::POSITIVE);
+		bool bad_crossing_positive = (type[bad_crossing] == generic_braid_data::crossing_type::POSITIVE);
 
 		/* change the type of the bad crossing for the good braid */
 		if (bad_crossing_positive)
-			type[bad_crossing] = braid_crossing_type::NEGATIVE;
+			type[bad_crossing] = generic_braid_data::crossing_type::NEGATIVE;
 		else
-			type[bad_crossing] = braid_crossing_type::POSITIVE;
+			type[bad_crossing] = generic_braid_data::crossing_type::POSITIVE;
 				
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 {
@@ -3360,10 +3380,10 @@ void write_braid (ostream& s, vector<int>& braid_num, vector<int>& type)
 	{
 		for (unsigned int i=0; i< braid_num.size(); i++)
 		{
-			if (type[i] == braid_crossing_type::NEGATIVE)
+			if (type[i] == generic_braid_data::crossing_type::NEGATIVE)
 				s << "-";
 
-			if (type[i] == braid_crossing_type::VIRTUAL)
+			if (type[i] == generic_braid_data::crossing_type::VIRTUAL)
 				s << "t";
 			else
 				s << "s";
@@ -3376,7 +3396,7 @@ void write_braid (ostream& s, vector<int>& braid_num, vector<int>& type)
 }
 
 void fixed_point_invariant(matrix<int>& Su, matrix<int>& Sd, matrix<int>& invSu, matrix<int>& invSd, 
-						   matrix<int>& Tu, matrix<int>& Td, ST_pair_type pair_type, string input_string, string title)
+						   matrix<int>& Tu, matrix<int>& Td, braid_control::ST_pair_type pair_type, string input_string, string title)
 {		
 	int num_strings;
 	int num_terms;
@@ -3467,7 +3487,7 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 }
 
 		/* check that the S and T we've been given are appropriate for the input braid */
-		if (welded_braid && pair_type != ST_pair_type::ESSENTIAL_WELDED)
+		if (welded_braid && pair_type != braid_control::ST_pair_type::ESSENTIAL_WELDED)
     	{
 if (debug_control::DEBUG >= debug_control::SUMMARY)
    	debug << "fixed_point_invariant: terminating since S and T are not an essential welded pair, as required for welded braids" << endl;
@@ -3483,7 +3503,7 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
     
 			return;
     	}
-		else if (doodle_braid && pair_type != ST_pair_type::ESSENTIAL_DOODLE)
+		else if (doodle_braid && pair_type != braid_control::ST_pair_type::ESSENTIAL_DOODLE)
     	{
 if (debug_control::DEBUG >= debug_control::SUMMARY)
    	debug << "fixed_point_invariant: terminating since S and T are not an essential doodle pair, as required for doodle braids" << endl;
@@ -3499,7 +3519,7 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
     
 			return;
     	}
-		else if (flat_braid && pair_type != ST_pair_type::FLAT_ESSENTIAL_VIRTUAL)
+		else if (flat_braid && pair_type != braid_control::ST_pair_type::FLAT_ESSENTIAL_VIRTUAL)
     	{
 if (debug_control::DEBUG >= debug_control::SUMMARY)
    	debug << "fixed_point_invariant: terminating since S and T are not a flat essential virtual pair, as required for flat braids" << endl;
@@ -3515,7 +3535,7 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
     
 			return;
     	}
-		else if (!welded_braid && !doodle_braid && !flat_braid && pair_type != ST_pair_type::ESSENTIAL_VIRTUAL && pair_type != ST_pair_type::FLAT_ESSENTIAL_VIRTUAL)
+		else if (!welded_braid && !doodle_braid && !flat_braid && pair_type != braid_control::ST_pair_type::ESSENTIAL_VIRTUAL && pair_type != braid_control::ST_pair_type::FLAT_ESSENTIAL_VIRTUAL)
     	{
 			/* virtual braids may use either essential virtual pairs or flat essential virtual pairs */
 if (debug_control::DEBUG >= debug_control::SUMMARY)
@@ -3544,7 +3564,7 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 			/* set up an array of num_strings integers to control the additional crossing types */
 			int crossing_type[num_strings];
 			for (int i=0; i<num_strings; i++)
-				crossing_type[i] = braid_crossing_type::VIRTUAL;
+				crossing_type[i] = generic_braid_data::crossing_type::VIRTUAL;
 			
 			bool found;	
 			do
@@ -3556,7 +3576,7 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "fixed_point_invariant: crossing_types: ";
 	for (int i=0; i< num_strings; i++)
 	{
-		if (crossing_type[i] != braid_crossing_type::NEGATIVE)
+		if (crossing_type[i] != generic_braid_data::crossing_type::NEGATIVE)
 			debug << ' ';
 		debug << crossing_type[i] << ' ';
 	}
@@ -3567,10 +3587,10 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 				ostringstream oss;
 				for (int i=0; i< num_strings; i++)
 				{
-					if (crossing_type[i] == braid_crossing_type::NEGATIVE)
+					if (crossing_type[i] == generic_braid_data::crossing_type::NEGATIVE)
 						oss << '-';
 						
-					if (crossing_type[i] == braid_crossing_type::VIRTUAL)
+					if (crossing_type[i] == generic_braid_data::crossing_type::VIRTUAL)
 						oss << 't';
 					else
 						oss << 's';
@@ -3586,14 +3606,14 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 				int count = 1;
 				
 		        /* test modified_input_string */
-		        distinguished = distinguish_modified_string (Su,Sd,invSu,invSd,Tu,Td,modified_input_string,num_terms+num_strings);
+		        distinguished = distinguish_modified_string (Su,Sd,invSu,invSd,Tu,Td,modified_input_string,num_terms+num_strings,num_strings);
 		        
 				if (!distinguished)
 				{
 					/* test double modified_input_string */
 					distinguished = distinguish_modified_string (Su,Sd,invSu,invSd,Tu,Td,
 					                                             modified_input_string+modified_input_string,
-					                                             2*(num_terms+num_strings));
+					                                             2*(num_terms+num_strings),num_strings);
 				    if (distinguished)
 				    {
 						count = 2;
@@ -3603,7 +3623,7 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 						/* test treble modified_input_string */
 						distinguished = distinguish_modified_string (Su,Sd,invSu,invSd,Tu,Td,
 						                                             modified_input_string+modified_input_string+modified_input_string,
-															         3*(num_terms+num_strings));
+															         3*(num_terms+num_strings),num_strings);
 						if (distinguished)
 						{
 							count = 3;
@@ -3657,21 +3677,21 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 				int place = 0;
 				do
 				{
-					if (crossing_type[place] == braid_crossing_type::VIRTUAL)
+					if (crossing_type[place] == generic_braid_data::crossing_type::VIRTUAL)
 					{
-						crossing_type[place] = braid_crossing_type::POSITIVE;
+						crossing_type[place] = generic_braid_data::crossing_type::POSITIVE;
 						found = true;
 						break;
 					}
-					else if (crossing_type[place] == braid_crossing_type::POSITIVE)
+					else if (crossing_type[place] == generic_braid_data::crossing_type::POSITIVE)
 					{
-						crossing_type[place] = braid_crossing_type::NEGATIVE;
+						crossing_type[place] = generic_braid_data::crossing_type::NEGATIVE;
 						found = true;
 						break;
 					}
 					else
 					{
-						crossing_type[place] = braid_crossing_type::VIRTUAL;
+						crossing_type[place] = generic_braid_data::crossing_type::VIRTUAL;
 						place++;
 					}
 					
@@ -3687,7 +3707,7 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 if (debug_control::DEBUG >= debug_control::SUMMARY)
     debug << "fixed_point_invariant: flipping braid " << input_string << endl;
     
-				flip_braid(input_string);
+				flip_braid(input_string,num_terms,num_strings);
     
 			}
 
@@ -3696,7 +3716,7 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 if (debug_control::DEBUG >= debug_control::SUMMARY)
     debug << "fixed_point_invariant: inverting braid " << input_string << endl;
     
-				invert_braid(input_string);
+				invert_braid(input_string,num_terms);
     
 			}
 			
@@ -3705,7 +3725,7 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 if (debug_control::DEBUG >= debug_control::SUMMARY)
     debug << "fixed_point_invariant: line-reflecting braid " << input_string << endl;
     
-				line_reflect_braid(input_string);
+				line_reflect_braid(input_string,num_terms,num_strings);
     
 			}
 
@@ -3715,7 +3735,7 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 if (debug_control::DEBUG >= debug_control::SUMMARY)
     debug << "fixed_point_invariant: plane-reflecting braid " << input_string << endl;
     
-				plane_reflect_braid(input_string);
+				plane_reflect_braid(input_string,num_terms);
     
 			}
 
@@ -3724,11 +3744,11 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 if (debug_control::DEBUG >= debug_control::SUMMARY)
     debug << "fixed_point_invariant: evaluating the Kamada double covering of braid " << input_string << endl;
     
-				Kamada_double_covering(input_string);
+				Kamada_double_covering(input_string,num_terms,num_strings);
     
 			}
 			
-			int fixed_points = num_fixed_points(Su,Sd,invSu,invSd,Tu,Td,input_string);
+			int fixed_points = num_fixed_points(Su,Sd,invSu,invSd,Tu,Td,input_string,num_terms,num_strings);
 	    	
 			if (!braid_control::SILENT_OPERATION)
 				cout <<"\nNumber of fixed-points = " << fixed_points << endl;
@@ -3748,7 +3768,7 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 			   fixed-point invariant under the flip isotopy
 			
 			flip_braid(input_string);
-	    	fixed_points = num_fixed_points(Su,Sd,invSu,invSd,Tu,Td,input_string);
+	    	fixed_points = num_fixed_points(Su,Sd,invSu,invSd,Tu,Td,input_string,num_terms,num_strings);
 			output << fixed_points << endl;
 			 end of test code 26-10-13 */
 			    
@@ -3758,57 +3778,69 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 					
 
 /* num_fixed_points takes a braid as input string and evaluates the number of fixed points for
-   that braid determined by S and T.  All checking of the appropriate use of S and T for input_string
-   is done by fixed_point_invariant.
+   that braid determined by S and T.  
+   
+   The function requires a valid braid word in input_string;
+   All checking of the appropriate use of S and T for input_string must be done by the calling function.  
 */
-int num_fixed_points(matrix<int>& Su, matrix<int>& Sd, matrix<int>& invSu, matrix<int>& invSd, 
-						   matrix<int>& Tu, matrix<int>& Td, string input_string)
+int num_fixed_points(matrix<int>& Su, matrix<int>& Sd, matrix<int>& invSu, matrix<int>& invSd, matrix<int>& Tu, matrix<int>& Td, 
+                     string input_string, int num_terms, int num_strings)
 {
-	int num_strings;
-	int num_terms;
-	int n = Su.numcols();
 	
-	if (valid_braid_input(input_string, num_terms, num_strings, braid_control::SILENT_OPERATION, braid_control::RAW_OUTPUT, braid_control::OUTPUT_AS_INPUT))
-	{	
-		char* str = c_string(input_string);
-		
-		/* work out the braid numbers for each term and identify whether the crossig is virtual or not */
-		int braid_num[num_terms];
-		bool virtual_crossing[num_terms];
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)	
+{
+	bool loc_newline = matrix_control::SINGLE_LINE_OUTPUT;
+	matrix_control::SINGLE_LINE_OUTPUT = true;
+	
+	debug << "num_fixed_points: switch Su = " << Su << endl;
+	debug << "num_fixed_points: switch Sd = " << Sd << endl;
+	debug << "num_fixed_points: switch Tu = " << Tu << endl;
+	debug << "num_fixed_points: switch Td = " << Td << endl;
+	
+	matrix_control::SINGLE_LINE_OUTPUT = loc_newline;
+}
+	
+	int n = Su.numcols();	
+	char* str = c_string(input_string);
+	
+	/* work out the braid numbers for each term and identify whether the crossing is virtual or not */
+	int braid_num[num_terms];
+	bool virtual_crossing[num_terms];
 
-		bool inverse;
-    	char* cptr = str;
-	    for ( int i = 0; i< num_terms; i++)
-    	{
-			if (*cptr == '-')
-			{
-			    inverse = true;
-		    	cptr++;
-			}
-			else
-			    inverse = false;
-
-			if (*cptr == 's' || *cptr == 'S')
-			    virtual_crossing[i] = false;
-			else
-			    virtual_crossing[i] = true;
-				
-			cptr++;
-
-			char* mark = cptr; /* mark where we start the number */
-
-			/* look for the end of the number */
-			while (isdigit(*cptr))
-		    	cptr++;
-
-			get_number(braid_num[i], mark);
-			if (inverse)
-				braid_num[i] *= -1;
+	bool inverse;
+	char* cptr = str;
+    for ( int i = 0; i< num_terms; i++)
+	{
+		if (*cptr == '-')
+		{
+		    inverse = true;
+	    	cptr++;
 		}
+		else
+		    inverse = false;
+
+		if (*cptr == 's' || *cptr == 'S')
+		    virtual_crossing[i] = false;
+		else
+		    virtual_crossing[i] = true;
+			
+		cptr++;
+
+		char* mark = cptr; /* mark where we start the number */
+
+		/* look for the end of the number */
+		while (isdigit(*cptr))
+	    	cptr++;
+
+		get_number(braid_num[i], mark);
+		if (inverse)
+			braid_num[i] *= -1;
+	}
 
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 {
   	debug << "num_fixed_points: provided with input string " << input_string << endl;
+  	debug << "num_fixed_points: num_terms = " << num_terms << ", num_strings = " << num_strings << endl;
 	debug << "num_fixed_points: braid_num: ";
 	for (int i = 0; i< num_terms; i++)
 		debug << braid_num[i] << ' ';
@@ -3819,47 +3851,51 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 }
 
 
-		/* The fixed point invariant calculates the number of fixed points Mv=v where v ranges through all
-		   vectors of length num_strings over X_n and M is the cumulative effect on v of the S_i and T_i
-		   determined by the braid word given as an input string.
-		*/
-		int v[num_strings];
-		for (int i=0;i<num_strings; i++)
-			v[i] = 0;
+	/* The fixed point invariant calculates the number of fixed points Mv=v where v ranges through all
+	   vectors of length num_strings over X_n and M is the cumulative effect on v of the S_i and T_i
+	   determined by the braid word given as an input string.
+	*/
+	int v[num_strings];
+	for (int i=0;i<num_strings; i++)
+		v[i] = 0;
 
-		int fixed_points = 0;
+	int fixed_points = 0;
 
-if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "num_fixed_points: calculating fixed points" << endl;
 
 //output << "\n\n";
 
-		bool not_finished = true;
-		do
-		{
-//			for (int i=0;i<num_strings; i++)
-//				cout << v[i] << ' ';
-//			cout << endl;
+	bool not_finished = true;
+	do
+	{
+//		for (int i=0;i<num_strings; i++)
+//			cout << v[i] << ' ';
+//		cout << endl;
 	
-			/* Evaluate the effect of the input braid on v to determine Mv.  Determine the braid 
-			   number bn for the crossing and then apply the appropriate switch (S invS or T) to 
-			   strands bn-1 and bn.  Thus for S we have S(x,y) = (y^x,x_y) so 
-			   
-			   S(Mv[bn], Mv[bn-1]) = (Mv[bn-1]^Mv[bn], Mv[bn]_Mv[bn-1])
-			   					   = (Su[Mv[bn]][Mv[bn-1]],Sd[Mv[bn-1]][Mv[bn]])
-								   
-			   but for invS we have invS(x,y) = (y_\bar{x},x^\bar{y}), so
-			   			   
-			   invS(Mv[bn], Mv[bn-1]) = (Mv[bn-1]_\bar{Mv[bn]}, Mv[bn]^\bar{Mv[bn-1]})
-			   					      = (invSd[Mv[bn]][Mv[bn-1]],invSu[Mv[bn-1]][Mv[bn]])
-								   
-			   and T is similar to S.
-			*/
-			int Mv[num_strings];			
-			for (int i=0; i< num_strings; i++)
-				Mv[i] = v[i];
+		/* Evaluate the effect of the input braid on v to determine Mv.  Determine the braid 
+		   number bn for the crossing and then apply the appropriate switch (S invS or T) to 
+		   strands bn-1 and bn.  
+		   
+		   Recall that the up and down matrices record Su[x][y] = y^x and Sd[x][y] = y_x etc.
+		   
+		   Thus for S we have S(x,y) = (y^x,x_y) so 
+		   
+		   S(Mv[bn], Mv[bn-1]) = (Mv[bn-1]^Mv[bn], Mv[bn]_Mv[bn-1])
+		   					   = (Su[Mv[bn]][Mv[bn-1]],Sd[Mv[bn-1]][Mv[bn]])
+							   
+		   but for invS we have invS(x,y) = (y_\bar{x},x^\bar{y}), so
+		   			   
+		   invS(Mv[bn], Mv[bn-1]) = (Mv[bn-1]_\bar{Mv[bn]}, Mv[bn]^\bar{Mv[bn-1]})
+		   					      = (invSd[Mv[bn]][Mv[bn-1]],invSu[Mv[bn-1]][Mv[bn]])
+							   
+		   and T is similar to S.
+		*/
+		int Mv[num_strings];			
+		for (int i=0; i< num_strings; i++)
+			Mv[i] = v[i];
 		
-if (debug_control::DEBUG >= debug_control::BASIC)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "num_fixed_points:  initial Mv = ";
 	for (int i=0; i< num_strings; i++)
@@ -3871,152 +3907,163 @@ if (debug_control::DEBUG >= debug_control::BASIC)
 //	output << Mv[i] << " ";
 
 
-			for (int i=0; i< num_terms; i++)
+		for (int i=0; i< num_terms; i++)
+		{
+			if (virtual_crossing[i])
 			{
-
-				if (virtual_crossing[i])
-				{
-					int bn = abs(braid_num[i]);
+				int bn = abs(braid_num[i]);
 if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "num_fixed_points:    braid_number = " << bn << " Mv[" << bn << "] = " << Mv[bn] 
 	      << " Mv[" << bn-1 << "] = " << Mv[bn-1] << endl;
 }
-					int temp = Td[Mv[bn-1]][Mv[bn]];
-					Mv[bn] = Tu[Mv[bn]][Mv[bn-1]];
-					Mv[bn-1] = temp;
+				int temp = Td[Mv[bn-1]][Mv[bn]];
+				Mv[bn] = Tu[Mv[bn]][Mv[bn-1]];
+				Mv[bn-1] = temp;
 if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "num_fixed_points:    after applying T_" << bn << " Mv[" << bn << "] = " << Mv[bn] 
 	      << " Mv[" << bn-1 << "] = " << Mv[bn-1] << endl;
 }
-				}
-				else if (braid_num[i] > 0)
-				{
-					int bn = braid_num[i];
+			}
+			else if (braid_num[i] > 0)
+			{
+				int bn = braid_num[i];
 if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "num_fixed_points:    braid_number = " << bn << " Mv[" << bn << "] = " << Mv[bn] 
 	      << " Mv[" << bn-1 << "] = " << Mv[bn-1] << endl;
 }
-					int temp = Sd[Mv[bn-1]][Mv[bn]];
-					Mv[bn] = Su[Mv[bn]][Mv[bn-1]];
-					Mv[bn-1] = temp;
+				int temp = Sd[Mv[bn-1]][Mv[bn]];
+				Mv[bn] = Su[Mv[bn]][Mv[bn-1]];
+				Mv[bn-1] = temp;
 if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "num_fixed_points:    after applying S_" << bn << " Mv[" << bn << "] = " << Mv[bn] 
 	      << " Mv[" << bn-1 << "] = " << Mv[bn-1] << endl;
 }
-				}
-				else // (braid_num[i] < 0)
-				{
-					int bn = abs(braid_num[i]);
+			}
+			else // (braid_num[i] < 0)
+			{
+				int bn = abs(braid_num[i]);
 if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "num_fixed_points:    braid_number = " << bn << " Mv[" << bn << "] = " << Mv[bn] 
 	      << " Mv[" << bn-1 << "] = " << Mv[bn-1] << endl;
 }
-					int temp = invSu[Mv[bn-1]][Mv[bn]];
-					Mv[bn] = invSd[Mv[bn]][Mv[bn-1]];
-					Mv[bn-1] = temp;
+				int temp = invSu[Mv[bn-1]][Mv[bn]];
+				Mv[bn] = invSd[Mv[bn]][Mv[bn-1]];
+				Mv[bn-1] = temp;
 if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "num_fixed_points:    after applying invS_" << bn << " Mv[" << bn << "] = " << Mv[bn] 
 	      << " Mv[" << bn-1 << "] = " << Mv[bn-1] << endl;
 }
-				}
+			}
 
-if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
+if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "num_fixed_points:  i=" << i << " Mv = ";
 	for (int j=0; j< num_strings; j++)
 		debug << Mv[j] << " ";
 	debug << endl;
 }
-			}
+		}
 
 //output << " Mv = ";
 //for (int i=0; i< num_strings; i++)
 //	output << Mv[i] << " ";
 			
-			/* test if it's a fixed point */
-			bool fixed_point = true;
-			
-			for (int i=0; i< num_strings; i++)
+		/* test if it's a fixed point */
+		bool fixed_point = true;
+		
+		for (int i=0; i< num_strings; i++)
+		{
+			if (Mv[i] != v[i])
 			{
-				if (Mv[i] != v[i])
-				{
-					fixed_point = false;
-					break;
-				}
+				fixed_point = false;
+				break;
 			}
+		}
 
-			if (fixed_point)
-			{					
-				fixed_points++;
+		if (fixed_point)
+		{					
+			fixed_points++;
 				
-if (debug_control::DEBUG >= debug_control::BASIC)
-	debug << "num_fixed_points:  fixed point" << endl;
-	
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
+{
+	debug << "num_fixed_points:  fixed point: ";
+	for (int i=0; i< num_strings; i++)
+		debug << Mv[i] << " ";
+	debug << endl;
+}	
+		
 //output << "invariant" << endl;
 
-			}
-			else
-			{
-if (debug_control::DEBUG >= debug_control::BASIC)
+		}
+		else
+		{
+if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "num_fixed_points:  not fixed point" << endl;
 	
 //output << endl;
-			}
+		}
 			
-			/* increment v as a num-stings digit number base n */
-			int digit;
-			for (digit = num_strings-1; digit >=0; digit--)
-			{
-				if (++v[digit] == n)
-					v[digit] = 0;
-				else
-					break;
-			}
-			if (digit == -1)
-				not_finished = false;
+		/* increment v as a num-stings digit number base n */
+		int digit;
+		for (digit = num_strings-1; digit >=0; digit--)
+		{
+			if (++v[digit] == n)
+				v[digit] = 0;
+			else
+				break;
+		}
+		if (digit == -1)
+			not_finished = false;
 
-		} while (not_finished);		
-		
-		delete [] str;		
+	} while (not_finished);		
+	
+	delete [] str;		
 		
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "num_fixed_points: number of fixed points = " << fixed_points << endl;
 	
-		return fixed_points;
-	}
-	
-if (debug_control::DEBUG >= debug_control::SUMMARY)
-	debug << "num_fixed_points:  Error! returning -1" << endl;
-	return -1; // error
+	return fixed_points;
 }
 
+/* rack_polynomial determines the period of the input birack Su,Sd as the least common multiple of the period of each pair 
+   in its diagonal.  It then adjusts the input braid, adding stabilization twists above until the the writhe is zero
+   and proceeds to calculate the number of fixed points of the braid with increasing writhe from zero to the calculated period-1.			   
+*/
 void rack_poly_invariant(matrix<int>& Su, matrix<int>& Sd, matrix<int>& invSu, matrix<int>& invSd, matrix<int>& Tu, 
-						 matrix<int>& Td, ST_pair_type pair_type, string input_string, string title)
+						 matrix<int>& Td, braid_control::ST_pair_type pair_type, string input_string, string title, int writhe, int turning_number)
 {
 	int num_strings;
 	int num_terms;
+	
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+	debug << "rack_poly_invariant:  provided with input string " << input_string << ", writhe = " << writhe << ", turning number = " << turning_number << endl;
 
 	if (valid_braid_input(input_string, num_terms, num_strings, braid_control::SILENT_OPERATION, braid_control::RAW_OUTPUT, braid_control::OUTPUT_AS_INPUT))
 	{
     	if (title.length())
        	{
 			if (!braid_control::SILENT_OPERATION)
-				cout << "\n\n" << title << endl;
+				cout << "\n" << title << endl;
     		if (!braid_control::RAW_OUTPUT)
-    			output << "\n\n" << title;
+    		{
+    			output << (braid_control::OUTPUT_AS_INPUT? "\n;" : "\n");
+				output << title;
+    		}
        	}
-    
+
+		if (!braid_control::SILENT_OPERATION)
+			cout << "braid = " << input_string << endl;
 		if (!braid_control::RAW_OUTPUT)
 		{
 			output << (braid_control::OUTPUT_AS_INPUT? "\n;" : "\n");
-			output << input_string;		
-    	}
+			output << "braid = " << input_string;
+		}		
 
 		/* first check that the S and T we've been given are appropriate for the input braid.  The braid
     	   qualifier will be {welded} if it is to be considered as a welded braid, in which case we need
@@ -4027,8 +4074,14 @@ void rack_poly_invariant(matrix<int>& Su, matrix<int>& Sd, matrix<int>& invSu, m
     	bool welded_braid = false;
     	bool doodle_braid = false;
     	bool flat_braid = false;
+
+		/* added 22-8-24 */
+    	bool virtual_braid = false;
+    	string::size_type pos = input_string.find('t');
+    	if (pos != string::npos)
+			virtual_braid = true;
     	
-    	string::size_type pos = input_string.find('{');
+    	pos = input_string.find('{');
     	if (pos != string::npos)
     	{
     		if (input_string.substr(pos).find("welded") != string::npos)
@@ -4040,13 +4093,15 @@ void rack_poly_invariant(matrix<int>& Su, matrix<int>& Sd, matrix<int>& invSu, m
     		if (input_string.substr(pos).find("flat") != string::npos)
     			flat_braid = true;
     	}
+
     
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 {
    	debug << "rack_poly_invariant: welded_braid =  " << (welded_braid?"true":"false") << endl;
    	debug << "rack_poly_invariant: doodle_braid =  " << (doodle_braid?"true":"false") << endl;
+   	debug << "rack_poly_invariant: flat_braid =  " << (flat_braid?"true":"false") << endl;
+   	debug << "rack_poly_invariant: virtual_braid =  " << (virtual_braid?"true":"false") << endl;
 }    
-
     
 		if (doodle_braid)
 		{
@@ -4055,7 +4110,7 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
    	
 			return;
 		}
-		else if (welded_braid && pair_type != ST_pair_type::ESSENTIAL_WELDED)
+		else if (welded_braid && pair_type != braid_control::ST_pair_type::ESSENTIAL_WELDED)
     	{
 if (debug_control::DEBUG >= debug_control::SUMMARY)
    	debug << "rack_poly_invariant: terminating since S and T are not an essential welded pair, as required for welded braids" << endl;
@@ -4071,7 +4126,7 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
     
 			return;
     	}
-		else if (flat_braid && pair_type != ST_pair_type::FLAT_ESSENTIAL_VIRTUAL)
+		else if (flat_braid && pair_type != braid_control::ST_pair_type::FLAT_ESSENTIAL_VIRTUAL)
     	{
 if (debug_control::DEBUG >= debug_control::SUMMARY)
    	debug << "rack_poly_invariant: terminating since S and T are not a flat essential virtual pair, as required for flat braids" << endl;
@@ -4087,7 +4142,7 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
     
 			return;
     	}
-		else if (!welded_braid && !flat_braid && pair_type != ST_pair_type::ESSENTIAL_VIRTUAL && pair_type != ST_pair_type::FLAT_ESSENTIAL_VIRTUAL)
+		else if (!welded_braid && !flat_braid && pair_type != braid_control::ST_pair_type::ESSENTIAL_VIRTUAL && pair_type != braid_control::ST_pair_type::FLAT_ESSENTIAL_VIRTUAL)
     	{
 if (debug_control::DEBUG >= debug_control::SUMMARY)
    	debug << "rack_poly_invariant: terminating since S and T are not an essential virtual pair, as required for virtual braids" << endl;
@@ -4102,185 +4157,583 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 			}
     
 			return;
-    	}
-
-		/* Check to see if there's a rack-terms braid qualifier specified 
-		   the default is braid_control::RACK_TERMS, which, if specified, overrides any
-		   braid qualifier.
-		*/
-		int rack_terms = 0;
+    	}	
 	
-		if (pos != string::npos)
-		{
-	
-			string::size_type rpos = input_string.substr(pos).find("rack-terms");
-			if (rpos != string::npos)
-			{
-				get_number(rack_terms, input_string.substr(pos), rpos+11); //expected format is "rack-terms=n"
-
-if (debug_control::DEBUG >= debug_control::SUMMARY)
-	debug << "rack_poly_invariant: rack_terms read from braid qualifier, rack-terms =  " << rack_terms << endl;
-			}
-    			
-			input_string = input_string.substr(0,pos);
-
-if (debug_control::DEBUG >= debug_control::DETAIL)
-  	debug << "rack_poly_invariant: after removing braid qualifiers, input_string =  " << input_string << endl;
-
-		}
-	
-		/* if braid_control::RACK_TERMS is non-zero, it's been set as the default and
-		   overrides any braid qualifier.  If there's no braid qualifier
-	       and braid_control::RACK_TERMS has not been set, we apply a default value of n,
-	       the size of the rack.
+		/* determine the cycle structure of W, the sideways map of S followed by a twist.  The sideways map is
+		   S_{-}^{+} (a,b) = (b_{a^{-1}}, a^{b_{a^{-1}}})
+		   where the up and down operations on the rhs are g operations and where b -> b_{a^{-1}} is the inverse of the down operation b_a.
+			
+		   This map describes how the pair (a,b) at the "bottom" of a positive crossing are mapped to the pair at the "top" of the crossing, 
+		   sideways to the map S.
 		*/
 		int n = Su.numrows();
-		if (braid_control::RACK_TERMS)
-		{
-			if (!braid_control::SILENT_OPERATION && rack_terms)
-				cout << "\noverriding rack-terms in braid qualifier with the value " << rack_terms << " from the command line" << endl;
+		matrix<int> sideways_u(n,n);
+		matrix<int> sideways_d(n,n);
+		
+		matrix<int> inv_D(n,n);
+		
+		for (int i=0; i< n; i++)
+		for (int j=0; j< n; j++)
+			inv_D[i][Sd[i][j]] = j; // inverts the map D_i given by the row Sd[i][]
 
-			rack_terms = braid_control::RACK_TERMS;
-
-if (debug_control::DEBUG >= debug_control::SUMMARY)
-  	debug << "rack_poly_invariant: using rack_terms provided from the command line, rack_terms =  " << rack_terms << endl;
-		}
-		else if (!rack_terms)
-		{
-			rack_terms = n;
-
-if (debug_control::DEBUG >= debug_control::SUMMARY)
-  	debug << "rack_poly_invariant: using default rack_terms value of n = " << rack_terms << endl;
-		}
-
-if (debug_control::DEBUG >= debug_control::SUMMARY)
-  	debug << "rack_poly_invariant: applying " << rack_terms << " rack terms" << endl;
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
+{
+	debug << "rack_poly_invariant: inv_D:" << endl;
+	print (inv_D,debug,3,"rack_poly_invariant: ");
+}
 	
-		/* The writhe is the number of positive terms in the braid 
-		   minus the number of negative terms
-		*/
-		int writhe = num_terms;
-		for (unsigned int i=0; i< input_string.length(); i++)
+		for (int a=0; a< n; a++)
+		for (int b=0; b< n; b++)
 		{
-			if (input_string[i] == '-')
-				writhe--;
+			int x = inv_D[a][b];  // D_a^{-1}(b)
+
+if (debug_control::DEBUG >= debug_control::DETAIL)
+	debug << "rack_poly_invariant:   a = " << a << " b = " << b << " x = " << x << endl;
+
+			sideways_d[a][b] = x;
+			sideways_u[b][a] = Su[x][a];
 		}
-		
-if (debug_control::DEBUG >= debug_control::SUMMARY)
-  	debug << "rack_poly_invariant: winding number of input braid =  " << writhe << endl;
 
-		vector<int> rack_poly_coefficients(rack_terms+1);
-		ostringstream oss;
-    	int fixed_points = num_fixed_points(Su,Sd,invSu,invSd,Tu,Td,input_string);		
-    	rack_poly_coefficients[0] = fixed_points;
-		oss << fixed_points << "t^" << writhe;
-		polynomial<int> rack_poly(oss.str());
-
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
+{
+	debug << "rack_poly_invariant: sideways_u:" << endl;
+	print (sideways_u,debug,3,"rack_poly_invariant: ");
+	debug << "rack_poly_invariant: sideways_d:" << endl;
+	print (sideways_d,debug,3,"rack_poly_invariant: ");
+	
+}		
+		/* Determine the permutation W = \tau \circ T.  We enumerate pairs of X^2 via first*n+second so that
+		   for i in the range 0 to n*n the pair is (a,b) = (i/n, i%n).  The map T is then given by T(a,b)=(b_a,a^b)
+		   where the up and down actions are sideways_u and sideways_d; that is T(a,b) = (sideways_d[a][b], sideways_u[b][a])
+		   so that W(a,b) = (sideways_u[b][a],sideways_d[a][b])
+		   
+		*/
+		vector<int> perm(n*n);
+				
 if (debug_control::DEBUG >= debug_control::SUMMARY)
-  	debug << "rack_poly_invariant: initial term of rack polynomial =  " << rack_poly << endl;
-		
-		string positive_string = input_string;
-		string negative_string = input_string;
-		bigint num_vectors = 1;
-		for (int i=0; i< num_strings; i++)
-			num_vectors *= bigint(n);
-			
-		for (int i=num_strings; i< num_strings+rack_terms; i++)
+	debug << "rack_poly_invariant: permutation W = \\tau\\circ T" << endl;
+
+		for (int i=0; i< n*n; i++)
 		{
-			if (!braid_control::SILENT_OPERATION)
-				cout << "term " << i - num_strings << ", " << num_vectors << " vectors to consider" << endl;
-			num_vectors *= bigint(n); // ready for next loop
+			perm[i] = n*sideways_u[i%n][i/n]+sideways_d[i/n][i%n];
+//			perm[i] = n*sideways_u[i/n][i%n]+sideways_d[i%n][i/n]; // XXX INCORRECT! FOR TESTING ONLY
+					
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+	debug << "rack_poly_invariant:   term " << i << ", W(" << i/n << ',' << i%n << ") = (" << sideways_u[i%n][i/n] << ',' << sideways_d[i/n][i%n] << "), perm " << perm[i] << endl;
+//	debug << "rack_poly_invariant:   term " << i << ", W(" << i/n << ',' << i%n << ") = (" << sideways_u[i/n][i%n] << ',' << sideways_d[i%n][i/n] << "), perm " << perm[i] << endl; // XXX INCORRECT! FOR TESTING ONLY
+		}
 			
-			ostringstream i_num;
-			i_num << i;
-			positive_string += "s";
-			positive_string += i_num.str();
-			negative_string += "-s";
-			negative_string += i_num.str();
-
 if (debug_control::DEBUG >= debug_control::SUMMARY)
-  	debug << "rack_poly_invariant: adding crossing s" << i_num.str() << endl;
-
-			fixed_points = num_fixed_points(Su,Sd,invSu,invSd,Tu,Td,positive_string);
-			rack_poly_coefficients[i-num_strings+1] = fixed_points;
-
+	debug << "rack_poly_invariant: W = ";
+						
+		/* record the cycles in W_cycles and the length of each cycle of W in W_cycles. */
+		vector<int> W_cycles(n*n);
+		int index = 0;
+		vector<int> W_cycle_length(n*n); // the maximum number of cycles
+		int num_W_cycles = -1; // used as an index as well as a count
+		int cycle_length;			
+		vector<int> flags(n*n);
+		bool found;
+		int start;	
+		do
+		{
+			found = false;
+			int i;
+		
+			/* look for another starting place in flags */
+			for (i=0; i<n*n; i++)
+			{
+				if (!flags[i])
+				{
+					num_W_cycles++;
+					start = i;
+					flags[i] = 1;
+					cycle_length=1;
+					found = true;
+					break;
+				}
+			}
+	
+			if (found)
+			{
+				if (perm[i] == start)
+				{
+					W_cycles[index++] = i;
+					W_cycle_length[num_W_cycles] = cycle_length;
+							
 if (debug_control::DEBUG >= debug_control::SUMMARY)
-  	debug << "rack_poly_invariant:   number of fixed points =  " << fixed_points << endl;
-
-			ostringstream oss_p;
-			oss_p << fixed_points << "t^" << writhe + i - num_strings + 1;
-			polynomial<int> p_term(oss_p.str());
-
+	debug << '(' << i << ')';
+				}
+				else
+				{
 if (debug_control::DEBUG >= debug_control::SUMMARY)
-  	debug << "rack_poly_invariant:   new polynomial term: " << p_term << endl;
-
-			rack_poly += p_term;
+{
+	debug << '(';
+	debug << i;
+}
+					W_cycles[index++] = i;
+					do
+					{
+						flags[perm[i]] = 1;
+						i = perm[i];
+						W_cycles[index++] = i;
 
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 {
-  	debug << "rack_poly_invariant:   rack polynomial updated to : " << rack_poly << endl;
-//  	debug << "rack_poly_invariant: adding crossing -s" << i_num.str() << endl;
+	debug << ' ';
+	debug << i;
+}	
+						cycle_length++;
+					} while (perm[i] != start);
+				
+					W_cycle_length[num_W_cycles] = cycle_length;							
+                            
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+	debug << ')';
+				}
+			}
+		} while (found);
+		
+		num_W_cycles++; // adjust to correct count value
+		
+		vector<int> W_cycle_offset(num_W_cycles);
+		for (int i=1; i< num_W_cycles; i++)
+			W_cycle_offset[i] = W_cycle_offset[i-1]+W_cycle_length[i-1];
+
+
+// W_cycles = {0, 3, 18, 15, 1, 10, 16, 13, 2, 20, 17, 23, 4, 5, 19, 8, 9, 6, 24, 22, 12, 11, 7, 14, 21}; //XXX for testing only
+								
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+{
+	debug << endl;
+	debug << "rack_poly_invariant: W_cycles: ";
+	for (int i=0; i< n*n; i++)
+		debug << W_cycles[i] << ' ';
+	debug << endl;
+	debug << "rack_poly_invariant: W_cycle_length = ";
+	for (int i=0; i< num_W_cycles; i++)
+		debug << W_cycle_length[i] << ' ';
+	debug << endl;
+	debug << "rack_poly_invariant: num_W_cycles = " << num_W_cycles << endl;
+	debug << "rack_poly_invariant: W_cycle_offset: ";
+	for (int i=0; i< num_W_cycles; i++)
+		debug << W_cycle_offset[i] << ' ';
+	debug << endl;
+}
+		vector<int> diagonal_place(n);
+		vector<int> diagonal_cycle(n);
+		vector<int> diagonal_cycle_length(n);
+		vector<int> cycle_start_offset(n);
+		
+		for (int i=0; i< n; i++)
+		{
+			/* find the diagonal entry n*(i+1) in W_cycles */
+			vector<int>::iterator vptr = find(W_cycles.begin(),W_cycles.end(),i*(n+1));
+			int place = distance(W_cycles.begin(),vptr);
+
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+	debug << "rack_poly_invariant: diagonal (" << i << ',' << i << ") at place " << place;
+
+			diagonal_place[i] = place;
+
+			for (int j=1; j< num_W_cycles; j++)
+			{
+				if (place >= W_cycle_offset[j])
+				{
+					diagonal_cycle[i]++;
+				}
+				else
+				{
+					break;
+				}
+			}
+						
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+	debug << ", cycle " << diagonal_cycle[i] << endl;
+
+		}
+
+		for (int i=0; i< n; i++)
+			diagonal_cycle_length[i] = W_cycle_length[diagonal_cycle[i]];
+
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+{
+	debug << "rack_poly_invariant: diagonal_place: ";
+	for (int i=0; i< n; i++)
+		debug << diagonal_place[i] << ' ';
+	debug << endl;
+	debug << "rack_poly_invariant: diagonal_cycle: ";
+	for (int i=0; i< n; i++)
+		debug << diagonal_cycle[i] << ' ';
+	debug << endl;
+	debug << "rack_poly_invariant: diagonal_cycle_length: ";
+	for (int i=0; i< n; i++)
+		debug << diagonal_cycle_length[i] << ' ';
+	debug << endl;
+}	
+
+		/* look for a cycle containing more than one diagonal pair and see if we can reduce the contribution to the
+		   period of the birack from those diagonal pairs
+		*/
+		vector<int> updated_diagonal_cycle_length = diagonal_cycle_length;
+		vector<bool> cycle_considered(n);
+		for (int i=0; i< n; i++)
+		{
+			if (cycle_considered[i])
+				continue;
+
+			cycle_considered[i] = true;
+					
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+	debug << "rack_poly_invariant: check diagonal cycle " << diagonal_cycle[i] << endl;
+						
+			/* count the instances of the cycle amongst the diagonal pairs */	
+			int count = 0;
+			
+			for (int j=i; j< n; j++)
+			{
+				if (diagonal_cycle[j] == diagonal_cycle[i]) // includes j==i
+				{
+					cycle_considered[j] = true;
+					count++;
+				}
+			}
+			
+			if (count <= 1)
+			{
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+	debug << "rack_poly_invariant:   fewer than two diagonal pairs in cycle" << endl;
+
+				continue; 
+
+			}
+						
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+	debug << "rack_poly_invariant:   contains " << count << " diagonal pairs" << endl;
+	
+			vector<int> position(count);
+			count = 0; // use it as an index
+			for (int j=0; j< n; j++)
+			{
+				if (diagonal_cycle[j] == diagonal_cycle[i])
+				{
+					/* pair (j,j) lies in diagonal_cycle[i] */
+					position[count++] = diagonal_place[j]-W_cycle_offset[diagonal_cycle[i]];
+				}
+			}
+			
+			sort(position.begin(),position.end());
+
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+{
+	debug << "rack_poly_invariant:   position of diagonal pairs: ";
+	for (int j=0; j< count; j++)
+		debug << position[j] << ' ';
+	debug << endl;
 }
 
-/* take out the calculation for the negative write
-
-			fixed_points = num_fixed_points(Su,Sd,invSu,invSd,Tu,Td,negative_string);
+			/* check whether there are diagonal entries in the cycle that are evenly spaced, cyclically around the cycle.
+			   Note there may be other diagonal entries in addition to any that are so spaced.  There may also be multiple
+			   sets of diagonal entries with different intervals between them.  			   
+			   
+			   We track these various combinations using a integer vector visit_base, initialized to -1 that records, for those
+			   diagonal entries found to be evenly spaced, the initial offset from which they were visited.  This allows us to 
+			   visit the same diagonal entry from different starting points in the event of co-prime intervals in a cycle.  For
+			   example, if a cycle of length 6 has the form d d d * d *, where d is a diagnonal, then offsets 0, 2 and 4 are evenly 
+			   spaced, as are offsets 1 and 4, so we wish to set the contribution for offset 1 to 3 and the others to 2.  In fact, 
+			   offset 4 will end up having its contribution set to 3 but as we will only be considering co-prime intervals, that is 
+			   not an issue.
+			*/			
+			vector<bool> diagonal_entry(diagonal_cycle_length[i]);
+			for (int j=0; j< count; j++)
+				diagonal_entry[position[j]] = true;
 
 if (debug_control::DEBUG >= debug_control::SUMMARY)
-  	debug << "rack_poly_invariant:   number of fixed points =  " << fixed_points << endl;
+{
+	debug << "rack_poly_invariant:   diagonal_entry: ";
+	for (int j=0; j< diagonal_cycle_length[i]; j++)
+		debug << diagonal_entry[j] << ' ';
+	debug << endl;
+}
+				
+			vector<int> visit_base(diagonal_cycle_length[i],-1); 
+			for (int j=0; j< count-1; j++)
+			{
+				if (visit_base[position[j]] == -1) // not visited here from anywhere yet
+				{
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+  	debug << "rack_poly_invariant:   check position offset " << j <<", diagonal position in cycle = " << position[j] << endl;
+					for (int k=j+1; k < count; k++)
+					{
+						if (visit_base[position[k]] != position[j])
+						{
+							/* check for evenly spaced diagonal entries at intervals determined by that between the j-th and k-th entries */
+							int interval = position[k] - position[j];
+						
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+  	debug << "rack_poly_invariant:     position offset " << k <<", diagonal position in cycle = " << position[k] << ", interval = " << interval << endl;
+						
+							bool evenly_spaced = true;
+							int offset = position[k]+interval;
+							while (offset < diagonal_cycle_length[i] && evenly_spaced)
+							{
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+  	debug << "rack_poly_invariant:       offset " << offset << " diagonal_entry = " << diagonal_entry[offset] << endl;
 
-			ostringstream oss_n;
-			oss_n << fixed_points << "t^" << writhe - i + num_strings - 1;
-			polynomial<int> n_term(oss_n.str());
+								if(diagonal_entry[offset])
+									offset += interval;
+								else
+									evenly_spaced = false;
+							}
+							
+							if (evenly_spaced)
+							{
+								offset %= diagonal_cycle_length[i];
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+  	debug << "rack_poly_invariant:       offset " << offset << " diagonal_entry = " << diagonal_entry[offset] << endl;
+								if(diagonal_entry[offset])
+									offset += interval;
+								else
+									evenly_spaced = false;
+							}
+							
+							if (evenly_spaced)
+							{						
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+  	debug << "rack_poly_invariant:     evenly spaced" << endl;
+								/* update the contribution to the period for each diagonal entry from the jth position */
+								offset = position[j];							
+								while (offset < diagonal_cycle_length[i])
+								{
+									int diagonal_pair = W_cycles[W_cycle_offset[diagonal_cycle[i]]+offset]%n; // diagonal element (k,k) is enumerated as k*n+k
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+{
+  	debug << "rack_poly_invariant:     updating diagonal_cycle_length for offset " << offset << ", W_cycles[" << W_cycle_offset[diagonal_cycle[i]]+offset << "] = " 
+  	      << W_cycles[W_cycle_offset[diagonal_cycle[i]]+offset] << ", diagonal_pair " << diagonal_pair << endl;
+}  	      
+									updated_diagonal_cycle_length[diagonal_pair] = interval;
+									visit_base[offset] = position[j];
+									offset += interval;
+								}
+
+								offset %= diagonal_cycle_length[i];
+								int diagonal_pair = W_cycles[W_cycle_offset[diagonal_cycle[i]]+offset]%n; // diagonal element (k,k) is enumerated as k*n+k
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+{
+  	debug << "rack_poly_invariant:     updating diagonal_cycle_length for offset " << offset << ", W_cycles[" << W_cycle_offset[diagonal_cycle[i]]+offset << "] = " 
+  	      << W_cycles[W_cycle_offset[diagonal_cycle[i]]+offset] << ", diagonal_pair " << diagonal_pair << endl;
+}  	      
+								updated_diagonal_cycle_length[diagonal_pair] = interval;
+								visit_base[offset] = position[j];
 
 if (debug_control::DEBUG >= debug_control::SUMMARY)
-  	debug << "rack_poly_invariant:   new polynomial term: " << n_term << endl;
+{
+  	debug << "rack_poly_invariant:     updated_diagonal_cycle_length: " ;
+	for (int l=0; l< n; l++)
+		debug << updated_diagonal_cycle_length[l] << ' ';
+	debug << endl;
+  	debug << "rack_poly_invariant:     visit_base: " ;
+	for (int l=0; l< diagonal_cycle_length[i]; l++)
+		debug << visit_base[l] << ' ';
+	debug << endl;	
+}
+							}
+							else
+							{
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+  	debug << "rack_poly_invariant:     not evenly spaced" << endl;
+							}
+						}
+					}
+				}
+			}						
+		}   			   
+		
+		int period = least_common_multiple(updated_diagonal_cycle_length);
+
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+  	debug << "rack_poly_invariant: period = " << period << endl;
+//return; // XXX FOR TESTING ONLY
+
+
+		if (!braid_control::SILENT_OPERATION && braid_control::EXTRA_OUTPUT)			
+			cout << "period of birack = " << period << endl;
 			
-			rack_poly += n_term;
-
-if (debug_control::DEBUG >= debug_control::SUMMARY)
-  	debug << "rack_poly_invariant:   rack polynomial updated to : " << rack_poly << endl;	
-*/	
+		if (!braid_control::RAW_OUTPUT && braid_control::EXTRA_OUTPUT)
+		{
+			output << (braid_control::OUTPUT_AS_INPUT? "\n;" : "\n");
+			output << "period of birack = ";
+			output << period << endl;
 		}
 		
+		bool negative_given_writhe = (writhe < 0?true:false); 
+
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+  	debug << "rack_poly_invariant: negative_given_writhe = " << negative_given_writhe << endl;
+
+		writhe = abs(writhe);
+		
+		string zero_writhe = input_string;
+		
+		for (int i = 0; i< writhe; i++)
+		{
+				ostringstream i_num;
+				i_num << i+num_strings;
+				zero_writhe  += (negative_given_writhe? "s": "-s");
+				zero_writhe += i_num.str();
+		}
+
+		int new_num_terms = num_terms+writhe;
+		int new_num_strings = num_strings+writhe;
+				
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+{
+  	debug << "rack_poly_invariant: zero_writhe braid = " << zero_writhe << endl;
+  	debug << "rack_poly_invariant: new_num_terms = " << new_num_terms << ", new_num_strings = " << new_num_strings << endl;
+}  							
+		vector<int> rack_poly_coefficients(period);
+		ostringstream oss;
+
+		bigint num_vectors = 1;
+		for (int i=0; i< num_strings+writhe; i++)
+			num_vectors *= bigint(n);
+			
+		if (!braid_control::SILENT_OPERATION && braid_control::EXTRA_OUTPUT)
+			cout << "term 0, " << num_vectors << " vectors to consider" << endl;
+
+		int fixed_points = num_fixed_points(Su,Sd,invSu,invSd,Tu,Td,zero_writhe,new_num_terms,new_num_strings);		
+	
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+  	debug << "rack_poly_invariant:   number of zero_writhe fixed points =  " << fixed_points << endl;
+
+    	rack_poly_coefficients[0] = fixed_points;
+		oss << fixed_points;
+		polynomial<int> rack_poly(oss.str());
+		
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+  	debug << "rack_poly_invariant: initial term of rack polynomial =  " << rack_poly << endl;
+				
+		string positive_string = zero_writhe;  // LOOK AT THIS, ESPECIALY WITH RESPECT TO VERIABLE NAMES
+						
+		/* 6-9-24 Evaluate the coefficients of t^k for k=1, ..., period-1.  If we were given a braid with a negative writhe, 
+		   we successively add a positive Markov move above the braid.  If we were given a positive writhe, we start by removing 
+		   the last negative Markov move that was added to create zero_writhe, then add positive Markov moves as necessary
+		*/
+		for (int i=1; i< period; i++)
+		{
+			if (!braid_control::SILENT_OPERATION && braid_control::EXTRA_OUTPUT)
+				cout << "term " << i << ", ";
+				
+			if (negative_given_writhe || i > writhe)
+			{				
+				ostringstream i_num;
+				/* if we've been given a negative writhe, we have already added writhe positive Markov moves, so we add term num_strings + (writhe+i)
+				   if we've been given a positive writhe, terms 1,...,writhe remove the negative Markov moves, so we're back to 
+				   a braid of num_strings, whose top term is \pm\sigma_{num_terms-1}.  We therefore add the term num_strings + (i-writhe-1) 
+				*/
+				i_num << num_strings+(negative_given_writhe?writhe-1+i:i-writhe-1);						
+				positive_string += "s";
+				positive_string += i_num.str();
+		
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+  	debug << "rack_poly_invariant: term " << i << " adding crossing s" << i_num.str() << endl;
+
+				num_vectors *= bigint(n); 
+				
+				new_num_terms++;
+				new_num_strings++;
+			}
+			else
+			{
+				
+				positive_string = input_string;
+				
+				for (int j = 0; j< writhe-i; j++)
+				{
+						ostringstream j_num;
+						j_num << j+num_strings;
+						positive_string += "-s";
+						positive_string += j_num.str();
+				}					
+				
+				num_vectors /= bigint(n); 
+
+				new_num_terms = num_terms+writhe-i;
+				new_num_strings = num_strings+writhe-i;
+			}
+			
+			
+			if (!braid_control::SILENT_OPERATION && braid_control::EXTRA_OUTPUT)					
+				cout << num_vectors << " vectors to consider" << endl;
+		
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+  	debug << "rack_poly_invariant: new_num_terms = " << new_num_terms << ", new_num_strings = " << new_num_strings << endl;
+
+			fixed_points = num_fixed_points(Su,Sd,invSu,invSd,Tu,Td,positive_string,new_num_terms,new_num_strings);
+			rack_poly_coefficients[i] = fixed_points;
+		
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+  	debug << "rack_poly_invariant:   number of fixed points =  " << fixed_points << endl;
+				
+			ostringstream oss_p;
+			oss_p << fixed_points << "t^" << i;
+
+			polynomial<int> p_term(oss_p.str());
+	
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+  	debug << "rack_poly_invariant:   new polynomial term: " << p_term << endl;
+		
+			rack_poly += p_term;
+		
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+  	debug << "rack_poly_invariant:   rack polynomial updated to : " << rack_poly << endl;
+		}	
+									
     	if (braid_control::EXTRA_OUTPUT)
     	{
 			if (!braid_control::SILENT_OPERATION)
-				cout << "\nRack polynomial = " << rack_poly << endl;
-			output << "\nRack polynomial = " << rack_poly << endl;
-    	}    	
-    	else
-    	{
-			if (!braid_control::SILENT_OPERATION)
 			{
-				cout <<"\nRack polynomial coefficients = ";
-				for (int i=0; i< rack_terms+1; i++)
+				cout << "Rack polynomial " << rack_poly << endl;
+				cout << "Rack polynomial coefficients t^0 to t^" << period-1 << ": ";
+
+				for (int i=0; i < period; i++)
 					cout << rack_poly_coefficients[i] << ' ';
 				cout << endl;
 			}
 		
-			if (!braid_control::RAW_OUTPUT)
-				output <<"\nRack polynomial coefficients = ";
-			
-			for (int i=0; i< rack_terms+1; i++)
+			output << "Rack polynomial " << rack_poly << endl;
+			output << "Rack polynomial coefficients t^0 to t^" << period-1 << ": ";					
+			for (int i=0; i < period; i++)
 				output << rack_poly_coefficients[i] << ' ';
 			output << endl;			
 		}
-		
-    
+    	else
+    	{
+			if (!braid_control::SILENT_OPERATION)			
+				cout << "Rack polynomial = " << rack_poly << endl;
+				
+			if (!braid_control::RAW_OUTPUT)
+			{
+				output << (braid_control::OUTPUT_AS_INPUT? "\n;" : "\n");
+				output << "Rack polynomial = ";
+				output << rack_poly << endl;
+			}
+    	}    	
+
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 {
     debug << "rack_poly_invariant: final rack_poly = " << rack_poly << endl;
-	debug <<"\nRack polynomial = ";
-	for (int i=0; i< rack_terms+1; i++)
+	debug <<"\nrack polynomial coefficients = ";
+	for (int i=0; i < period; i++)
 		debug << rack_poly_coefficients[i] << ' ';
 	debug << endl;
 }
+		
 	}
 }
 
 bool distinguish_modified_string (matrix<int>& Su, matrix<int>& Sd, matrix<int>& invSu, matrix<int>& invSd, 
-						   matrix<int>& Tu, matrix<int>& Td, string input_string, int num_terms)
+						   matrix<int>& Tu, matrix<int>& Td, string input_string, int num_terms, int num_strings)
 {
 	bool distinguished = false;
 	int n = Su.numrows();	
@@ -4297,7 +4750,7 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 
 	if ( num_cpts == 1)
 	{
-		int fixed_points = num_fixed_points(Su,Sd,invSu,invSd,Tu,Td,input_string);
+		int fixed_points = num_fixed_points(Su,Sd,invSu,invSd,Tu,Td,input_string,num_terms,num_strings);
     	   
 if (debug_control::DEBUG >= debug_control::SUMMARY)
     debug << "distinguish_modified_string:   number of fixed points = " << fixed_points << endl;

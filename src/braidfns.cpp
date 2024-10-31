@@ -16,12 +16,9 @@ bool two_dominates(matrix<int>& Ua, matrix<int>& Da, matrix<int>& Ub, matrix<int
 bool power_2(matrix<int>& U, matrix<int>& D)
 int switch_order(matrix<int>& U, matrix<int>& D)
 void display_fixed_point_switch(matrix<int>& M, ostream& os, bool number_from_zero)
-void flip_braid(string& braid)
-void invert_braid(string& braid)
-void plane_reflect_braid(string& braid)
-void line_reflect_braid(string& braid)
-void Kamada_double_covering(string& braid)
+void Kamada_double_covering(string& braid, int num_terms, int num_strings)
 void commutative_automorphism_invariant(const Qpmatrix& phi, const Qpmatrix& psi, string input_string, string title)
+matrix<int> permutation_cycles (generic_code_data& code_data)
 
 **************************************************************************/
 #include <string>
@@ -48,9 +45,7 @@ extern bool SIDEWAYS_SEARCH;
 #include <ctype.h>
 #include <braid.h>
 
-//bool valid_braid_input (string input_string, int& num_terms, int& num_strings, bool raw_output, bool silent_output, bool output_as_input);
 string braid_to_generic_code (string braid, int num_terms, int code_type);
-//void parse_braid(string word, int num_terms, vector<int>& braid_num, vector<int>& type);
 bool Yang_Baxter_satisfied (matrix<int>& U, matrix<int>& D, bool rack_condition = false);
 bool rat_minor_determinant (Qpmatrix* Matrix_rep, int N, int Nr1, int Nc1, int Nc2, int* rperm, int* cperm, string title, polynomial<scalar,char,bigint>& hcf);
 
@@ -100,7 +95,7 @@ void print_prog_params (ostream& os, string level, string prefix)
 		os << prefix << "braid_control::EQUALITY_TEST = " << braid_control::EQUALITY_TEST << endl;
 		os << prefix << "braid_control::EXPANDED_BRACKET_POLYNOMIAL = " << braid_control::EXPANDED_BRACKET_POLYNOMIAL << endl;
 		os << prefix << "braid_control::EXTRA_OUTPUT = " << braid_control::EXTRA_OUTPUT << endl;
-		os << prefix << "braid_control::FLAT_VOGEL_MOVES = " << braid_control::FLAT_VOGEL_MOVES << endl;
+		os << prefix << "braid_control::FLAT_CROSSINGS = " << braid_control::FLAT_CROSSINGS << endl;
 		os << prefix << "braid_control::FLIP_BRAID = " << braid_control::FLIP_BRAID << endl;
 		os << prefix << "braid_control::GCD_BACK_SUBSTITUTING = " << braid_control::GCD_BACK_SUBSTITUTING << endl;
 		os << prefix << "braid_control::INVERT_BRAID = " << braid_control::INVERT_BRAID << endl;
@@ -898,80 +893,71 @@ void display_fixed_point_switch(matrix<int>& M, ostream& os, bool number_from_ze
     - bottom right quadrant, top down
     
    The replacement of a virtual crossing t_i in the original braid is given by t_{n+i} t{n-i}.
+   
+   The function requires that it be provided with a valid braid word.
 */
-void Kamada_double_covering(string& braid)
+void Kamada_double_covering(string& braid, int num_terms, int num_strings)
 {
 if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "braid::Kamada_double_covering: evaluating the double covering of braid " << braid << endl;
 
-	int num_terms;
-	int num_strings;
+	vector<int> braid_num(num_terms);
+    vector<int> type(num_terms);
 
-	if (valid_braid_input(braid, num_terms, num_strings, braid_control::SILENT_OPERATION, braid_control::RAW_OUTPUT, braid_control::OUTPUT_AS_INPUT))
+	parse_braid(braid, num_terms, braid_num, type);
+
+	ostringstream oss;
+	
+	for (int i=0; i< num_terms; i++)
 	{
-		vector<int> braid_num(num_terms);
-	    vector<int> type(num_terms);
-
-		parse_braid(braid, num_terms, braid_num, type);
-
-		ostringstream oss;
-		
-		for (int i=0; i< num_terms; i++)
+		if (type[i] == generic_braid_data::crossing_type::VIRTUAL)
 		{
-			if (type[i] == braid_crossing_type::VIRTUAL)
-			{
 if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "braid::Kamada_double_covering:   crossing " << i << " is virtual, replacing t" << braid_num[i] << " with "
 	      << "t" << num_strings + braid_num[i] << " t" << num_strings - braid_num[i] << endl;
 }
 
-				oss << "t" << num_strings + braid_num[i] << "t" << num_strings - braid_num[i];
-			}
-			else 
-			{
+			oss << "t" << num_strings + braid_num[i] << "t" << num_strings - braid_num[i];
+		}
+		else 
+		{
 if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "braid::Kamada_double_covering:   crossing " << i << " is flat, replacing s" << braid_num[i] << " with "
 	      << "B_i s" << num_strings + braid_num[i] << " s" << num_strings - braid_num[i] << " B_i" << endl;
 }
 
-				ostringstream B_i;
-				
-				for (int j=braid_num[i]-1; j >=1; j--)
-				    B_i << "t" << num_strings + j;
-				    
-				for (int j=braid_num[i]-1; j >=1; j--)
-				    B_i << "t" << num_strings - j; 
+			ostringstream B_i;
+			
+			for (int j=braid_num[i]-1; j >=1; j--)
+			    B_i << "t" << num_strings + j;
+			    
+			for (int j=braid_num[i]-1; j >=1; j--)
+			    B_i << "t" << num_strings - j; 
 
-				B_i << "t" << num_strings;
+			B_i << "t" << num_strings;
 
-				for (int j=1; j <=braid_num[i]-1; j++)
-				    B_i << "t" << num_strings + j;
-				    
-				for (int j=1; j <=braid_num[i]-1; j++)
-				    B_i << "t" << num_strings - j; 
+			for (int j=1; j <=braid_num[i]-1; j++)
+			    B_i << "t" << num_strings + j;
+			    
+			for (int j=1; j <=braid_num[i]-1; j++)
+			    B_i << "t" << num_strings - j; 
 
 
 if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "braid::Kamada_double_covering:     where B_i = " << B_i.str() << endl;
 }				
-				oss << B_i.str() << "s" << num_strings + braid_num[i] << "s" << num_strings - braid_num[i] << B_i.str();
-			}
+			oss << B_i.str() << "s" << num_strings + braid_num[i] << "s" << num_strings - braid_num[i] << B_i.str();
 		}
-		
-		braid = oss.str();
+	}
+	
+	braid = oss.str();
 		
 if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "braid::Kamada_double_covering: to give braid " << braid << endl;
 
-	}
-	else
-	{
-if (debug_control::DEBUG >= debug_control::DETAIL)
-	debug << "braid::Kamada_double_covering: not a valid braid, doing nothing" << endl;
-	}
 }
 
 /*  The commutative automorphism invariant determines the codimension 0 invariant (Delta_0) and, where necessary, the codimension 1
@@ -1203,14 +1189,14 @@ if (debug_control::DEBUG >= debug_control::BASIC)
 		if (  (code_table[generic_code_data::table::TYPE][i] == generic_code_data::TYPE1 && code_table[generic_code_data::table::LABEL][i] == generic_code_data::POSITIVE)
 				||(code_table[generic_code_data::table::TYPE][i] == generic_code_data::TYPE2 && code_table[generic_code_data::table::LABEL][i] == generic_code_data::NEGATIVE)
    					)
-			crossing_type = braid_crossing_type::NEGATIVE;
+			crossing_type = generic_braid_data::crossing_type::NEGATIVE;
 		else
-			crossing_type = braid_crossing_type::POSITIVE;
+			crossing_type = generic_braid_data::crossing_type::POSITIVE;
 
 if (debug_control::DEBUG >= debug_control::DETAIL)
 {	
 	debug << "commutative_automorphism_invariant: crossing " << i;
-	if ( crossing_type == braid_crossing_type::NEGATIVE )
+	if ( crossing_type == generic_braid_data::crossing_type::NEGATIVE )
 		debug << " negative";
 	else
 		debug << " positive";
@@ -1227,7 +1213,7 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "commutative_automorphism_invariant: row " << 2*row << " ";
 }		
 		/* first do the up action in row 2*row. */
-		if (crossing_type == braid_crossing_type::POSITIVE)
+		if (crossing_type == generic_braid_data::crossing_type::POSITIVE)
 		{
 			if (code_table[generic_code_data::table::TYPE][i] == generic_code_data::TYPE1)
 			{
@@ -1291,7 +1277,7 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "commutative_automorphism_invariant: row " << 2*row+1 << " ";
 
 		/* now the down action in row 2*row+1 */	
-		if (crossing_type == braid_crossing_type::POSITIVE)
+		if (crossing_type == generic_braid_data::crossing_type::POSITIVE)
 		{
 			if (code_table[generic_code_data::table::TYPE][i] == generic_code_data::TYPE1)
 			{
@@ -1463,4 +1449,169 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 
 		}
 	}
+}
+
+matrix<int> permutation_cycles (generic_code_data& code_data)
+{
+	int num_crossings = code_data.num_crossings;
+	int num_edges = 2*num_crossings;
+	 
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+{
+	debug << "permutation_cycles: presented with code data ";	
+	write_code_data(debug,code_data);
+	debug << endl;
+}
+	int num_cycles = 0;
+	vector<int> cycles(num_crossings);
+	vector<int> cycle_length(num_crossings); // number of cycles less than the number of crossings
+	vector<bool> visited(num_crossings);  // records whether a term has been included in a cycle
+
+	
+	int start_i = 0; // first i-value in a cycle
+	int i = start_i;   // the i-th crossing has label 2i
+	cycles[0] = 0;
+	visited[0] = true;
+
+	int index = 1; // index into cycles
+	int cycle_count = 1; // length of the current cycle
+	
+	bool finished = false;
+	
+	while (!finished)
+	{
+		int peer = code_data.code_table[generic_code_data::table::OPEER][i];
+		int j = (peer+1)%num_edges/2;
+		
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+	debug << "permutation_cycles: crossing i = " << i << ", peer = " << peer << ", perm j = " << j << endl;	
+		
+		if (j == start_i)
+		{
+
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+	debug << "permutation_cycles: end of cycle " << num_cycles << ", length = " << cycle_count << endl;	
+
+			cycle_length[num_cycles] = cycle_count;
+			num_cycles++;
+			
+			/* look for the start of another cycle */
+			finished = true;
+			for (int k=0; k< code_data.num_crossings; k++)
+			{
+				if (!visited[k])
+				{
+					finished = false;
+					start_i = k;
+					i = start_i;
+					cycles[index++] = start_i;
+					visited[start_i] = true;
+					cycle_count = 1;
+
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+	debug << "permutation_cycles: start of next cycle = " << start_i << endl;	
+					break;
+				}
+			}
+			
+			if (finished)
+				break;
+		}
+		else
+		{
+			visited[j] = true;
+			cycles[index++] = j;
+			cycle_count++;
+			i = j;
+		}
+	}
+		
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+	debug << "permutation_cycles: peer_perm_cycles: " << endl;
+
+	matrix<int> peer_perm_cycles(num_cycles,num_crossings+1);
+	index = 0;
+	
+	for (int i=0; i< num_cycles; i++)
+	{
+		peer_perm_cycles[i][0] = cycle_length[i];
+		for (int j=1; j<= cycle_length[i]; j++)
+			peer_perm_cycles[i][j] = cycles[index++];
+	}
+
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+{
+	debug << "permutation_cycles: peer_perm_cycles: " << endl;
+	for (int i=0; i< num_cycles; i++)
+	{
+		debug << "permutation_cycles:   cycle " << i << "(" << peer_perm_cycles[i][0] << "): ";
+		for (int j=1; j<= peer_perm_cycles[i][0]; j++)
+			debug << peer_perm_cycles[i][j] << ' ';
+		debug << endl;
+	}
+}
+	return peer_perm_cycles;
+		
+}
+
+/* braid_permutation evaluates the permutation induced by a braid on the strand numbers.  Thus, if the ith strand
+   ends up at position j then the permutation takes i to j.  The function was introduced as part of the investigation 
+   into turning numbers but was not needed.  However, since it is a useful concept the function has been left in the code.
+   
+   The function requires a valid braid string as input
+*/
+  
+vector<int> braid_permutation (string braid, int num_terms, int num_strings)
+{
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+	debug << "braid_permutation: supplied with braid string " << braid << endl;
+
+		vector<int> braid_num(num_terms);
+	    vector<int> type(num_terms);
+
+		parse_braid(braid, num_terms, braid_num, type);
+	
+		vector<int> perm(num_strings);
+		
+		for (int i=0; i < num_strings; i++)
+		{
+			int strand_height = i;
+
+if (debug_control::DEBUG >= debug_control::DETAIL)
+	debug << "braid_permutation: strand " << strand_height << endl;
+			
+			for (int j=0; j< num_terms; j++)
+			{
+				if (braid_num[j] == strand_height)
+				{
+					strand_height--;
+if (debug_control::DEBUG >= debug_control::DETAIL)
+	debug << "braid_permutation:   term " << j << " involves strand " << i << ", moving down to strand_height " << strand_height << endl;
+				}
+				else if (braid_num[j] == strand_height+1)
+				{
+					strand_height++;
+if (debug_control::DEBUG >= debug_control::DETAIL)
+	debug << "braid_permutation:   term " << j << " involves strand " << i << ", moving up to strand_height " << strand_height << endl;
+				}
+				else
+				{
+if (debug_control::DEBUG >= debug_control::DETAIL)
+	debug << "braid_permutation:   term " << j << " does not involve strand " << i << endl;
+				}
+			}
+			
+			/* string i ends up at strand_height */
+			perm[strand_height] = i+1; // perm numbers strands from 1
+		}
+		
+		
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+{
+	debug << "braid_permutation: ";
+	for (int i=0; i < num_strings; i++)
+		debug << perm[i] << ' ';
+	debug << endl;
+}
+		return perm;
 }

@@ -118,6 +118,9 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 		{
 if (debug_control::DEBUG >= debug_control::DETAIL)
     debug << "get_input_word: line contains a switch, ignoring line" << endl;
+    
+			/* clear any title associated with the switch */
+			title.clear();
 			goto done_with_line;
 		}
 

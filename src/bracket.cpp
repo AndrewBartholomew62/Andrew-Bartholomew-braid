@@ -76,8 +76,8 @@ bracket_variable::bracket_variable(generic_code_data& c): code_data(c)
 	/* if the code_data is a knotoid then we cannot use the left_preferred Gauss data, since
 	   we have to start at the leg and proceed towards the head.
 	*/
-	gauss_orientation_data gauss_data = left_preferred(g,true,c.immersion); //unoriented = true	
-	write_gauss_data(gauss_data,oss,true,c.immersion,c.head_zig_zag_count); // zig_zags = true
+	gauss_orientation_data gauss_data = left_preferred(g,true,c.immersion_character); //unoriented = true	
+	write_gauss_data(gauss_data,oss,true,c.immersion_character,c.head_zig_zag_count); // zig_zags = true
 	_string = oss.str();
 	
 	/* write the knotoid or long knot head semi-arc count to the end of _string, before the ')' character
@@ -249,13 +249,13 @@ if (debug_control::DEBUG >= debug_control::BASIC)
 	else 
 		debug << "Unknown!" << endl;				
 		
-	if (code_data.immersion == generic_code_data::character::PURE_KNOTOID)
+	if (code_data.immersion_character == generic_code_data::character::PURE_KNOTOID)
 		debug << "bracket_polynomial: pure knotoid detected" << endl;
 
-	if (code_data.immersion == generic_code_data::character::LONG_KNOT)
+	if (code_data.immersion_character == generic_code_data::character::LONG_KNOT)
 		debug << "bracket_polynomial: long knot detected" << endl;
 		
-	if (code_data.immersion == generic_code_data::character::KNOTOID)
+	if (code_data.immersion_character == generic_code_data::character::KNOTOID)
 		debug << "bracket_polynomial: knotoid detected" << endl;
 }
 		
@@ -321,7 +321,7 @@ if (debug_control::DEBUG >= debug_control::BASIC)
 	int num_non_shortcut_crossings = num_crossings;  //all crossings for links
 	bool pure_knotoid_code_data = false;
 	
-	if (code_data.immersion == generic_code_data::character::PURE_KNOTOID && head != -1)
+	if (code_data.immersion_character == generic_code_data::character::PURE_KNOTOID && head != -1)
 	{
 		if (valid_knotoid_input(code_data))
 		{
@@ -434,10 +434,10 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 	   The sign is used to calculate the writhe and also to determine the aspect of
 	   each crossing during the calculation of the bracket polynomial.
 	   
-		NOTE: we use the braid_crossing_type rather than generic_code_data::label for sign, since it
+		NOTE: we use the generic_braid_data::crossing_type rather than generic_code_data::label for sign, since it
 		relates to the standard definition of positive and negative crossings, rather than peer code labels.
 	*/
-	vector<int> sign(num_crossings,braid_crossing_type::NONE);
+	vector<int> sign(num_crossings,generic_braid_data::crossing_type::NONE);
 	vector<int>& shortcut_crossing = code_data.shortcut_crossing;
 	
 	for (int i=0; i< num_crossings; i++)
@@ -451,23 +451,23 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 			   )
 			{
 				/* positive crossing */
-				sign[i]  = braid_crossing_type::POSITIVE;
+				sign[i]  = generic_braid_data::crossing_type::POSITIVE;
 		    }
 			else if (   (code_table[generic_code_data::table::TYPE][i] == generic_code_data::TYPE1 && code_table[generic_code_data::table::LABEL][i] == generic_code_data::POSITIVE)
 			          || (code_table[generic_code_data::table::TYPE][i] == generic_code_data::TYPE2 && code_table[generic_code_data::table::LABEL][i] == generic_code_data::NEGATIVE)
 			        )
 			{
 				/* negative crossing */
-				sign[i] = braid_crossing_type::NEGATIVE;
+				sign[i] = generic_braid_data::crossing_type::NEGATIVE;
 		    }
 		    else if (code_table[generic_code_data::table::LABEL][i] == generic_code_data::FLAT)
 		    {
-				sign[i] = braid_crossing_type::FLAT;
+				sign[i] = generic_braid_data::crossing_type::FLAT;
 			}
 		    else
 			{
-				/* virtual crossing, we're skipping shortcut crossings, which retain a sign of braid_crossing_type::NONE */
-				sign[i] = braid_crossing_type::VIRTUAL;
+				/* virtual crossing, we're skipping shortcut crossings, which retain a sign of generic_braid_data::crossing_type::NONE */
+				sign[i] = generic_braid_data::crossing_type::VIRTUAL;
 		    }			    
 		}
 	}
@@ -493,9 +493,9 @@ if (debug_control::DEBUG >= debug_control::BASIC)
 			continue;
 		else
 		{
-			if (sign[i] == braid_crossing_type::POSITIVE)
+			if (sign[i] == generic_braid_data::crossing_type::POSITIVE)
 				writhe ++;
-			else if (sign[i] == braid_crossing_type::NEGATIVE)
+			else if (sign[i] == generic_braid_data::crossing_type::NEGATIVE)
 				writhe --;
 		}
 	}
@@ -572,7 +572,7 @@ if (debug_control::DEBUG >= debug_control::BASIC)
 	
 	for (int i=0; i< num_crossings; i++)
 	{
-		if (sign[i] != braid_crossing_type::POSITIVE && sign[i] != braid_crossing_type::NEGATIVE)
+		if (sign[i] != generic_braid_data::crossing_type::POSITIVE && sign[i] != generic_braid_data::crossing_type::NEGATIVE)
 		{
 			num_state_smoothed_crossings--;
 			num_classical_non_shortcut_crossings--;
@@ -1237,8 +1237,8 @@ if (debug_control::DEBUG >= debug_control::BASIC)
 						*/				
 if (debug_control::DEBUG >= debug_control::INTERMEDIATE) 
 	debug << "bracket_polynomial:     arrow_state_zig_zag_count = " << arrow_state_zig_zag_count << endl;
-//						if ((pure_knotoid_code_data || code_data.immersion == generic_code_data::character::LONG_KNOT || code_data.immersion == generic_code_data::character::KNOT_TYPE_KNOTOID) && start == 0)
-						if (code_data.immersion != generic_code_data::character::CLOSED && start == 0)
+//						if ((pure_knotoid_code_data || code_data.immersion_character == generic_code_data::character::LONG_KNOT || code_data.immersion_character == generic_code_data::character::KNOT_TYPE_KNOTOID) && start == 0)
+						if (code_data.immersion_character != generic_code_data::character::CLOSED && start == 0)
 						{
 							/* The segment component in a knotoid contributes an L variable */
 							if (arrow_state_zig_zag_count)
@@ -1253,7 +1253,7 @@ if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 								char z = 'a'+arrow_state_zig_zag_count/2-1;
 								arrow_factor *= polynomial<int,bracket_variable>(string(1,z));
 							}
-							else if ((code_data.immersion == generic_code_data::character::LONG_KNOT || code_data.immersion == generic_code_data::character::KNOTOID) && !braid_control::EXPANDED_BRACKET_POLYNOMIAL)
+							else if ((code_data.immersion_character == generic_code_data::character::LONG_KNOT || code_data.immersion_character == generic_code_data::character::KNOTOID) && !braid_control::EXPANDED_BRACKET_POLYNOMIAL)
 							{
 								num_zig_zag_components++;  // not a zig-zag but we do want to use L rather than D for this component
 								char z = 'L'; // long segment with no zig-zags
@@ -1282,8 +1282,8 @@ if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 						
 						if (encountered_odd_crossing_on_component)
 						{
-//							if ((pure_knotoid_code_data || code_data.immersion == generic_code_data::character::LONG_KNOT || code_data.immersion == generic_code_data::character::KNOT_TYPE_KNOTOID) && start == 0)
-							if (code_data.immersion != generic_code_data::character::CLOSED && start == 0)
+//							if ((pure_knotoid_code_data || code_data.immersion_character == generic_code_data::character::LONG_KNOT || code_data.immersion_character == generic_code_data::character::KNOT_TYPE_KNOTOID) && start == 0)
+							if (code_data.immersion_character != generic_code_data::character::CLOSED && start == 0)
 							{
 								/* note the number of zig-zags at the knotoid head, so we can assign it to the component_zig_zag_count
 								   once we have evaluated the rest of the component peer code.
@@ -1320,7 +1320,7 @@ if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 							   arrow polynomial, based on the arrow_state_zig_zag_count
 							*/
 														
-							if (code_data.immersion != generic_code_data::character::CLOSED && start == 0)
+							if (code_data.immersion_character != generic_code_data::character::CLOSED && start == 0)
 							{
 								/* The segment component in a knotoid contributes an L variable */
 								if (arrow_state_zig_zag_count)
@@ -1451,12 +1451,12 @@ if (debug_control::DEBUG >= debug_control::BASIC)
 				if ((variant == PARITY_VARIANT || variant == PARITY_ARROW_VARIANT) && crossing_parity[i] != gauss_orientation_data::parity::EVEN)
 					continue;
 					
-				if (sign[i] == braid_crossing_type::POSITIVE)
+				if (sign[i] == generic_braid_data::crossing_type::POSITIVE)
 				{
 					sigma += state[place];
 					place++;
 				}
-				else if (sign[i] == braid_crossing_type::NEGATIVE)
+				else if (sign[i] == generic_braid_data::crossing_type::NEGATIVE)
 				{
 					sigma += state[place] * -1;
 					place++;
@@ -2248,7 +2248,7 @@ if (debug_control::DEBUG >= debug_control::BASIC)
 						else
 							component_peer_code.head = component_peer_code.code_table[generic_code_data::table::EPEER][(component_head_semi_arc-1)/2]/2;							
 							
-						component_peer_code.immersion = generic_code_data::character::PURE_KNOTOID;
+						component_peer_code.immersion_character = generic_code_data::character::PURE_KNOTOID;
 						
 						/* call valid_knotoid_data to set shortcut_crossing */
 						valid_knotoid_input(component_peer_code);
@@ -2261,14 +2261,14 @@ if (debug_control::DEBUG >= debug_control::BASIC)
 						*/
 						if (pure_knotoid_code_data)
 						{
-							component_peer_code.immersion = generic_code_data::character::KNOTOID;
+							component_peer_code.immersion_character = generic_code_data::character::KNOTOID;
 							
 if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 	debug << "bracket_polynomial:   knotoid: graphical component 0 is a knot-type knotoid not a pure knotoid" << endl;
 						}
 						else
 						{
-							component_peer_code.immersion = code_data.immersion; // needed for knot-type knotoids and long knot
+							component_peer_code.immersion_character = code_data.immersion_character; // needed for knot-type knotoids and long knot
 if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 	debug << "bracket_polynomial:   knotoid: graphical component 0 has the same immersion character as original code data" << endl;
 						}
@@ -2285,7 +2285,7 @@ if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 if (debug_control::DEBUG >= debug_control::BASIC)
 	debug << "bracket_polynomial:   set component_peer_code.head_zig_zag_count = " << component_peer_code.head_zig_zag_count << endl;
 							
-							if (component_peer_code.immersion == generic_code_data::character::PURE_KNOTOID)
+							if (component_peer_code.immersion_character == generic_code_data::character::PURE_KNOTOID)
 							{
 								component_zig_zag_count[(component_head_semi_arc %2?1:0)][component_peer_code.head] = knotoid_head_zig_zag_count;
 
@@ -2408,7 +2408,7 @@ if (debug_control::DEBUG >= debug_control::BASIC)
 if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 	debug << "bracket_polynomial:   removed component " << j << ", zig-zag count = " << zig_zag_count << endl;
 	
-								if (component_peer_code.immersion != generic_code_data::character::CLOSED && j == 0)
+								if (component_peer_code.immersion_character != generic_code_data::character::CLOSED && j == 0)
 								{
 									/* The segment component in a knotoid contributes an L variable */
 									if (zig_zag_count)
@@ -2503,7 +2503,7 @@ if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 	debug << "bracket_polynomial:    unicursal component " << j << " is part of component_peer_code, zig-zag count = " << zig_zag_count << endl;
 	
-										if (component_peer_code.immersion != generic_code_data::character::CLOSED && j == 0)
+										if (component_peer_code.immersion_character != generic_code_data::character::CLOSED && j == 0)
 										{
 											/* segment components contribute a M variable, we can re-use variable characters a 
 											   onwards and n onwards here because we're adding to parity_factor not arrow_factor

@@ -195,7 +195,7 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 		
 		if (extended_version)
 		{
-			if (code_data.immersion == generic_code_data::character::PURE_KNOTOID && code_data.head != -1 && shortcut_crossing.size())
+			if (code_data.immersion_character == generic_code_data::character::PURE_KNOTOID && code_data.head != -1 && shortcut_crossing.size())
 				pure_knotoid_code_data = true;
 		
 if (debug_control::DEBUG >= debug_control::DETAIL)
@@ -211,7 +211,7 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "gauss_orientation_data::constructor(generic_code_data): num_classical_crossings = " << num_classical_crossings << endl;
 		
-			if (code_data.immersion == generic_code_data::character::PURE_KNOTOID && code_data.head != -1 && shortcut_crossing.size())
+			if (code_data.immersion_character == generic_code_data::character::PURE_KNOTOID && code_data.head != -1 && shortcut_crossing.size())
 			{
 				pure_knotoid_code_data = true;
 				for (unsigned int i=0; i< shortcut_crossing.size(); i++)

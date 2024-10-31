@@ -31,7 +31,7 @@ extern ifstream     input;
 
 bool gauss_to_peer_code(generic_code_data gauss_code_data, generic_code_data& peer_code_data, bool optimal=true, vector<int>* gauss_crossing_perm=0, bool evaluate_gauss_crossing_perm=false);
 
-list<vector<int> > hamiltonian_circuit(generic_code_data& code_data, bool list_all_circuits, bool count_circuits_only, bool edge_circuit)
+list<vector<int> > hamiltonian_circuit(generic_code_data& code_data, bool list_all_circuits, bool count_circuits_only, bool edge_circuit, int include_edge)
 {
 if (debug_control::DEBUG >= debug_control::SUMMARY)	
 {
@@ -267,10 +267,14 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 	int BLUE= 1;
 
 	vector<int> colour_map(num_cycles,RED);
-		
+			
 	bool not_finished = true;
 	do
 	{
+		bool contains_include_edge = true; 
+		
+		if (include_edge != -1)
+			contains_include_edge = false;
 
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 {	
@@ -317,6 +321,7 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 
 				valid_colour_map = false;				
 				colour_map[max_region[i]] = BLUE;
+				
 				for (int j=max_region[i]+1; j< num_cycles; j++)
 					colour_map[j] = RED;
 					
@@ -343,6 +348,7 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 					if (colour_map[j] == RED)
 					{
 						colour_map[j] = BLUE;
+
 						for (int k=j+1; k< num_cycles; k++)
 							colour_map[k] = RED;
 						not_finished = true;
@@ -386,6 +392,7 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 						if (colour_map[i] == RED)
 						{
 							colour_map[i] = BLUE;
+							
 							for (int j=i+1; j< num_cycles; j++)
 								colour_map[j] = RED;
 							not_finished = true;
@@ -474,6 +481,9 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 			if (edge_circuit)
 				circuit[0] = edge;
 			
+			if (include_edge != -1 && edge == include_edge)
+				contains_include_edge = true;
+			
 			int edge_count = 0;						
 			int next_crossing = 0;
 			do
@@ -555,13 +565,17 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 					
 					if (edge_circuit)
 						circuit[edge_count] = edge;
+
+					if (include_edge != -1 && edge == include_edge)
+						contains_include_edge = true;
+					
 				}
 			} while (next_crossing !=0); // not back where we started
 			
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "hamiltonian_circuit: returned to crossing zero with edge_count " << edge_count << endl;
 		
-			if (edge_count == num_crossings)
+			if (edge_count == num_crossings && contains_include_edge) 
 			{
 				circuit_list.push_back(circuit);				
 				if (!list_all_circuits && !count_circuits_only)
@@ -578,6 +592,7 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 				if (colour_map[i] == RED)
 				{
 					colour_map[i] = BLUE;
+					
 					for (int j=i+1; j< num_cycles; j++)
 						colour_map[j] = RED;
 					not_finished = true;

@@ -475,7 +475,7 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 					int precedence=0;
 
 /*							
-if (match_count == 1 && PD_data[i][last_PD_index] == 0 && gauss_code_data.immersion == generic_code_data::character::KNOTOID)
+if (match_count == 1 && PD_data[i][last_PD_index] == 0 && gauss_code_data.immersion_character == generic_code_data::character::KNOTOID)
 {
 if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "gauss_to_peer_code:   don't want to match directly onto leg of knotoid, precedence incremented to 4" << endl;
@@ -2650,7 +2650,7 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 	peer_code_data.component_type = vector<component_character>(num_components);
 	peer_code_data.head = -1;
 	peer_code_data.head_zig_zag_count = gauss_code_data.head_zig_zag_count;
-	peer_code_data.immersion = gauss_code_data.immersion;
+	peer_code_data.immersion_character = gauss_code_data.immersion_character;
 	peer_code_data.num_crossings = num_immersion_crossings;
 	peer_code_data.num_components = num_components;
 	peer_code_data.code_table = peer_code_table;
@@ -2669,7 +2669,7 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 
 	bool component_zero_odd_shift = false;
 	
-	if ((peer_code_data.immersion == generic_code_data::character::KNOTOID || peer_code_data.immersion == generic_code_data::character::MULTI_LINKOID) && num_virtual_crossings_on_gauss_arc[0] != 0)
+	if ((peer_code_data.immersion_character == generic_code_data::character::KNOTOID || peer_code_data.immersion_character == generic_code_data::character::MULTI_LINKOID) && num_virtual_crossings_on_gauss_arc[0] != 0)
 	{
 		/* If the Gauss code is that of a KNOTOID or a MULTI_LINKOID and we have added virtual crossings to Gauss arc zero, then we have 
 		   produced the peer code of the virtual closure of the knotoid.  In this case we renumber the peer code so that 
@@ -2707,34 +2707,41 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "gauss_to_peer_code: terminating_edge_at_head of component zero = " << terminating_edge_at_head << ", head_naming_edge = " << head_naming_edge << endl;
 
 		/* set the head crossing */
-		if (peer_code_data.immersion == generic_code_data::character::KNOTOID)
+		if (peer_code_data.immersion_character == generic_code_data::character::KNOTOID)
 		{
 			peer_code_data.head = head_naming_edge/2;
-			peer_code_data.immersion = generic_code_data::character::PURE_KNOTOID;
+			peer_code_data.immersion_character = generic_code_data::character::PURE_KNOTOID;
 		}
-		else if (peer_code_data.immersion == generic_code_data::character::MULTI_LINKOID)
+		else if (peer_code_data.immersion_character == generic_code_data::character::MULTI_LINKOID)
 		{
 			peer_code_data.component_type[0].type = component_character::PURE_START_LEG;
-			peer_code_data.component_type[0].head = head_naming_edge/2;
+//			peer_code_data.component_type[0].head = head_naming_edge/2;
+			peer_code_data.component_type[0].head_semi_arc = terminating_edge_at_head;
 		}
 	
-		for (int i = terminating_edge_at_head; i < peer_code_data.num_component_edges[0]; i++)
+		/* multi-linkoids are represented as the virtual closure of the multi-linkoid, so the virtual crossings we have already is correct,
+		   knotoids are represented with the shortcut passing everywhere under, so the crossing labels need adjusting.
+		*/
+		if (peer_code_data.immersion_character != generic_code_data::character::MULTI_LINKOID)
 		{
+			for (int i = terminating_edge_at_head; i < peer_code_data.num_component_edges[0]; i++)
+			{
 if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "gauss_to_peer_code: shortcut edge " << i;
 	
-			if (i%2 == 0)
-			{
-				peer_code_data.code_table[generic_code_data::table::LABEL][i/2] = generic_code_data::NEGATIVE;
+				if (i%2 == 0)
+				{
+					peer_code_data.code_table[generic_code_data::table::LABEL][i/2] = generic_code_data::NEGATIVE;
 if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << " crossing " << i/2 << " becomes NEGATIVE" << endl;
-			}
-			else
-			{
-				peer_code_data.code_table[generic_code_data::table::LABEL][peer_code_data.code_table[generic_code_data::table::EPEER][(i-1)/2]/2] = generic_code_data::POSITIVE;
+				}
+				else
+				{
+					peer_code_data.code_table[generic_code_data::table::LABEL][peer_code_data.code_table[generic_code_data::table::EPEER][(i-1)/2]/2] = generic_code_data::POSITIVE;
 
 if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << " crossing " << peer_code_data.code_table[generic_code_data::table::EPEER][(i-1)/2]/2 << " becomes POSITIVE" << endl;
+				}
 			}
 		}
 	
@@ -2790,11 +2797,11 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 	   have to shift subsequent components to ensure this is the case.  Since conponent zero has already been considered, and possibly shifted, we may already 
 	   have adjusted the other components accordingly.  That means we only want to shift subsequent components by an even number of edges in order to retain the
 	   odd and even terminating edges at a crossing.  The boolean component_zero_odd_shift tells us whether component zero has had an odd shift, in which case 
-	   the subsequent components have all been shifted forwards by one edge.  Thus, some components have nbeen shifted back when the labels were fist allocated 
+	   the subsequent components have all been shifted forwards by one edge.  Thus, some components have been shifted back when the labels were fist allocated 
 	   and then forwards if component_zero_odd_shift is true.  This results in multiple cases to consider when shifting the subsequent open components to ensure
 	   that the leg is correctly positioned.  We record the character of the open components in the component_type vector of the generic_code_data.	   
 	*/
-	if (peer_code_data.immersion == generic_code_data::character::MULTI_LINKOID)
+	if (peer_code_data.immersion_character == generic_code_data::character::MULTI_LINKOID)
 	{
 		for (int i=1; i< peer_code_data.num_open_components; i++)
 		{
@@ -2929,13 +2936,16 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "gauss_to_peer_code:   head_naming_edge = " << head_naming_edge << endl;
 
-				peer_code_data.component_type[i].head = head_naming_edge/2;
+//				peer_code_data.component_type[i].head = head_naming_edge/2;
+				peer_code_data.component_type[i].head_semi_arc = terminating_edge_at_head;
 			}
 
 			renumber_peer_code(peer_code_data,shift_vector);
 
-			/* change any shortcut virtual crossings to be under-crossings */
-
+			/* change any shortcut virtual crossings to be under-crossings
+			
+			October 2023: multi-knotoids are represented as their virtual closure, so no change is required
+				
 			for (int i = terminating_edge_at_head; i < last_shortcut_edge; i++)
 			{
 //if (debug_control::DEBUG >= debug_control::DETAIL)
@@ -2952,6 +2962,7 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 					peer_code_data.code_table[generic_code_data::table::LABEL][peer_code_data.code_table[generic_code_data::table::EPEER][(i-1)/2]/2] = generic_code_data::POSITIVE;
 				}
 			}
+			*/
 	
 if (debug_control::DEBUG >= debug_control::DETAIL)
 {

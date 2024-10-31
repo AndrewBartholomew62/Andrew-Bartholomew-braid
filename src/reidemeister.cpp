@@ -195,7 +195,7 @@ if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 	
 	int num_components_removed = 0;  //the return variable
 	
-	if (code_data.immersion == generic_code_data::character::PURE_KNOTOID && code_data.head != -1 && shortcut_crossing.size())
+	if (code_data.immersion_character == generic_code_data::character::PURE_KNOTOID && code_data.head != -1 && shortcut_crossing.size())
 	{
 		ignore_shortcut = true;
 		
@@ -463,7 +463,7 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 		
 	
 	int head_semi_arc;
-    if (code_data.immersion == generic_code_data::character::PURE_KNOTOID && code_data.head !=-1 && shortcut_crossing.size())
+    if (code_data.immersion_character == generic_code_data::character::PURE_KNOTOID && code_data.head !=-1 && shortcut_crossing.size())
     {	
 		pure_knotoid_code_data = true;
 		
@@ -540,10 +540,10 @@ if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
 if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_edge_flags_from_peer_code: amalgamated_zig_zag_count = " << amalgamated_zig_zag_count << " at the end of component " << new_edge_component << endl;
 	
-			if (code_data.immersion != generic_code_data::character::CLOSED && new_edge_component == 0)
+			if (code_data.immersion_character != generic_code_data::character::CLOSED && new_edge_component == 0)
 			{
 				/* set, or amalgamate with, the head_zig_zag_count  - see above comment */
-				if (code_data.immersion == generic_code_data::character::PURE_KNOTOID)
+				if (code_data.immersion_character == generic_code_data::character::PURE_KNOTOID)
 				{
 					code_data.head_zig_zag_count = amalgamated_zig_zag_count;
 if (debug_control::DEBUG >= debug_control::DETAIL)
@@ -559,7 +559,7 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 				}
 			
 				/* update head semi-arc zig-zag count */
-				if (code_data.immersion == generic_code_data::character::PURE_KNOTOID)
+				if (code_data.immersion_character == generic_code_data::character::PURE_KNOTOID)
 				{
 					if (code_data.head == -1)
 					{
@@ -692,10 +692,10 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_edge_flags_from_peer_code: amalgamated_zig_zag_count = " << amalgamated_zig_zag_count << " at the end of component " << new_edge_component << endl;
 	
-	if (code_data.immersion != generic_code_data::character::CLOSED && new_edge_component == 0)
+	if (code_data.immersion_character != generic_code_data::character::CLOSED && new_edge_component == 0)
 	{
 		/* set, or amalgamate with, the head_zig_zag_count */
-		if (code_data.immersion == generic_code_data::character::PURE_KNOTOID)
+		if (code_data.immersion_character == generic_code_data::character::PURE_KNOTOID)
 		{
 			code_data.head_zig_zag_count = amalgamated_zig_zag_count;
 if (debug_control::DEBUG >= debug_control::DETAIL)
@@ -712,7 +712,7 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << " to give " << code_data.head_zig_zag_count << endl;
 		}
 					
-		if (code_data.immersion == generic_code_data::character::PURE_KNOTOID)
+		if (code_data.immersion_character == generic_code_data::character::PURE_KNOTOID)
 			initial_new_zig_zag_count[(head_semi_arc %2?1:0)][code_data.head] = code_data.head_zig_zag_count;
 	}
 	else
@@ -879,6 +879,7 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 		/* identify any components removed from the peer code by removing the edges.  If there is such a component, 
 		   none of its edges will have been assigned a new edge label
 		*/
+		int new_num_components = num_components;
 		for (int i=0; i< num_components; i++)
 		{
 			bool component_removed = true;
@@ -903,6 +904,8 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 			
 			if (component_removed)
 			{
+				new_num_components--;
+				
 				/* we adjust the immersion character below, if necessary */
 				clear_component_flag(i,component_flags);
 				
@@ -921,6 +924,9 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_edge_flags_from_peer_code:   removing edge flags retains component " << i << endl;
 			}
 		}
+
+if (debug_control::DEBUG >= debug_control::DETAIL)
+	debug << "remove_edge_flags_from_peer_code: new_num_components = " << new_num_components << endl;
 
 		/* to update the generic code data we create a new code_table from the existing one,
 		   write the resultant generic code data to an ostringstream and then read it back in.
@@ -1042,13 +1048,39 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 		/* copy the new code_table to code_data and set the num_crossings.  Set the new head for knotoids.
 		   It may be that removing the edge labels has resulted in new_head_semi_arc being set to zero, in 
 		   which case, we shall clear the head (i.e set it to -1), to reflect the fact that we have reduced 
-		   the diagram to a knot-like knotoid.  We also set code_data.immersion to be 
+		   the diagram to a knot-like knotoid.  We also set code_data.immersion_character to be 
 		   generic_code_data::character::KNOTOID, so that we do not perform invalid Reidemeiseter II moves 
 		   involving edge zero if we are evaluating the parity bracket or parity arrow polynomial.
 		*/
 		code_data.code_table = new_code_table;
 		code_data.num_crossings = new_num_crossings;
+		code_data.num_components = new_num_components;
 		
+		/* Determine the new number of component edges.  We have vectors new_first_component_edge and new_last_component_edge 
+		  of length the old number of components, such that  new_last_component_edge[i] == new_first_component_edge[i]-1 if 
+		  the i-th component has been removed.
+		*/
+		vector<int> new_num_component_edges(new_num_components);
+		int component = 0;
+		for (int i=0; i< num_components; i++)
+		{
+			if (new_last_component_edge[i] == new_first_component_edge[i]-1)
+				continue; // component i has been removed
+				
+			new_num_component_edges[component] = new_last_component_edge[i]-new_first_component_edge[i]+1;
+			component++;
+		}
+		
+		code_data.num_component_edges = new_num_component_edges;
+		
+if (debug_control::DEBUG >= debug_control::DETAIL)
+{
+	debug << "remove_edge_flags_from_peer_code: new_num_component_edges: ";
+	for (int i=0; i< new_num_components; i++)
+		debug << new_num_component_edges[i] << ' ';
+	debug << endl;
+}		
+
 		if (track_zig_zag_counts)
 		{
 			bool zig_zags_present = false;
@@ -1078,9 +1110,9 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_edge_flags_from_peer_code: new_head_semi_arc is zero, clearing knotoid status of code data" << endl;
 	
-				code_data.immersion = generic_code_data::character::KNOTOID;
+				code_data.immersion_character = generic_code_data::character::KNOTOID;
 if (debug_control::DEBUG >= debug_control::DETAIL)
-	debug << "remove_edge_flags_from_peer_code: set code_data.immersion = generic_code_data::character::KNOTOID to indicate knot-type knotoid" << endl;
+	debug << "remove_edge_flags_from_peer_code: set code_data.immersion_character = generic_code_data::character::KNOTOID to indicate knot-type knotoid" << endl;
 	
 			}
 			else if (new_head_semi_arc % 2)
@@ -1350,7 +1382,7 @@ if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 	bool pure_knotoid_code_data = false;
 	int head_semi_arc = -1;
 	
-	if (code_data.immersion == generic_code_data::character::PURE_KNOTOID && code_data.head != -1 && code_data.shortcut_crossing.size())
+	if (code_data.immersion_character == generic_code_data::character::PURE_KNOTOID && code_data.head != -1 && code_data.shortcut_crossing.size())
 	{
 		if (code_table[generic_code_data::table::LABEL][code_data.head] == generic_code_data::POSITIVE)
 			head_semi_arc = code_table[generic_code_data::table::OPEER][code_data.head];
@@ -1411,13 +1443,13 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "simple_Reidemeister_II_present: case 1, bigon bounded by successor and peer_successor includes knotoid leg (0) or head (" << head_semi_arc << ")" << endl;
 			}
-			else if (code_data.immersion == generic_code_data::character::LONG_KNOT && 
+			else if (code_data.immersion_character == generic_code_data::character::LONG_KNOT && 
 			         code_table[generic_code_data::table::LABEL][i] != generic_code_data::VIRTUAL && (successor == 0 || peer_successor == 0 ))
 			{
 if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "simple_Reidemeister_II_present: case 1, bigon bounded by successor and peer_successor includes long knot ends" << endl;
 			}
-			else if (code_data.immersion == generic_code_data::character::KNOTOID && 
+			else if (code_data.immersion_character == generic_code_data::character::KNOTOID && 
 			         code_table[generic_code_data::table::LABEL][i] != generic_code_data::VIRTUAL && (successor == 0 || peer_successor == 0 ))
 			{
 if (debug_control::DEBUG >= debug_control::DETAIL)
@@ -1450,13 +1482,13 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "simple_Reidemeister_II_present: case 4, bigon bounded by naming edge and peer_successor includes knotoid leg (0) or head (" << head_semi_arc << ")" << endl;
 			}
-			else if (code_data.immersion == generic_code_data::character::LONG_KNOT && 
+			else if (code_data.immersion_character == generic_code_data::character::LONG_KNOT && 
 			         code_table[generic_code_data::table::LABEL][i] != generic_code_data::VIRTUAL && (2*i == 0 || peer_successor == 0))
 			{
 if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "simple_Reidemeister_II_present: case 4, bigon bounded by naming edge and peer_successor includes long knot ends" << endl;
 			}
-			else if (code_data.immersion == generic_code_data::character::KNOTOID && 
+			else if (code_data.immersion_character == generic_code_data::character::KNOTOID && 
 			         code_table[generic_code_data::table::LABEL][i] != generic_code_data::VIRTUAL && (2*i == 0 || peer_successor == 0))
 			{
 if (debug_control::DEBUG >= debug_control::DETAIL)
@@ -1489,13 +1521,13 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "simple_Reidemeister_II_present: case 2, bigon bounded by peer and successor includes knotoid  leg (0) or head (" << head_semi_arc << ")" << endl;
 			}
-			else if (code_data.immersion == generic_code_data::character::LONG_KNOT && 
+			else if (code_data.immersion_character == generic_code_data::character::LONG_KNOT && 
 			         code_table[generic_code_data::table::LABEL][i] != generic_code_data::VIRTUAL && (peer == 0 || successor == 0))
 			{
 if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "simple_Reidemeister_II_present: case 2, bigon bounded by peer and successor includes long knot ends" << endl;
 			}
-			else if (code_data.immersion == generic_code_data::character::KNOTOID && 
+			else if (code_data.immersion_character == generic_code_data::character::KNOTOID && 
 			         code_table[generic_code_data::table::LABEL][i] != generic_code_data::VIRTUAL && (peer == 0 || successor == 0))
 			{
 if (debug_control::DEBUG >= debug_control::DETAIL)
@@ -1529,13 +1561,13 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "simple_Reidemeister_II_present: case 3, bigon bounded by naming edge and peer includes knotoid leg (0) or head (" << head_semi_arc << ")" << endl;
 			}
-			else if (code_data.immersion == generic_code_data::character::LONG_KNOT && 
+			else if (code_data.immersion_character == generic_code_data::character::LONG_KNOT && 
 			         code_table[generic_code_data::table::LABEL][i] != generic_code_data::VIRTUAL && (2*i == 0 || peer == 0))
 			{
 if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "simple_Reidemeister_II_present: case 3, bigon bounded by naming edge and peer includes long knot ends" << endl;
 			}
-			else if (code_data.immersion == generic_code_data::character::KNOTOID && 
+			else if (code_data.immersion_character == generic_code_data::character::KNOTOID && 
 			         code_table[generic_code_data::table::LABEL][i] != generic_code_data::VIRTUAL && (2*i == 0 || peer == 0))
 			{
 if (debug_control::DEBUG >= debug_control::DETAIL)
@@ -1879,7 +1911,7 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 			   edge zero, we can then check the peer path by comparing the start_peer with the edge at the other end of
 			   the peer path, since the numbering will have wrapped if edge zero lies on the peer path.
 			*/
-			if (Reidemeister_II_found && code_data.immersion != generic_code_data::character::CLOSED)
+			if (Reidemeister_II_found && code_data.immersion_character != generic_code_data::character::CLOSED)
 			{
 				int rendezvous_end_edge;
 				
@@ -2042,7 +2074,7 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 	bool& standard_Reidemeister_II_configuration = _return.standard_Reidemeister_II_configuration;
 	
 	bool ignore_shortcut = false;
-	if (code_data.immersion == generic_code_data::character::PURE_KNOTOID && code_data.head != -1 && shortcut_crossing.size())
+	if (code_data.immersion_character == generic_code_data::character::PURE_KNOTOID && code_data.head != -1 && shortcut_crossing.size())
 		ignore_shortcut = true;
 	
 	for (int i=0; i< num_edges; i++)
@@ -2656,7 +2688,7 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 	bool pure_knotoid_code_data = false;
 	int head_semi_arc = -1;
 	
-	if (code_data.immersion == generic_code_data::character::PURE_KNOTOID && code_data.head != -1 && shortcut_crossing.size())
+	if (code_data.immersion_character == generic_code_data::character::PURE_KNOTOID && code_data.head != -1 && shortcut_crossing.size())
 	{
 		if (code_table[generic_code_data::table::LABEL][code_data.head] == generic_code_data::POSITIVE)
 			head_semi_arc = code_table[generic_code_data::table::OPEER][code_data.head];
@@ -3721,10 +3753,10 @@ if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
 if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II: amalgamated_zig_zag_count = " << amalgamated_zig_zag_count << " at the end of component " << new_edge_component << endl;
 	
-							if (code_data.immersion != generic_code_data::character::CLOSED && new_edge_component == 0)
+							if (code_data.immersion_character != generic_code_data::character::CLOSED && new_edge_component == 0)
 							{
 								/* set, or amalgamate with, the head_zig_zag_count */
-								if (code_data.immersion == generic_code_data::character::PURE_KNOTOID)
+								if (code_data.immersion_character == generic_code_data::character::PURE_KNOTOID)
 								{
 									code_data.head_zig_zag_count = amalgamated_zig_zag_count;
 if (debug_control::DEBUG >= debug_control::DETAIL)
@@ -3740,7 +3772,7 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 								}
 								
 								/* update head semi-arc zig-zag count */
-								if (code_data.immersion == generic_code_data::character::PURE_KNOTOID)
+								if (code_data.immersion_character == generic_code_data::character::PURE_KNOTOID)
 									initial_new_zig_zag_count[(head_semi_arc %2?1:0)][code_data.head] = code_data.head_zig_zag_count;
 							}
 							else
@@ -3944,10 +3976,10 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II: amalgamated_zig_zag_count = " << amalgamated_zig_zag_count << " at the end of component " << new_edge_component << endl;
 	
-					if (code_data.immersion != generic_code_data::character::CLOSED && new_edge_component == 0)
+					if (code_data.immersion_character != generic_code_data::character::CLOSED && new_edge_component == 0)
 					{
 						/* set, or amalgamate with, the head_zig_zag_count */
-						if (code_data.immersion == generic_code_data::character::PURE_KNOTOID)
+						if (code_data.immersion_character == generic_code_data::character::PURE_KNOTOID)
 						{
 							code_data.head_zig_zag_count = amalgamated_zig_zag_count;
 if (debug_control::DEBUG >= debug_control::DETAIL)
@@ -3963,7 +3995,7 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 						}
 			
 						/* update head semi-arc zig-zag count */
-						if (code_data.immersion == generic_code_data::character::PURE_KNOTOID)
+						if (code_data.immersion_character == generic_code_data::character::PURE_KNOTOID)
 							initial_new_zig_zag_count[(head_semi_arc %2?1:0)][code_data.head] = code_data.head_zig_zag_count;
 					}
 					else
@@ -4170,7 +4202,7 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 					   so it is not incremented before the assignment of the new label. 
 					*/
 										
-					if (code_data.immersion != generic_code_data::character::CLOSED) 
+					if (code_data.immersion_character != generic_code_data::character::CLOSED) 
 					{					
 						int component_zero_shift = 0;
 						
@@ -4389,11 +4421,11 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 						{
 							/* clear pure_knotoid_code_data so we assign labels correctly below, the head is set below */
 							pure_knotoid_code_data = false;
-							code_data.immersion = generic_code_data::character::KNOTOID;
+							code_data.immersion_character = generic_code_data::character::KNOTOID;
 if (debug_control::DEBUG >= debug_control::DETAIL)
 {
 	debug << "remove_Reidemeister_II: new_head_semi_arc is zero, clearing knotoid status of code data" << endl;
-	debug << "remove_Reidemeister_II: set code_data.immersion = generic_code_data::character::KNOTOID to indicate knot-type knotoid" << endl;
+	debug << "remove_Reidemeister_II: set code_data.immersion_character = generic_code_data::character::KNOTOID to indicate knot-type knotoid" << endl;
 }
 							
 						}
@@ -4760,7 +4792,7 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 						else
 							code_data.head = new_head_semi_arc/2;
 
-						code_data.immersion = generic_code_data::character::PURE_KNOTOID;
+						code_data.immersion_character = generic_code_data::character::PURE_KNOTOID;
 
 if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "remove_Reidemeister_II: new peer code head = " << code_data.head << endl;
@@ -4794,7 +4826,7 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 			   valid knotoid data, since remove_edge_flags_from_peer_code may have cleared the head if the
 			   diagram reduces to a knot.
 			*/
-			if (code_data.immersion == generic_code_data::character::PURE_KNOTOID && code_data.head != -1) 
+			if (code_data.immersion_character == generic_code_data::character::PURE_KNOTOID && code_data.head != -1) 
 			{
 				if (!valid_knotoid_input(code_data))
 				{

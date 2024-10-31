@@ -1,4 +1,4 @@
-/************************************************************************
+/***********************************************************************************************************
 			   Vogel's algorithm
 
 		  A. Bartholomew, started 20th October, 2002
@@ -6,20 +6,45 @@
 		  updated for braid 10 re-write 1st May 2005
 		  updated for labelled peer codes January 2011
 		  updated to handle flat crossings January 2015
+		  updated to calculate turning numbers August 2024
 
-This module contains an implementation of the Yamada-Vogel algorithm to
-determine a braid representation of a link given by a labelled peer code.
-The labelled peer code is read into a generic_code_data object by the
-generic_code brokering function, which is presented to the vogel function
-contained herein.  The code table in the generic code data is used to 
-determine Seifert circles, the Seifert graph and from there, whether a Vogel 
-move is required.  If we carry out a Vogel move, then we re-evaluate 
-enough of the code table to write a new labelled peer code which can
-be re-read to a new generic_code_data object and we go around the loop again.
-If we determine from the Seifert graph that no Vogel move is required then 
-we use the Seifert circles and crossing types to evaluate the braid 
-representation of the knot.  Full details of the algorithm may be found at 
-www.layer8.co.uk/maths
+This module contains an implementation of the Yamada-Vogel algorithm to determine a braid representation of a 
+link given by a labelled peer code.  The labelled peer code is read into a generic_code_data object by the 
+generic_code brokering function, which is presented to the vogel function contained herein.  The code table 
+in the generic code data is used to determine Seifert circles, the Seifert graph and from there, whether a Vogel 
+move is required.  If we carry out a Vogel move, then we re-evaluate enough of the code table to write a new 
+labelled peer code which can be re-read to a new generic_code_data object and we go around the loop again.  
+If we determine from the Seifert graph that no Vogel move is required then we use the Seifert circles and 
+crossing types to evaluate the braid representation of the knot.  Full details of the algorithm may be found 
+at www.layer8.co.uk/maths
+
+In August 2024 the function was updated to calculate turning numbers.  Since the algorithm involves only Reidemeister 
+2 moves it does not change the turning number of the initial diagram.  The algorithm terminates with one or two sets of 
+concentric Seifert circles and we calculate the turning number by keeping track of the point at infinity as given by the 
+initial peer code.  For this purpose we use the concept of the infinite turning cycle, as used by the draw programme.  We
+allow the user to specify the infinite turning cycle with a qualifier {cycle=n}, again following the draw programme.
+
+The first edge of the infinite turning cycle is the orientation_reference_edge, the polarity of this edge, together with
+an understanding of whether the infinite turning cycle is a left or right turning cycle tells us whether the point at infinity
+is to the right or left of this edge as we follow its natural orientation determined by the edge numbering (note we traverse
+odd edges backwards in turning cycles)
+
+Specifically, the point at infinity lies the following side of the reference edge
+
+orientation_                    Infinite turning cycle                       
+reference_edge             left cycle              right cycle        
+polarity                   (clockwise)           (anti-clockwise)
+
+           odd                right                  left
+           even                left                  right
+
+Once we have a chain of concentric Seifert circles we can look for the circle containing the orientation reference edge, call this 
+the reference circle.  We may move Seifert circles around the 2-sphere as necessary to reposition the referenced point at infinity 
+to the non-compact component of the plane, so that the reference circle is the outermost circle of a set of concentric Seifert circles.  
+The clockwise or anti-clockwise nature of the reference circle is determined by that of the orientation reference edge, which inherits
+its sense from the from the infinite turning cycle.  We therefore know how many braid strands are closed clockwise or anti-clockwise, 
+since all those circles in the compact region of the reference circle's complement have the same sense as the reference circle and the 
+other Seifert circles have the opposite sense.
 
 **************************************************************************/
 #include <string>
@@ -54,13 +79,17 @@ extern ofstream		debug;
 #define OVERMARK  2
 #define UNDERMARK 3
 
+/* used for calculating turning numbers */
+#define ANTICLOCKWISE  1
+#define CLOCKWISE     -1
+
 /********************* Function prototypes ***********************/
 void vogel_error (string errstring);
 string braid_reduce (string word);
 string virtual_vogel (string inbuf);
 int on_circle(matrix<int>& seifert_circle, int circle, int crossing);
 
-string vogel (generic_code_data code_data)
+string vogel (generic_code_data code_data, int* turning_number_ptr)
 {
 	char* 		mark;
 	int			num_left_cycles=0;
@@ -76,9 +105,19 @@ string vogel (generic_code_data code_data)
 	int 		e2;
 	bool		found;
 	bool		closed_braid;
+	
+	/* variables used for calculating turning numbers */
+	bool		initial_code_data = true;
+	int			orientation_reference_edge; // the first edge in the infinite turning cycle
+	int 		orientation_reference_polarity; // CLOCKWISE or ANTICLOCKWISE according to the infinite turning cycle
+	bool		infinity_right_of_reference_edge;
 
 	int num_crossings = code_data.num_crossings;
 	int num_edges = 2*num_crossings;
+	
+	ostringstream dev_ss;
+	write_peer_code(dev_ss, code_data);
+	string dev_str = dev_ss.str();
 
 if (braid_control::VOGEL_DEBUG)
 {
@@ -86,8 +125,15 @@ if (braid_control::VOGEL_DEBUG)
 	write_peer_code(debug, code_data);
 	debug << "\nvogel: code_data:" << endl;
 	print_code_data(debug,code_data,"vogel: ");
-	debug << endl;
 }
+
+	if (braid_control::VOGEL_TURNING_NUMBER && turning_number_ptr == 0)
+	{
+if (braid_control::VOGEL_DEBUG)
+	debug << "vogel: Error! turning_number_ptr is zero when braid_control::VOGEL_TURNING_NUMBER is true" << endl;
+	
+		return "";
+	}
 	
 	/* Count the number of Seifert circles, this will not change even if we
 	   apply Vogel moves. We will be storing Seifert circles as lists of edges
@@ -142,9 +188,10 @@ if (braid_control::VOGEL_DEBUG)
 if (braid_control::VOGEL_DEBUG)
     debug << "vogel: number of Seifert circles = " << num_circles << endl;
 
-	/* reset the edge_flags ready for the first time round the main loop */
+	/* reset the edge_flags ready for the first time round the main loop 
 	for (int i=0; i< num_edges; i++)
 		edge_flag[i] = 0;
+	*/
 
 	/* We declare seifert_graph here, since it will never
 	   need to change in size.
@@ -158,6 +205,7 @@ if (braid_control::VOGEL_DEBUG)
 	   Seifert graph.
 	*/
 	matrix<int> seifert_circle(num_circles,num_edges+1);
+	matrix<int> seifert_e_circle(num_circles,num_edges+1);
 	do
 	{	
 		/* we need to define code_data within the scope of the "do" loop
@@ -177,10 +225,87 @@ if (braid_control::VOGEL_DEBUG)
 		matrix<int> cycle(num_crossings+2, num_edges+1);
 		calculate_turning_cycles(code_data, cycle, num_left_cycles, num_cycles);
 		
-		/* Now calculate the seifert circles from the code_table, we use
-		   seifert_circle for crossings, and seifert_e_circle for the edges.
+		/* in the first iteration of this loop, set the orientation_reference_edge and record whether it lies
+		   in a left or right turning cycle */
+		if (braid_control::VOGEL_TURNING_NUMBER && initial_code_data)
+		{
+			if (!braid_control::RACK_POLYNOMIAL)
+			{
+				/* write the initial code data turning cycles to the output file */
+			    output << "\n\nturning_cycles:" << endl;
+				for (int i=0; i<num_cycles; i++)
+				{
+					output << "  cycle " << i << " length = " << cycle[i][0] << ": ";
+					for (int j=1; j<=cycle[i][0]; j++)
+						output << cycle[i][j] << " ";
+					output << endl;
+				}
+			}
+			
+			if (braid_control::INFINITE_CYCLE == braid_control::cycle::UNSPECIFIED)
+			{
+				/* determine the infinite region as the longest turning cycle */
+				braid_control::INFINITE_CYCLE = 0;
+
+				for (int i=1; i< num_cycles; i++)
+				{
+					if (cycle[i][0] > cycle[braid_control::INFINITE_CYCLE][0])
+						braid_control::INFINITE_CYCLE = i;
+				}
+			}
+			
+if (braid_control::VOGEL_DEBUG)
+    debug << "vogel: infinite turning cycle = " << braid_control::INFINITE_CYCLE << endl;			
+
+			/* identify the first edge in the infinite turning cycle and record the cycle polarity */
+			orientation_reference_edge = abs(cycle[braid_control::INFINITE_CYCLE][1]);
+			
+if (braid_control::VOGEL_DEBUG)
+    debug << "vogel: orientation_reference_edge = " << orientation_reference_edge << endl;			
+			
+			if (braid_control::INFINITE_CYCLE < num_left_cycles )
+			{
+				orientation_reference_polarity = CLOCKWISE;
+if (braid_control::VOGEL_DEBUG)
+    debug << "vogel: infinite turning cycle oriented clockwise" << endl;			
+			}
+			else
+			{
+				orientation_reference_polarity = ANTICLOCKWISE;
+if (braid_control::VOGEL_DEBUG)
+    debug << "vogel: infinite turning cycle oriented anti-clockwise" << endl;			
+			}
+
+			if ( (orientation_reference_edge%2==0 && orientation_reference_polarity ==  ANTICLOCKWISE) ||
+			     (orientation_reference_edge%2==1 && orientation_reference_polarity ==  CLOCKWISE) )
+			{
+				infinity_right_of_reference_edge = true;
+			}
+			else
+			{
+				infinity_right_of_reference_edge = false;
+			}
+			
+if (braid_control::VOGEL_DEBUG)
+    debug << "vogel: infinity_right_of_reference_edge = " << (infinity_right_of_reference_edge?"true":"false") << endl;			
+			
+			initial_code_data = false;
+		}
+		
+		
+		/* Now calculate the seifert circles from the code_table, we use Seifert_Circle for crossings, and seifert_e_circle for the edges.
+		
+		   We use a local object Seifert_Circle and Seifert_E_Circle due to an error encountered with peer code [-1 -3 -5 -7]/+ + + + when we use the object
+		   seifert_circle declared outside the scope of this "do" clause to record Seifert circles.  Although Vogel moves do not change the 
+		   number of Seifert circles and the code below re-writes the length of each Seifert circle as it is calculated, with a single object 
+		   declared at a wider scope, the crossing information for a Seifert circle was being overridden when the next Seifert circle length 
+		   was written.  The above peer code had three Vogel moves applied to give peer code [-7 9 13 17 -11 1 -15 3 -19 5]/+ + + + + - + - + -, 
+		   whereupon writing the length of the third Seifert circle overwrote part of the second Seifert circle.  This did not happen if the 
+		   vogel function were presented with the latter peer code from the outset.  Change history has been left here in case this is a 
+		   compiler error.
 		*/
-		matrix<int> seifert_e_circle(num_circles,num_edges+1);
+		matrix<int> Seifert_E_Circle(num_circles,num_edges+1);
+		matrix<int> Seifert_Circle(num_circles,num_edges+1);
 		
 		/* We shall use num_circles as an index into seifert_circle
 		   but need to count rows from zero, so this assignment keeps the
@@ -208,6 +333,10 @@ if (braid_control::VOGEL_DEBUG)
 				{
 					start = i;
 					edge = start;
+
+//if (braid_control::VOGEL_DEBUG)
+//    debug << "vogelXX:   start of seifert circle at edge " << edge << "(start = " << start << ")" << endl;
+
 					found = true;
 					break;
 				}
@@ -224,25 +353,94 @@ if (braid_control::VOGEL_DEBUG)
 					edge_flag[edge] = 1;
 					offset++;
 					
-					seifert_e_circle[num_circles][offset] = edge;
+					Seifert_E_Circle[num_circles][offset] = edge;
 					
 					/* identify the crossing at which the next edge terminates */
 					crossing = code_data.term_crossing[edge];
+
+//if (braid_control::VOGEL_DEBUG)
+//    debug << "vogelXX:   edge " <<  edge << " terminates at crossing " << crossing << ", offset = " << offset << endl;
+
 					
-					seifert_circle[num_circles][offset] = crossing;
+//					seifert_circle[num_circles][offset] = crossing;
+					Seifert_Circle[num_circles][offset] = crossing;
 					
 					/* determine the next edge in the Seifer circle */
 					edge = (edge % 2? code_table[generic_code_data::table::ODD_ORIGINATING][crossing]: code_table[generic_code_data::table::EVEN_ORIGINATING][crossing]);
+
+//if (braid_control::VOGEL_DEBUG)
+//    debug << "vogelXX:   next edge " << edge << endl;
 				
 				} while (edge != start);	
-				
+	
+/*			
+if (braid_control::VOGEL_DEBUG)
+{
+    debug << "vogelXX:   Seifert circle crossings from seifert_circle before:" << endl;
+    for (int i=0;i<num_circles;i++)
+    {
+//		debug << "vogelXX:   " << i << ". vertex = " << i+1 << ", length = "  << seifert_circle[i][0] << ": ";
+//		for (int j=1;j<=seifert_circle[i][0];j++)
+//		    debug << seifert_circle[i][j] << " ";
+		
+		debug << "vogelXX:   " << i << ". vertex = " << i+1 << ", length = "  << Seifert_Circle[i][0] << ": ";
+		for (int j=1;j<=Seifert_Circle[i][0];j++)
+		    debug << Seifert_Circle[i][j] << " ";
+		debug << endl;
+    }
+    debug << "vogelXX:   Seifert circle edges from seifert_circle before:" << endl;
+    for (int i=0;i<num_circles;i++)
+    {
+		debug << "vogelXX:   " << i << ". vertex = " << i+1 << ", length = "  << Seifert_E_Circle[i][0] << ": ";
+		for (int j=1;j<=Seifert_E_Circle[i][0];j++)
+		    debug << Seifert_E_Circle[i][j] << " ";
+		debug << endl;
+    }
+}
+*/
+
 				/* write the length of the Seifert circle into the first
 	   			   column of seifert_e_circle and seifert_circle */
-	 			seifert_e_circle[num_circles][0] = offset;
-	 			seifert_circle[num_circles][0] = offset;
+	 			Seifert_E_Circle[num_circles][0] = offset;
+//	 			seifert_circle[num_circles][0] = offset;
+	 			Seifert_Circle[num_circles][0] = offset;
+
+/*
+if (braid_control::VOGEL_DEBUG)
+{
+    debug << "vogelXX:   Seifert circle crossings from seifert_circle after:" << endl;
+    for (int i=0;i<=num_circles;i++)
+    {
+//		debug << "vogelXX:   " << i << ". vertex = " << i+1 << ", length = "  << seifert_circle[i][0] << ": ";
+//		for (int j=1;j<=seifert_circle[i][0];j++)
+//		    debug << seifert_circle[i][j] << " ";
+
+		debug << "vogelXX:   " << i << ". vertex = " << i+1 << ", length = "  << Seifert_Circle[i][0] << ": ";
+		for (int j=1;j<=Seifert_Circle[i][0];j++)
+		    debug << Seifert_Circle[i][j] << " ";
+		debug << endl;
+    }
+    debug << "vogelXX:   Seifert circle edges from seifert_circle after:" << endl;
+    for (int i=0;i<num_circles;i++)
+    {
+		debug << "vogelXX:   " << i << ". vertex = " << i+1 << ", length = "  << Seifert_E_Circle[i][0] << ": ";
+		for (int j=1;j<=Seifert_E_Circle[i][0];j++)
+		    debug << Seifert_E_Circle[i][j] << " ";
+		debug << endl;
+    }
+}
+*/
+
 			}
 			else
+			{
+				/* We copy-assign Seifert_Circle to seifert_circle here since subsequent use of seifert_circle is read-only */
+				seifert_circle = Seifert_Circle;				
+				seifert_e_circle = Seifert_E_Circle;				
 				complete = true;
+			}
+				
+				
 		} while (!complete);
 			
 		/* adjust num_circles to its correct value */
@@ -473,19 +671,14 @@ if (braid_control::VOGEL_DEBUG)
 	debug << endl;
 }
 
-			/* Apply the Vogel move by determining the code table for the
-			   peer code of the modified diagram
-			*/
+			
+			/* Apply the Vogel move by determining the code table for the peer code of the modified diagram	*/
 			vector<int> new_edge(num_edges);
 		
 			/* set e1 to be the low edge */
 			if (e2 < e1)
-			{
-				edge = e1;
-				e1 = e2;
-				e2 = edge;
-			}
-		
+				swap(e1,e2);
+
 			/* write the new edge numbers */
 			for (int i=0; i< e1; i++)
 				new_edge[i] = i;
@@ -501,6 +694,20 @@ if (braid_control::VOGEL_DEBUG)
 		debug << new_edge[i] << ' ';
 	debug << endl;
 }
+
+			if (braid_control::VOGEL_TURNING_NUMBER)
+			{
+				/* update the orientation_reference_edge with it's new edge number */
+				if (orientation_reference_edge > e1)
+				{
+					orientation_reference_edge = new_edge[orientation_reference_edge];
+				
+if (braid_control::VOGEL_DEBUG)
+	debug << "vogel: orientation_reference_edge updated to " << orientation_reference_edge << endl;
+				}
+				
+			}
+			
 			/* determine the crossing numbers in the new code for the two additional crossings introduced by the Vogel move.
 			   also determine the component on which each edge resides.
 			*/
@@ -626,7 +833,7 @@ if (braid_control::VOGEL_DEBUG)
 				new_code_table[generic_code_data::table::TYPE][c2] = generic_code_data::TYPE1;
 			}
 		
-			if (braid_control::FLAT_VOGEL_MOVES)
+			if (braid_control::FLAT_CROSSINGS)
 			{
 				new_code_table[generic_code_data::table::LABEL][c1] = generic_code_data::FLAT;
 				new_code_table[generic_code_data::table::LABEL][c2] = generic_code_data::FLAT;
@@ -637,6 +844,14 @@ if (braid_control::VOGEL_DEBUG)
 				new_code_table[generic_code_data::table::LABEL][c1] = generic_code_data::POSITIVE;
 				new_code_table[generic_code_data::table::LABEL][c2] = generic_code_data::NEGATIVE;
 			}
+			
+			/* Added 6-8-24  to accommodate the updated write_peer_code function supporting multilinkoids.  This needs ODD_TERMINATING and EVEN_TERMINATING data */
+			for (int i=0; i< new_code_data.num_crossings; i++)
+			{
+				new_code_table[generic_code_data::table::ODD_TERMINATING][i] = new_code_table[generic_code_data::table::OPEER][i];
+				new_code_table[generic_code_data::table::EVEN_TERMINATING][i] = 2*i;
+			}
+
 
 			new_code_data.code_table = new_code_table;
 			
@@ -645,16 +860,17 @@ if (braid_control::VOGEL_DEBUG)
 			*/
 if (braid_control::VOGEL_DEBUG)
 {
-	debug << "vogel: new_code_data = ";
-	write_peer_code(debug, new_code_data);
-	debug << "\nvogel: new_code_data:" << endl;
+	debug << "vogel: new_code_data:" << endl;
 	print_code_data(debug,new_code_data,"vogel: ");
-	debug << endl;
+	debug << "\nvogel: new_code_data = ";
+	write_peer_code(debug, new_code_data);
 }
 			ostringstream oss;
 			write_peer_code(oss, new_code_data);
 			read_peer_code(code_data, oss.str());
-	
+
+dev_str = oss.str();
+		
 			/* increase num_crossings and reset num_edges*/
 			num_crossings += 2;
 			num_edges = 2*num_crossings;
@@ -683,11 +899,11 @@ if (braid_control::VOGEL_DEBUG)
 	debug << "vogel: peer code written from new_code_table: " << oss.str() << endl;
 	debug << "vogel: new code data after reading new peer_code: " << endl;
 	print_code_data(debug,code_data,"vogel: ");
-	debug << endl;
 }
 
 		}	
 	} while (!closed_braid);
+
 
 	/* Now evaluate the braid crossing types, positive, negative or virtual, 
 	   that will be used when determining the braid word
@@ -697,16 +913,16 @@ if (braid_control::VOGEL_DEBUG)
 	for (int i=0; i< num_crossings; i++)
 	{
 		if (code_table[generic_code_data::table::LABEL][i] == generic_code_data::VIRTUAL)
-			crossing_type[i] = braid_crossing_type::VIRTUAL;
+			crossing_type[i] = generic_braid_data::crossing_type::VIRTUAL;
 		else if (code_table[generic_code_data::table::LABEL][i] == generic_code_data::FLAT)
-			crossing_type[i] = braid_crossing_type::FLAT;
+			crossing_type[i] = generic_braid_data::crossing_type::FLAT;
 		else
 		{
 			if ((code_table[generic_code_data::table::LABEL][i] == generic_code_data::NEGATIVE && code_table[generic_code_data::table::TYPE][i] == generic_code_data::TYPE1)
 			  ||(code_table[generic_code_data::table::LABEL][i] == generic_code_data::POSITIVE && code_table[generic_code_data::table::TYPE][i] == generic_code_data::TYPE2))
-				crossing_type[i] = braid_crossing_type::POSITIVE;
+				crossing_type[i] = generic_braid_data::crossing_type::POSITIVE;
 			else
-				crossing_type[i] = braid_crossing_type::NEGATIVE;		
+				crossing_type[i] = generic_braid_data::crossing_type::NEGATIVE;		
 		}
 	}
 
@@ -762,6 +978,111 @@ if (braid_control::VOGEL_DEBUG)
 		debug << chain[j] << " ";
 	debug << endl;
 }
+
+	if (braid_control::VOGEL_TURNING_NUMBER)
+	{
+		/* Identify where in the chain of Seifert circles the orientation reference edge lies */	
+		int turning_number;	
+		bool found = false;
+		int location = -1;
+		
+		for (int i=0; i< num_circles; i++)
+		{
+			/* check whether the orientation_reference_edge lies in the ith Seifert circle in chain.*/
+			for (int j=1; j<= seifert_e_circle[chain[i]-1][0]; j++)
+			{
+				if (seifert_e_circle[chain[i]-1][j] == orientation_reference_edge)
+				{
+					location = i;
+					found = true;
+				}
+			}
+			if (found)
+				break;
+		}
+		
+if (braid_control::VOGEL_DEBUG)
+	debug << "vogel: orientation_reference_edge " << orientation_reference_edge << " located in Seifert circle at chain offset " << location << endl;
+		
+		if (location == 0 || location == num_circles-1)
+		{
+if (braid_control::VOGEL_DEBUG)
+	debug << "vogel: Seifert circles form a single set of concentric circles " << endl;
+	
+			turning_number = num_circles*orientation_reference_polarity;
+		}
+		else
+		{
+if (braid_control::VOGEL_DEBUG)
+	debug << "vogel: Seifert circles form two sets of concentric circles " << endl;
+
+			/* The Seifert circle containing the orientation_reference_edge is deemed to be oriented according to the orientation_reference_polarity
+			   but we do not yet know from which end of the chain we were looking (the "clockwise" or "anti-clockwise" Seifert circles end).
+			   We check the Seifert circle at location-1 in the chain and determine the TYPE of the edge in the reduced Seifert graph
+			   between the two Seifert circles.  This will tell us, together with the odd or even nature of the orientation_reference_edge, whether the 
+			   Seifert circle chain[0] is to the left or the right of the orientation_reference_edge.  Comparing that information with the location of 
+			   infinity determined by the orientation_reference_polarity allows us to calculate the turning number.
+			   
+			   Start by locating the edge from chain[location] to chain[location-1] in the seifert graph
+			*/
+			int preceeding_location_type;
+			for (int i=1; i<= seifert_graph[chain[location]-1][0]; i++)
+			{
+				if (abs(seifert_graph[chain[location]-1][i]) == chain[location-1])
+				{
+					if(seifert_graph[chain[location]-1][i] < 0)
+						preceeding_location_type = generic_code_data::TYPE1;
+					else
+						preceeding_location_type = generic_code_data::TYPE2;
+
+if (braid_control::VOGEL_DEBUG)
+{
+	debug << "vogel: preceeding Seifert circle connected to that of orientation_reference_edge by crossings of type " <<
+    (preceeding_location_type ==  generic_code_data::TYPE1?"TYPE1":"TYPE2") << endl;				
+}	
+					break;
+					
+				}
+			}
+			
+			bool start_of_chain_to_left = false;
+			
+			if ( (orientation_reference_edge%2==0 && preceeding_location_type ==  generic_code_data::TYPE1) ||
+			     (orientation_reference_edge%2==1 && preceeding_location_type ==  generic_code_data::TYPE2) )
+			{
+				start_of_chain_to_left = true;
+			}
+
+if (braid_control::VOGEL_DEBUG)
+{
+	debug << "vogel: start of chain lies to left of Seifert circle containing edge " << orientation_reference_edge << " is " <<
+    (start_of_chain_to_left?"true":"false") << endl;		    		
+    debug << "vogel: infinity_right_of_reference_edge = " << (infinity_right_of_reference_edge?"true":"false") << endl;			
+}
+			if ((start_of_chain_to_left && infinity_right_of_reference_edge) || (!start_of_chain_to_left && !infinity_right_of_reference_edge))
+			{
+if (braid_control::VOGEL_DEBUG)
+	debug << "vogel: " << location+1 << " Seifert circles with the same and " << (num_circles-1-location) << " with the opposite orientation as the reference edge" << endl;
+
+				/* The first location+1 Seifert circles have the same orientation as the reference edge, the remainder have the opposite orientation */
+				turning_number = (location+1)*orientation_reference_polarity + (num_circles-1-location)*orientation_reference_polarity*-1;
+			}
+			else
+			{
+if (braid_control::VOGEL_DEBUG)
+	debug << "vogel: " << location << "Seifert circles with the same and " << (num_circles-location) << " with the opposite orientation as the reference edge" << endl;
+
+				/* The first location Seifert circles have the same orientation as the reference edge, the remainder have the opposite orientation */
+				turning_number = location*orientation_reference_polarity + (num_circles-location)*orientation_reference_polarity*-1;		
+			}
+		}
+
+if (braid_control::VOGEL_DEBUG)
+	debug << "vogel: turning_number = " << turning_number << endl;
+			
+			(*turning_number_ptr) = turning_number;
+	}
+
 
 	/* next set up the strand numbers */	
 	vector<int> strand(num_circles);
@@ -860,7 +1181,7 @@ if (braid_control::VOGEL_DEBUG)
 			if (k)
 			{
 				/* crossing seifert_circle[parent][j] is the kth crossing on the child */
-				int num_chars = (crossing_type[seifert_circle[parent][j]] == braid_crossing_type::NEGATIVE? 2 : 1);
+				int num_chars = (crossing_type[seifert_circle[parent][j]] == generic_braid_data::crossing_type::NEGATIVE? 2 : 1);
 				ostringstream oss;
 				oss << p_strand-1;
 				num_chars += oss.str().length();
@@ -931,12 +1252,12 @@ if (braid_control::VOGEL_DEBUG)
 			    *pptr++ = '%';
 
 			    /* first add the crossing */
-		    	if (crossing_type[seifert_circle[parent][j]] == braid_crossing_type::NEGATIVE)
+		    	if (crossing_type[seifert_circle[parent][j]] == generic_braid_data::crossing_type::NEGATIVE)
 					*pptr++ = '-';
-//		    	if (crossing_type[seifert_circle[parent][j]] == braid_crossing_type::VIRTUAL)
-		    	if (crossing_type[seifert_circle[parent][j]] == braid_crossing_type::VIRTUAL || crossing_type[seifert_circle[parent][j]] == braid_crossing_type::FLAT)
+//		    	if (crossing_type[seifert_circle[parent][j]] == generic_braid_data::crossing_type::VIRTUAL)
+		    	if (crossing_type[seifert_circle[parent][j]] == generic_braid_data::crossing_type::VIRTUAL || crossing_type[seifert_circle[parent][j]] == generic_braid_data::crossing_type::FLAT)
 					*pptr++ = 't';
-		    	else // braid_crossing_type::POSITIVE or braid_crossing_type::FLAT
+		    	else // generic_braid_data::crossing_type::POSITIVE or generic_braid_data::crossing_type::FLAT
 					*pptr++ = 's';
 
 				pptr += oss.str().copy(pptr,string::npos);
@@ -998,7 +1319,10 @@ if (braid_control::VOGEL_DEBUG)
 if (braid_control::VOGEL_DEBUG)
 	debug << "vogel: braid word before reduction: " << oss.str() << endl;
 
-	string braid_word = braid_reduce(oss.str());
+	string braid_word = oss.str();
+	
+	if (braid_control::REDUCE_BRAIDS)
+		braid_word = braid_reduce(oss.str());
 
 if (braid_control::VOGEL_DEBUG)
 	debug << "vogel: braid word after reduction: " << braid_word << endl;

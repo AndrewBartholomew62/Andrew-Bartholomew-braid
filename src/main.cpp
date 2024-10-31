@@ -96,8 +96,11 @@ documentation, available at www.layer8.co.uk/maths/braids
                   Added the ability to read Dowker-Thistlethwaite codes for prime knots and convert them to labelled peer codes (December 2022).
     Version 25.2  Added support for multi-linkoids to the peer code and Gauss code input and output functions and modified gauss_to_peer_code to convert
                   multi-knotoid Gauss codes to peer codes.(April 2023)
-    Version 26.0  AAdded Hamiltonian task to find Hamiltonian circuits in a diagram of a classical or flat knot or link.  Removed the start menu. (October 2023)
-                  
+    Version 26.0  Added Hamiltonian task to find Hamiltonian circuits in a diagram of a classical or flat knot or link.  Removed the start menu. (October 2023)
+    Version 27.0  Added prime task to test whether (the shadow of) a diagram is prime; i.e 3-connected. Cleaned up the handling of multi-linkoids (October 2023)
+    Version 28.0  Added turning number calculation(August 2024), changed RACK_POLYNOMIAL task to accept peer codes in addition to braid words.  Cleaned up the
+                  validation of braid input and harmonized the checking of braid qualifiers across the various tasks that use them.  
+                  Implemented the Q-polynomial invariant for single component doodles(October 2024)
 	
 ********************************************************************************************************************************************************/
 using namespace std;
@@ -129,7 +132,7 @@ ifstream    input;
 #include <gauss-orientation.h>
 
 /******************** Control Variables **********************/
-string braid_control::version  = "26.0";
+string braid_control::version  = "28.0";
 
 int braid_control::gcd_initializing;
 
@@ -143,6 +146,7 @@ bool braid_control::BURAU = false;
 bool braid_control::BYPASS_FUNDAMENTAL_EQUATION_CHECK = false;
 bool braid_control::CALCULATE_DELTA_0_ONLY = false;
 bool braid_control::CALCULATE_MOD_P = false;
+bool braid_control::CLASSICAL_ONLY = false;
 bool braid_control::COMMUTATIVE_AUTOMORPHISM = false;
 bool braid_control::COMPLEX_STUDY_DELTA_1 = false;
 bool braid_control::CUSTOM_WEYL = false;
@@ -150,6 +154,7 @@ bool braid_control::DELTA_1_UNIT_CHECK = true;
 bool braid_control::DEVELOPMENT_MODE = false;
 bool braid_control::DISPLAY_DELTA_1_ONLY = false;
 bool braid_control::DOODLE_ALEXANDER = false;
+bool braid_control::DOODLE_Q_POLYNOMIAL = false;
 bool braid_control::DOWKER_CODE = false;
 bool braid_control::DYNNIKOV_TEST = false;
 bool braid_control::EQUALITY_TEST = false;
@@ -158,7 +163,7 @@ bool braid_control::EXPANDED_BRACKET_POLYNOMIAL = true;
 bool braid_control::EXTRA_OUTPUT = false;
 bool braid_control::FIXED_POINT_INVARIANT = false;
 bool braid_control::FLIP_BRAID = false;
-bool braid_control::FLAT_VOGEL_MOVES = false;
+bool braid_control::FLAT_CROSSINGS = false;
 bool braid_control::GAUSS_CODE = false;
 bool braid_control::GCD_BACK_SUBSTITUTING = false;
 bool braid_control::HAMILTONIAN = false;
@@ -193,6 +198,7 @@ bool braid_control::QUANTUM_WEYL = false;
 bool braid_control::QUATERNION = false;
 bool braid_control::RACK_POLYNOMIAL = false;
 bool braid_control::RAW_OUTPUT = false;
+bool braid_control::REDUCE_BRAIDS = true;
 bool braid_control::RELAXED_PARITY = false;
 bool braid_control::REMOVE_REIDEMEISTER_II_MOVES = true;
 bool braid_control::REMOVE_PEER_CODE_COMPONENT = false;
@@ -213,6 +219,7 @@ bool braid_control::UOPGC = false; // unoriented over preferred Gaus code
 bool braid_control::VERIFY_DELTA_0 = false;
 bool braid_control::VOGEL_ALGORITHM = false;
 bool braid_control::VOGEL_HEIGHT_ONLY = false;
+bool braid_control::VOGEL_TURNING_NUMBER = false;
 bool braid_control::WAIT_SWITCH = false;
 bool braid_control::WELDED_BRAID = false;
 bool braid_control::WEYL = false;
@@ -233,11 +240,9 @@ int	braid_control::SWITCH_POWER=0; // used to control whether powers of switches
 
 bool braid_control::VOGEL_DEBUG = false;
 
-/* RACK_TERMS is the default for number of positive and negative terms added to
-   a braid to calculate the rack polynomial.  The default is set in the function
-   rack_poly_invariant
-*/
-int	braid_control::RACK_TERMS = 0; 
+int braid_control::HC_INCLUDE_EDGE = -1;  // initialises to the "no specific edge to include" value
+
+int	braid_control::INFINITE_CYCLE = cycle::UNSPECIFIED; // used by turning-number calculation initialises to "no specific turning cycle" value
 
 /* SATELLITE acts as a flag and indicates the number of strands to be added, if the default of 2 is not required */
 int braid_control::SATELLITE = 0;
@@ -268,7 +273,7 @@ Qpmatrix adj2(Qpmatrix& M);
 void simplify_matrix (Qpmatrix& M);
 string parse_long_knot_input_string (string input_string);
 void display_fixed_point_switch(matrix<int>& M, ostream& os, bool number_from_zero);
-string vogel (generic_code_data code_data);
+string vogel (generic_code_data code_data, int* turning_number_ptr=0);
 			
 template <typename T, typename V, typename U, typename St> 
 matrix<polynomial<T,V,U>,St> C_study_matrix(const matrix<polynomial<T,V,U>,St>& H_matrix, int n=0, int m=0, int* rperm=0, int* cperm=0);
@@ -295,10 +300,10 @@ bool two_dominates(matrix<int>& Ua, matrix<int>& Da, matrix<int>& Ub, matrix<int
 bool power_2(matrix<int>& U, matrix<int>& D);
 int switch_order(matrix<int>& U, matrix<int>& D);
 void fixed_point_invariant(matrix<int>& Su, matrix<int>& Sd, matrix<int>& invSu, matrix<int>& invSd, 
-						   matrix<int>& Tu, matrix<int>& Td, ST_pair_type pair_type, string input_string, string title);
+						   matrix<int>& Tu, matrix<int>& Td, braid_control::ST_pair_type pair_type, string input_string, string title);
 
 void rack_poly_invariant(matrix<int>& Su, matrix<int>& Sd, matrix<int>& invSu, matrix<int>& invSd, matrix<int>& Tu, 
-						 matrix<int>& Td, ST_pair_type pair_type, string input_string, string title);
+						 matrix<int>& Td, braid_control::ST_pair_type pair_type, string input_string, string title, int writhe, int turning_number);
 
 void commutative_automorphism_invariant(const Qpmatrix& phi, const Qpmatrix& psi, string input_string, string title);			
 void set_acceptable_input_type();
@@ -339,6 +344,7 @@ int main (int argc, char* argv[])
     if (argc == 1)
 	{
 
+		cout << "\nThis is A. Bartholomew's braid programme, v" << braid_control::version;
 		cout << "\nbraid --<task> [-<short_options>][--<long_option>][<infile>[<outfile>]]" << endl;
 		cout << "  braid -h to view help file" << endl;
 		cout << "  braid -H! for detailed usage information" << endl;
@@ -350,7 +356,7 @@ int main (int argc, char* argv[])
 
 
 		/* Put up a menu for the user to decide what to do */
-		cout << "\nThis is A.Bartholomew's braid programme, v" << braid_control::version;	
+		cout << "\nThis is A. Bartholomew's braid programme, v" << braid_control::version;	
 		cout << "\n\nPlease choose from the following options:\n";
 		cout << "\n 0. Quit the program without doing anything.";
 		cout << "\n 1. Burau matrix representation of a braid.";
@@ -520,6 +526,30 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 
 	if (braid_control::DEVELOPMENT_MODE)
 	{
+		
+/*
+		list<int> test;
+		cout << "terms: ";
+		do 
+		{
+			int next;
+			cin >> next;
+			if (next < 0)
+				break;
+			else
+				test.push_back(next);
+		} while(true);
+		
+		cout << "lcm = " << least_common_multiple(test) << endl;
+exit(0);		
+*/
+		
+/*
+vector<int> braid_permutation (string braid, int num_terms, int num_strings);
+	
+
+void renumber_peer_code(generic_code_data& code_data, vector<int> shift);
+matrix<int> permutation_cycles (generic_code_data& code_data);
 
 bool gauss_to_peer_code(generic_code_data gauss_code_data, generic_code_data& peer_code_data, bool optimal=true, vector<int>* gauss_crossing_perm=0, bool evaluate_gauss_crossing_perm=false);		
 
@@ -528,8 +558,10 @@ bool gauss_to_peer_code(generic_code_data gauss_code_data, generic_code_data& pe
 
 //if (debug_control::DEBUG >= debug_control::SUMMARY)
 //	debug << "development: input_control::ACCEPT_MAP set to 0x" << hex << input_control::ACCEPT_MAP << dec << endl;
+*/
 		
 		string buffer;
+/*		
 		string title;
     	input.open(input_file.c_str());
     	if(!input)
@@ -540,31 +572,187 @@ bool gauss_to_peer_code(generic_code_data gauss_code_data, generic_code_data& pe
 		
 		while (getline(input,buffer))
 		{
+			if (buffer[0] == ';' || (buffer[0] == '-' && buffer[1] == '-'))
+				continue;
+				
+			cout << buffer << endl;
+*/
+		do
+		{
+//			cout << "enter peer code: ";
+			cout << "enter braid: ";
+			getline(cin, buffer);
+			
+			
+			if (buffer == "q")
+				break;
+	
+//			generic_code_data code_data;
+//			read_peer_code(code_data,buffer);
+			
+//			seifert_circle_data SCD(code_data);
+		
+//			seifert_circle_data SCD(buffer);
+			
+//			print_seifert_data(cout,SCD," ");
+
+//if (debug_control::DEBUG >= debug_control::SUMMARY)
+//	print_seifert_data(debug,SCD," ");
+			
+/*			vector<int> perm = braid_permutation(buffer,num_terms,num_strings);
+
+			cout << "  braid_permutation: ";
+			for (size_t i=0; i < perm.size(); i++)
+				cout << perm[i] << ' ';
+			cout << endl;
+			
+			int turning_number = 1;
+			for (size_t i=0; i < perm.size(); i++)
+			{
+				for (size_t j=i+1; j < perm.size(); j++)
+				{
+					if (perm[j] < perm[i])
+						turning_number++;
+				}
+			}
+
+			cout << "  turning_number = " << turning_number << endl;
+*/			
+		} while(true);
+		
+//continue;				
+exit(0);
+
+#ifdef TAKEOUT
 			generic_code_data code_data;
 			read_code_data(code_data,buffer);
-			
-			bool connected_sum = non_prime_immersion(code_data,true);
+	
+			int num_cycles;
+			int num_left_cycles;
+			matrix<int> cycle(code_data.num_crossings+2, 2*code_data.num_crossings+1);
+			if (calculate_turning_cycles(code_data, cycle, num_left_cycles, num_cycles))
+			{
+			    int genus = (2 + code_data.num_crossings - num_cycles)/2;
+
+			    cout << "genus = " << genus << endl;
+
+                            cout << "turning_cycles:" << endl;
+                            for (int i=0; i<num_cycles; i++)
+		            {
+		                 cout << "  cycle " << i << ": ";
+	                         for (int j=1; j<=cycle[i][0]; j++)
+	                            cout << cycle[i][j] << " ";
+
+	                         cout << endl;
+			    }
+			}
+			else
+			{
+			    cout << "failed to calculate turning cycles" << endl;
+			}
+
+			continue;
+
+			for (int i=0; i<=2*code_data.num_crossings; i++)
+			{
+				generic_code_data shifted_code_data = code_data;
+				vector<int> shift_vector = {i};
+				renumber_peer_code(shifted_code_data,shift_vector);
+				
+				
+				vector<int> perm(code_data.num_crossings);
+				vector<int> inv_perm(code_data.num_crossings);
+				
+				for (int j=0; j< code_data.num_crossings; j++)
+				{
+					int odd_terminating = shifted_code_data.code_table[generic_code_data::table::EVEN_TERMINATING][j]+1;
+					int even_terminating = shifted_code_data.code_table[generic_code_data::table::ODD_TERMINATING][j]+1;
+					int crossing = even_terminating/2;
+					perm[crossing-1] = (odd_terminating+1)/2;
+
+					if (shifted_code_data.code_table[generic_code_data::table::TYPE][(odd_terminating-1)/2]==generic_code_data::type::TYPE2)
+						perm[crossing-1]*=-1;
+				}
+					
+				
+				cout << "(";
+				for (int j=0; j< code_data.num_crossings; j++)
+				{
+					cout << setw(3) << j+1;
+//					if (j< code_data.num_crossings-1)
+//						cout << ' ';
+				}
+				cout << ")";
+				
+				cout << "\t";
+				write_code_data(cout,shifted_code_data);
+				cout << "\n(";
+
+				for (int j=0; j< code_data.num_crossings; j++)
+				{
+					cout << setw(3) << perm[j];
+//					if (j< code_data.num_crossings-1)
+//						cout << ' ';
+				}
+				cout << ")\n";
+				
+				cout << endl;				
+				
+				matrix<int> peer_perm_cycles = permutation_cycles(shifted_code_data);
+				
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+{
+	debug << "development: peer_perm_cycles: " << endl;
+	for (unsigned int i=0; i< peer_perm_cycles.numrows(); i++)
+	{
+		debug << "development:   cycle " << i << "(" << peer_perm_cycles[i][0] << "): ";
+		for (int j=1; j<= peer_perm_cycles[i][0]; j++)
+			debug << peer_perm_cycles[i][j] << ' ';
+		debug << endl;
+	}
+}
+				if (peer_perm_cycles.numrows() == 1 && i == 1)
+				{
+					cout << "single cycle ";
+					write_code_data(cout,shifted_code_data);				
+//					cout << " shift " << i << endl;
+					cout << endl;
+				}
+
+			}
+			continue;
+		
+/*			bool connected_sum = !three_connected(code_data,true);
 			
 			if (connected_sum)
 				cout << "non_prime" << endl;
 			else
 				cout << "prime" << endl;
+*/				
+
+/*
+			simple_Reidemeister_II_return simple_Reidemeister_II_data = simple_Reidemeister_II_present(code_data, false); // create_flags = false
+			if (simple_Reidemeister_II_data.Reidemeister_II_found)
+				cout << "non_minimal" << endl;
+			else
+				cout << "minimal" << endl;
+*/			
 				
-			continue;
-			
 			
 			write_code_data(cout,code_data);
 			cout << endl;
+/*
 			generic_code_data peer_code_data;
 			gauss_to_peer_code(code_data, peer_code_data);			
 			write_code_data(cout,peer_code_data);
 //			print_code_data(cout,peer_code_data);
 			cout << endl;
+*/
 
 continue;			
-			int num_cycles;
-			int num_left_cycles;
-			matrix<int> cycle(code_data.num_crossings+2, 2*code_data.num_crossings+1);
+		//	int num_cycles;
+		//	int num_left_cycles;
+	//		matrix<int> cycle(code_data.num_crossings+2, 2*code_data.num_crossings+1);
 			calculate_turning_cycles(code_data, cycle, num_left_cycles, num_cycles);
 			vector<int> cycle_length_count(code_data.num_crossings+2);
 			
@@ -612,7 +800,7 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 //void write_peer_code(ostream& s, const generic_code_data& code_data, bool zig_zags=false, bool labelled=true);
 bool remove_edge_flags_from_peer_code(generic_code_data& code_data, vector<int>& edge_flag);
 int remove_Reidemeister_II(generic_code_data& code_data, vector<int>& component_flags);
-//int vertex_span (generic_code_data& code_data, int initial_crossing, vector<int>* exclude=0);
+//int vertex_span (generic_code_data& peer_code_data, int initial_crossing, vector<int>* exclude=0);
 //bool valid_knotoid_input(generic_code_data& code_data);
 generic_code_data partition_peer_code(generic_code_data& code_data);
 /*
@@ -689,6 +877,8 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 }
 */
 		exit(0);
+#endif
+		
 	} /* END OF DEVELOPMENT MODE CLAUSE */
 	
 	
@@ -797,7 +987,7 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 
 		if (argc > 1)
 		{
-			cout << "\nThis is A.Bartholomew's braid programme, v" << braid_control::version;
+			cout << "\nThis is A. Bartholomew's braid programme, v" << braid_control::version;
 			cout << "\n\nYou have started the programme to carry out the task described below.\n";
 			cout << "If you are unsure whether this is what you intended type the word help at the prompt.\n";
 			cout << "Type exit at the prompt to leave the programme.\n";
@@ -805,7 +995,12 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 		
 		cout << "\n\nThe programme will";
 
-		if (braid_control::VOGEL_ALGORITHM)
+		if (braid_control::VOGEL_TURNING_NUMBER)
+		{
+		    cout << " determine the turning number of the planar diagram\n";
+	    	cout << "determined by the labelled peer codes that you enter.\n";
+		}
+		else if (braid_control::VOGEL_ALGORITHM)
 		{
 		    cout << " determine a braid word representation for the links\n";
 	    	cout << "determined by the labelled peer codes that you enter.\n";
@@ -1110,7 +1305,7 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "braid::main: inputfile contains " << switch_cache.size() << " switches" << endl;
 
-if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
+if (debug_control::DEBUG >= debug_control::BASIC)
 {
 	if (switch_cache.size())
 	{
@@ -1170,6 +1365,7 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 			{
 				/* The default essential virtual pair is S = BQ^3_{6} T = BQ^3_{7} */
 				next_switch = "FT 1 0 2 0 2 1 2 1 0 1 2 0 1 2 0 1 2 0 1 2 0 1 2 0 1 2 0 2 0 1 2 0 1 2 0 1"; 
+//				next_switch = "F 1 0 2 0 2 1 2 1 0 1 2 0 1 2 0 1 2 0";  // as above but with the default twist
 			}
 
 
@@ -2849,7 +3045,7 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 
 				}
 
-				ST_pair_type pair_type;
+				braid_control::ST_pair_type pair_type;
 				if (essential_doodle_pair)
 				{
 					if (!S_of_order_2 || S_Yang_Baxter || S_one_dominates_T || S_two_dominates_T)
@@ -2860,7 +3056,7 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 					}
 					else
 					{
-						pair_type = ST_pair_type::ESSENTIAL_DOODLE;
+						pair_type = braid_control::ST_pair_type::ESSENTIAL_DOODLE;
 if (debug_control::DEBUG >= debug_control::SUMMARY)	
 	debug << "braid::main: fixed-point switches S and T validated as an essential doodle pair" << endl;
 					}
@@ -2875,14 +3071,21 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 					}
 					else
 					{
-						pair_type = ST_pair_type::ESSENTIAL_WELDED;
+						pair_type = braid_control::ST_pair_type::ESSENTIAL_WELDED;
 if (debug_control::DEBUG >= debug_control::SUMMARY)	
 	debug << "braid::main: fixed-point switches S and T validated as an essential welded pair" << endl;
 					}
 				}
 				else // essential virtual pair
 				{
-					if (!S_Yang_Baxter || S_one_dominates_T || S_two_dominates_T)
+//					if (!S_Yang_Baxter || S_one_dominates_T || S_two_dominates_T)
+					if (!S_Yang_Baxter)
+					{
+if (debug_control::DEBUG >= debug_control::SUMMARY)	
+	debug << "braid::main: fixed-point switchs S does not satisfy Yang Baxter equations" << endl;
+						continue; // to the next switch
+					}
+					else if (!braid_control::CLASSICAL_ONLY && (S_one_dominates_T || S_two_dominates_T))
 					{
 if (debug_control::DEBUG >= debug_control::SUMMARY)	
 	debug << "braid::main: fixed-point switches S and T do not satisfy the conditions for an essential virtual pair" << endl;
@@ -2892,13 +3095,13 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 					{
 						if(S_of_order_2)
 						{
-							pair_type = ST_pair_type::FLAT_ESSENTIAL_VIRTUAL;
+							pair_type = braid_control::ST_pair_type::FLAT_ESSENTIAL_VIRTUAL;
 if (debug_control::DEBUG >= debug_control::SUMMARY)	
 	debug << "braid::main: fixed-point switches S and T validated as a flat essential virtual pair" << endl;
 						}
 						else
 						{
-							pair_type = ST_pair_type::ESSENTIAL_VIRTUAL;
+							pair_type = braid_control::ST_pair_type::ESSENTIAL_VIRTUAL;
 if (debug_control::DEBUG >= debug_control::SUMMARY)	
 	debug << "braid::main: fixed-point switches S and T validated as an essential virtual pair" << endl;
 						}
@@ -2971,7 +3174,7 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 						cout << "\nEssential welded pair";
 					else if (essential_doodle_pair)
 						cout << "\nEssential doodle pair";
-					else
+					else if (!braid_control::CLASSICAL_ONLY)
 						cout << "\nEssential virtual pair";
 				}
 
@@ -2983,59 +3186,61 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 						output << "Essential welded pair";
 					else if (essential_doodle_pair)
 						output << "Essential doodle pair";
-					else
+					else if (!braid_control::CLASSICAL_ONLY)
 						output << "Essential virtual pair";
 				}
 				
 				if (switch_cache.size() && switch_cache[s].first != "")
 				{
 					if (!braid_control::SILENT_OPERATION)
-						cout << "\n" << switch_cache[s].first << endl;
+						cout << "\n" << switch_cache[s].first;
 					if (!braid_control::RAW_OUTPUT)
-						output << "\n" << switch_cache[s].first << endl;
+					{
+						output << (braid_control::OUTPUT_AS_INPUT? "\n;" : "\n");
+						output << switch_cache[s].first;
+					}
 				}
-				else
+
+				bool saved_bool = matrix_control::SINGLE_LINE_OUTPUT;
+				matrix_control::SINGLE_LINE_OUTPUT = true;
+				if (!braid_control::SILENT_OPERATION)
 				{
-					bool saved_bool = matrix_control::SINGLE_LINE_OUTPUT;
-					matrix_control::SINGLE_LINE_OUTPUT = true;
-					if (!braid_control::SILENT_OPERATION)
-					{
-						cout << "\nSu = ";
-						display_fixed_point_switch(Su, cout, number_from_zero);
-						cout << "  Sd = ";
-						display_fixed_point_switch(Sd, cout, number_from_zero);
-						cout << "\nTu = ";
-						display_fixed_point_switch(Tu, cout, number_from_zero);
-						cout << "  Td = ";
-						display_fixed_point_switch(Td, cout, number_from_zero);
-						cout << endl;
-						cout << "\nInverse invSu = ";
-						display_fixed_point_switch(invSu, cout, number_from_zero);
-						cout << "  invSd = ";
-						display_fixed_point_switch(invSd, cout, number_from_zero);
-						cout << endl;
-					}
-					if (!braid_control::RAW_OUTPUT)
-					{
-						output << (braid_control::OUTPUT_AS_INPUT? "\n;" : "\n");					
-						output << "Su = ";
-						display_fixed_point_switch(Su, output, number_from_zero);
-						output << " Sd = ";
-						display_fixed_point_switch(Sd, output, number_from_zero);
-						output << (braid_control::OUTPUT_AS_INPUT? "\n;" : "\n");
-						output <<  "Tu = ";
-						display_fixed_point_switch(Tu, output, number_from_zero);
-						output << " Td = ";
-						display_fixed_point_switch(Td, output, number_from_zero);
-						output << endl;
-						output << (braid_control::OUTPUT_AS_INPUT? "\n;" : "\n");
-						output <<  "Inverse invSu = ";
-						display_fixed_point_switch(invSu, output, number_from_zero);
-						output << " invSd = ";
-						display_fixed_point_switch(invSd, output, number_from_zero);
-					}
-					matrix_control::SINGLE_LINE_OUTPUT = saved_bool;
+					cout << "\nSu = ";
+					display_fixed_point_switch(Su, cout, number_from_zero);
+					cout << "  Sd = ";
+					display_fixed_point_switch(Sd, cout, number_from_zero);
+					cout << "\nTu = ";
+					display_fixed_point_switch(Tu, cout, number_from_zero);
+					cout << "  Td = ";
+					display_fixed_point_switch(Td, cout, number_from_zero);
+					cout << endl;
+					cout << "\nInverse invSu = ";
+					display_fixed_point_switch(invSu, cout, number_from_zero);
+					cout << "  invSd = ";
+					display_fixed_point_switch(invSd, cout, number_from_zero);
+					cout << "\n" << endl;
 				}
+				if (!braid_control::RAW_OUTPUT)
+				{
+					output << (braid_control::OUTPUT_AS_INPUT? "\n;" : "\n");					
+					output << "Su = ";
+					display_fixed_point_switch(Su, output, number_from_zero);
+					output << " Sd = ";
+					display_fixed_point_switch(Sd, output, number_from_zero);
+					output << (braid_control::OUTPUT_AS_INPUT? "\n;" : "\n");
+					output <<  "Tu = ";
+					display_fixed_point_switch(Tu, output, number_from_zero);
+					output << " Td = ";
+					display_fixed_point_switch(Td, output, number_from_zero);
+					output << endl;
+					output << (braid_control::OUTPUT_AS_INPUT? "\n;" : "\n");
+					output <<  "Inverse invSu = ";
+					display_fixed_point_switch(invSu, output, number_from_zero);
+					output << " invSd = ";
+					display_fixed_point_switch(invSd, output, number_from_zero);
+					output << (braid_control::OUTPUT_AS_INPUT? "\n;" : "\n");
+				}
+				matrix_control::SINGLE_LINE_OUTPUT = saved_bool;
 
 //if (debug_control::DEBUG >= debug_control::SUMMARY)
 //{
@@ -3052,7 +3257,126 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 				if (braid_control::RACK_POLYNOMIAL)
 				{
 					while (get_next_input_string(input_file,input_string, title))
-						rack_poly_invariant(Su, Sd, invSu, invSd, Tu, Td, pair_type, input_string, title);			
+					{
+
+						/* The code here replicates that found in generic-code.cpp, since that function is only called
+						   when we are not processing a braid_control::SWITCH_POLYNOMIAL_INVARIANT.  In Version 28.0
+						   the RACK_POLYNOMIAL task changed to accept peer codes in addition to braids, so we can 
+						   handle explicit turning numbers, using Vogel to calculate an equivalent braid, before 
+						   calculating the rack_poly_invariant.  Note that the Vogel algorithm does not change the writhe 
+						   or the turning number of the input.
+						   
+						   If we are given a braid, we assume all strands are closed anti-clockwise, so the turning 
+						   nunber equals the number of braid strands.						   						   
+						*/
+
+if (debug_control::DEBUG >= debug_control::BASIC)
+	debug << "braid::main: provided with input string: " << input_string << endl;
+
+					    int turning_number;
+					    int writhe;
+					    string braid_word;
+
+						if (input_string.find('(') != string::npos || input_string.find('[') != string::npos)
+						{
+							/* first isolate any qualifiers from the input string */
+							string qualifier;						
+							string::size_type pos = input_string.find('{');
+							if (pos != string::npos)
+							{
+								qualifier = input_string.substr(pos,string::npos);
+
+if (debug_control::DEBUG >= debug_control::BASIC)
+	debug << "braid::main: isolated qualifier = " << qualifier << endl;
+								input_string = input_string.substr(0,pos);
+							}
+	
+							/* if we have a cycle qualifier, override the global value set by braid_control::INFINITE_CYCLE 
+							   with the value determined by the qualifier 
+							*/
+							braid_control::INFINITE_CYCLE = braid_control::cycle::UNSPECIFIED;
+							if (qualifier.find("cycle") != string::npos)
+							{
+								string::size_type pos = qualifier.find("cycle");
+								string::size_type next = qualifier.find(',',pos); //next == string::npos if there's no next qualifier
+								string cycle_string = qualifier.substr(pos,next);
+
+if (debug_control::DEBUG >= debug_control::DETAIL)
+	debug << "braid::main: cycle_string: " << cycle_string << endl;
+
+							pos = cycle_string.find('=');
+					
+					
+							if (pos != string::npos)
+							{
+								char* c_cycle_string = c_string(cycle_string);			
+								char* cptr = c_cycle_string;	
+								while (*cptr != '=')
+									cptr++;
+									
+								get_number(braid_control::INFINITE_CYCLE,++cptr);			
+								delete c_cycle_string;
+							}
+
+if (debug_control::DEBUG >= debug_control::BASIC)
+	debug << "braid::main: cycle qualifier provided, infinite turning cycle = " << braid_control::INFINITE_CYCLE << endl;
+
+							}
+
+							generic_code_data code_data;
+							read_code_data (code_data, input_string);
+								
+						    /* call the function vogel to evaluate the braid word.  We check first whether all the
+						       crossings are specified as flat crossings, in which case we require the Vogel
+						       algorithm to use flat Vogel crossings.  If there are any non-flat crossings in the
+						       input code, we require the --flat option to be specified if the intent is for the Vogel
+						       algorithm to use flat crossings, otherwise it will use classical Vogel crossings.
+						    */
+						    bool flat_crossings_only = true;
+						    int num_crossings = code_data.num_crossings;
+						    matrix<int> code_table = code_data.code_table;
+						    
+						    for (int i=0; i<num_crossings; i++)
+						    {
+								if (code_table[generic_code_data::table::LABEL][i] != generic_code_data::FLAT)
+								{
+									flat_crossings_only = false;
+									break;
+								}
+							}
+						    
+						    if (flat_crossings_only)
+						    {
+								braid_control::FLAT_CROSSINGS = true;
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+	debug << "braid::main: input code contains only flat crossings, setting programme option FLAT_CROSSINGS" << endl;
+							
+							}
+						    
+//						    int turning_number;
+//							string braid_word = vogel(code_data,&turning_number);
+							braid_word = vogel(code_data,&turning_number);
+							
+//							int writhe = code_data_writhe(code_data);
+							writhe = code_data_writhe(code_data);
+						}
+						else
+						{
+							int num_terms;
+							int num_strings;
+							if (valid_braid_input(input_string, num_terms, num_strings, braid_control::SILENT_OPERATION, braid_control::RAW_OUTPUT, braid_control::OUTPUT_AS_INPUT))
+							{
+								braid_word = input_string;
+								turning_number = num_strings;
+								writhe = count(input_string.begin(),input_string.end(),'s') - 2*count(input_string.begin(),input_string.end(),'-');
+							}
+							
+						}
+																	
+//						rack_poly_invariant(Su, Sd, invSu, invSd, Tu, Td, pair_type, input_string, title);			
+						rack_poly_invariant(Su, Sd, invSu, invSd, Tu, Td, pair_type, braid_word, title, writhe, turning_number);			
+
+					}
 				}
 				else
 				{
@@ -3162,9 +3486,12 @@ if (debug_control::DEBUG >= debug_control::BASIC)
 				if (switch_title != "")
 				{
 					if (!braid_control::SILENT_OPERATION)
-						cout << "\n" << switch_title << endl;
+						cout << "\n" << switch_title;
 					if (!braid_control::RAW_OUTPUT)
-						output << "\n" << switch_title << endl;
+					{
+						output << (braid_control::OUTPUT_AS_INPUT? "\n;" : "\n");					
+						output << "\n" << switch_title;
+					}
 				}
 
 				bool saved_bool = matrix_control::SINGLE_LINE_OUTPUT;
@@ -3442,6 +3769,12 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: BURAU read from " << source << endl;
 	}	
+	else if (!strcmp(loc_buf,"classical"))
+	{
+    	braid_control::CLASSICAL_ONLY = true;
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+	debug << "set_programme_long_option: CLASSICAL_ONLY read from " << source << endl;
+	}
 	else if (!strcmp(loc_buf,"complex-delta1"))
 	{
     	braid_control::COMPLEX_STUDY_DELTA_1= true;
@@ -3458,7 +3791,7 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 /*    else if (!strcmp(loc_buf,"doodle"))
 	{
 		braid_control::DOODLE_CONDITIONS = true;
-		braid_control::FLAT_VOGEL_MOVES = true;
+		braid_control::FLAT_CROSSINGS = true;
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_options: DOODLE_CONDITIONS read from " << source << endl;
 	} */
@@ -3512,11 +3845,11 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: FIXED_POINT_INVARIANT read from " << source << endl;
 	}
-    else if (!strcmp(loc_buf,"flat"))
+    else if (!strcmp(loc_buf,"flat-crossings"))
 	{
-		braid_control::FLAT_VOGEL_MOVES = true;
+		braid_control::FLAT_CROSSINGS = true;
 if (debug_control::DEBUG >= debug_control::SUMMARY)
-	debug << "set_programme_long_options: FLAT_VOGEL_MOVES read from " << source << endl;
+	debug << "set_programme_long_options: FLAT_CROSSINGS read from " << source << endl;
 	}
 	else if (!strcmp(loc_buf,"flip-braid"))
 	{
@@ -3555,6 +3888,20 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: HC_EDGES read from " << source << endl;
 	}
+	else if (!strcmp(loc_buf,"HC-include-edge"))
+	{
+		if (*c1 == '=')
+		{
+			get_number(braid_control::HC_INCLUDE_EDGE,++c1);
+		}
+		else
+		{
+			cout << "\nYou must specify an edge to include if you use the HC-include-edge option, e.g. HC-include-edge=12" << endl;
+			exit(0);
+		}
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+	debug << "set_programme_long_option: HC_INCLUDE_EDGE read from " << source << ", HC_INCLUDE_EDGE = " << braid_control::HC_INCLUDE_EDGE << endl;
+	}
 	else if (!strcmp(loc_buf,"HC-list-all"))
 	{
     	braid_control::HC_LIST_ALL = true;
@@ -3584,6 +3931,12 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 		braid_control::INVERT_BRAID = true;
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: INVERT_BRAID read from " << source << endl;
+	}
+	else if (!strcmp(loc_buf,"doodle-Q-poly"))
+	{
+   		braid_control::DOODLE_Q_POLYNOMIAL = true;
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+	debug << "set_programme_long_option: DOODLE_Q_POLYNOMIAL read from " << source << endl;
 	}
 	else if (!strcmp(loc_buf,"jones-polynomial"))
 	{
@@ -3783,20 +4136,12 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 		braid_control::QUATERNION = false;
    		braid_control::RACK_POLYNOMIAL = true;
     	braid_control::WEYL = false;
+
+    	braid_control::VOGEL_TURNING_NUMBER = true;
+		braid_control::REDUCE_BRAIDS = false;
+		
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: RACK_POLYNOMIAL read from " << source << endl;
-	}
-	else if (!strcmp(loc_buf,"rack-terms"))
-	{
-		if (*c1 == '=')
-			get_number(braid_control::RACK_TERMS,++c1);
-		else
-		{
-			cout << "\nyou must specify a value if you use the rack-terms option, e.g. rack-terms=7" << endl;
-			exit(0);
-		}
-if (debug_control::DEBUG >= debug_control::SUMMARY)
-	debug << "set_programme_long_option: RACK_TERMS read from " << source << endl;
 	}
 	else if (!strcmp(loc_buf,"raw-output"))
 	{
@@ -3805,13 +4150,6 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: braid_control::RAW_OUTPUT read from " << source << endl;
 	}
-//	else if (!strcmp(loc_buf,"real-delta1"))
-//	{
-//   	braid_control::REAL_STUDY_DELTA_1= true;
-//		braid_control::QUATERNION = true;
-//if (debug_control::DEBUG >= debug_control::SUMMARY)
-//	debug << "set_programme_long_option: REAL_STUDY_DELTA_1 read from " << source << endl;
-//	}
 	else if (!strcmp(loc_buf,"relaxed-parity"))
 	{
     	braid_control::RELAXED_PARITY = true;
@@ -3881,6 +4219,13 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
     	braid_control::TeX_POLYNOMIAL_OUTPUT = true;
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: braid_control::TeX_POLYNOMIAL_OUTPUT read from " << source << endl;
+	}
+	else if (!strcmp(loc_buf,"turning-number"))
+	{
+    	braid_control::VOGEL_ALGORITHM = true;
+    	braid_control::VOGEL_TURNING_NUMBER = true;
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+	debug << "set_programme_long_option: turning-number read from " << source << endl;
 	}
 	else if (!strcmp(loc_buf,"ulpgd"))
 	{
@@ -3998,6 +4343,7 @@ void set_programme_short_option(char* cptr)
 			cout << "  arrow-polynomial: the arrow polynomial invariant of a classical or virtual knot, link, knotoid or multi-knotoid\n";
 			cout << "  automorphism: evaluate a commutative automorphism switch polynomial invariant\n";
 	    	cout << "  burau: Burau polynomial invariant\n";
+	    	cout << "  doodle-Q-poly: The Q-polynomial for doodles with one component\n";
 	    	cout << "  dowker: Dowker code\n";
 			cout << "  dynnikov: Dynnikov test\n";
 			cout << "  fixed-point: Fixed-point invariant of a braid\n";
@@ -4014,9 +4360,11 @@ void set_programme_short_option(char* cptr)
 			cout << "  parity-arrow: calculate the normalized parity arrow polynomial\n";
 			cout << "  parity-bracket: calculate the normalized parity bracket polynomial\n";
 			cout << "  peer: peer code\n";
+			cout << "  prime: determine whether a given diagram is prime; i.e is not a connected sum or has a 3-connected shadow\n";
 	    	cout << "  quaternion: quaternionic-switch polynomial invariant\n";
 			cout << "  rack-polynomial: calculate the rack-polynomial invariant\n";
 			cout << "  sawollek: calculate Sawollek's normalized Conway polynomial\n";
+			cout << "  turning-number: evaluate the turning number of a given diagram\n";
 			cout << "  vogel: Vogel algorithm\n";
 			cout << "  weyl: Weyl-algebra-switch polynomial invariant\n\n";
 
@@ -4030,7 +4378,8 @@ void set_programme_short_option(char* cptr)
 			cout << "  equality               test for A=D or B=C in switch when calculating switch polynomial invariants\n";
 			cout << "  extra-output           display additional polynomial invariant output\n";
 			cout << "  fixed-point            finite biquandle fixed point invariant\n";
-			cout << "  flat                   create flat Reidemeister II moves when executing the Vogel algorithm\n";
+			cout << "  flat-crossings         create flat Reidemeister II moves when executing the Vogel algorithm\n";
+			cout << "                         consider crossings to be flat when testing for prime knots, so include crossing test\n";
 			cout << "  flip-braid             flip all the braids in the input file\n";
 			cout << "  format                 format the output file so that it may be used as an input file later\n";
 			cout << "  invert-braid           invert all the braids in the input file\n";
@@ -4050,7 +4399,6 @@ void set_programme_short_option(char* cptr)
 			cout << "  PD-format              write Gauss code as a planar diagram\n";
 			cout << "  plane-reflect          reflect all the braids in the file in the plane of the page\n";
 			cout << "  power=n                evaluate the nth power of the switch when calculating switch polynomial invariants\n";
-			cout << "  rack-terms=k           set the global value k for the number of terms to consider for rack-polynomials\n";
 			cout << "  raw-output             produce raw output, that is the result only without descriptive text\n";
 			cout << "  relaxed-parity         evaluate the relaxed variant of the parity arrow polynomial\n";
 			cout << "  remove=n               remove the n-th component from a peer code\n";
@@ -4088,7 +4436,7 @@ void set_programme_short_option(char* cptr)
 //					cout << "r: real Study matrix Delta_1 (turns on q)\n";
 			cout << "  R: use rho-mapping for Study determinants\n";
 			cout << "  S: silent operation\n";
-			cout << "  t=n: set the number of additional +ve/-ve terms for the rack-polynomial invariant (default " << braid_control::RACK_TERMS << ")\n";
+//			cout << "  t=n: set the number of additional +ve/-ve terms for the rack-polynomial invariant (default " << braid_control::RACK_TERMS << ")\n";
 			cout << "  T: output in /tmp\n";
 			cout << "  U: do not test for units in calculation of Delta_1\n";
 			cout << "  V: Do not use the t-variable with quaternionic switches\n";
@@ -4221,7 +4569,7 @@ debug << "set_programme_short_option: setting polynomial_control::MOD_P = true a
 	if (strchr(cptr, 'S'))
 		braid_control::SILENT_OPERATION = true;
 
-	if (strchr(cptr, 't'))
+/*	if (strchr(cptr, 't'))
 	{
 	    char* c1 = strchr(cptr,'t')+1;
 	    if (*c1 == '=')
@@ -4238,7 +4586,7 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 			exit(0);
 		}
 	}
-		
+*/		
 	if (strchr(cptr, 'U'))
 		braid_control::DELTA_1_UNIT_CHECK = false;
 
@@ -6430,14 +6778,14 @@ if (debug_control::DEBUG >= debug_control::BASIC)
 		if (  (code_table[generic_code_data::table::TYPE][i] == generic_code_data::TYPE1 && code_table[generic_code_data::table::LABEL][i] == generic_code_data::POSITIVE)
 				||(code_table[generic_code_data::table::TYPE][i] == generic_code_data::TYPE2 && code_table[generic_code_data::table::LABEL][i] == generic_code_data::NEGATIVE)
    					)
-			crossing_type = braid_crossing_type::NEGATIVE;
+			crossing_type = generic_braid_data::crossing_type::NEGATIVE;
 		else
-			crossing_type = braid_crossing_type::POSITIVE;
+			crossing_type = generic_braid_data::crossing_type::POSITIVE;
 
 if (debug_control::DEBUG >= debug_control::DETAIL)
 {	
 	debug << "R_module_rep: crossing " << i;
-	if ( crossing_type == braid_crossing_type::NEGATIVE )
+	if ( crossing_type == generic_braid_data::crossing_type::NEGATIVE )
 		debug << " negative";
 	else
 		debug << " positive";
@@ -6463,7 +6811,7 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 			if (j == (code_table[generic_code_data::table::TYPE][i] == (OLD_SWITCH_ACTION?generic_code_data::TYPE1:generic_code_data::TYPE2) ? variable[code_table[generic_code_data::table::EVEN_TERMINATING][i]] : variable[code_table[generic_code_data::table::ODD_TERMINATING][i]]))
 			{
 				/* Record the A entry at j*/
-				if (crossing_type == braid_crossing_type::POSITIVE)
+				if (crossing_type == generic_braid_data::crossing_type::POSITIVE)
 				{
 if (debug_control::DEBUG >= debug_control::DETAIL) debug << j << ":S00    ";
 					set_matrix_N_element(matrix_rep,2*row,j,switch_matrix,0,0,N);
@@ -6478,7 +6826,7 @@ if (debug_control::DEBUG >= debug_control::DETAIL) debug << j << ":iS00   ";
 			else if (j == (code_table[generic_code_data::table::TYPE][i] == (OLD_SWITCH_ACTION?generic_code_data::TYPE1:generic_code_data::TYPE2) ? variable[code_table[generic_code_data::table::ODD_TERMINATING][i]] : variable[code_table[generic_code_data::table::EVEN_TERMINATING][i]]))
 			{
 				/* Record the B entry at j */
-				if (crossing_type == braid_crossing_type::POSITIVE)
+				if (crossing_type == generic_braid_data::crossing_type::POSITIVE)
 				{
 if (debug_control::DEBUG >= debug_control::DETAIL) debug << j << ":S01    ";
 					set_matrix_N_element(matrix_rep,2*row,j,switch_matrix,0,1,N);				
@@ -6549,7 +6897,7 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 			if (j == (code_table[generic_code_data::table::TYPE][i] == (OLD_SWITCH_ACTION?generic_code_data::TYPE1:generic_code_data::TYPE2) ? variable[code_table[generic_code_data::table::EVEN_TERMINATING][i]] : variable[code_table[generic_code_data::table::ODD_TERMINATING][i]]))
 			{
 				/* Record the C entry at j */
-				if (crossing_type == braid_crossing_type::POSITIVE)
+				if (crossing_type == generic_braid_data::crossing_type::POSITIVE)
 				{
 if (debug_control::DEBUG >= debug_control::DETAIL) debug << j << ":S10    ";
 					set_matrix_N_element(matrix_rep,2*row+1,j,switch_matrix,1,0,N);				
@@ -6564,7 +6912,7 @@ if (debug_control::DEBUG >= debug_control::DETAIL) debug << j << ":iS10   ";
 			else if (j == (code_table[generic_code_data::table::TYPE][i] == (OLD_SWITCH_ACTION?generic_code_data::TYPE1:generic_code_data::TYPE2) ? variable[code_table[generic_code_data::table::ODD_TERMINATING][i]] : variable[code_table[generic_code_data::table::EVEN_TERMINATING][i]]))
 			{
 				/* Record the D entry at j */
-				if (crossing_type == braid_crossing_type::POSITIVE)
+				if (crossing_type == generic_braid_data::crossing_type::POSITIVE)
 				{
 if (debug_control::DEBUG >= debug_control::DETAIL) debug << j << ":S11    ";
 					set_matrix_N_element(matrix_rep,2*row+1,j,switch_matrix,1,1,N);				
@@ -7606,7 +7954,8 @@ void set_cli_suboptions(char* optr, string option)
 
 void set_acceptable_input_type()
 {
-	if (braid_control::FIXED_POINT_INVARIANT || braid_control::RACK_POLYNOMIAL)
+//	if (braid_control::FIXED_POINT_INVARIANT || braid_control::RACK_POLYNOMIAL)
+	if (braid_control::FIXED_POINT_INVARIANT)
 	{
 		input_control::ACCEPT_MAP |= input_control::braid_word;
 
@@ -7618,6 +7967,21 @@ void set_acceptable_input_type()
 			if (braid_control::OUTPUT_AS_INPUT)
 				output << ';';
 			output << "Reading braid words from input.\n\n";
+		}
+	}
+	else if (braid_control::RACK_POLYNOMIAL)
+	{
+		input_control::ACCEPT_MAP |= input_control::braid_word;
+		input_control::ACCEPT_MAP |= input_control::peer_code;
+
+		if (!braid_control::SILENT_OPERATION)
+			cout << "\n\nReading braid words and labelled peer codes from input.\n\n";
+		if (!braid_control::RAW_OUTPUT)
+		{
+			output << "\n\n";
+			if (braid_control::OUTPUT_AS_INPUT)
+				output << ';';
+			output << "Reading braid words  and labelled peer codes from input.\n\n";
 		}
 	}
 	else if (braid_control::SWITCH_POLYNOMIAL_INVARIANT)
@@ -7636,7 +8000,7 @@ void set_acceptable_input_type()
 			output << "Reading braid words, labelled immersion codes and labelled peer codes from input.\n\n";
 		}
 	}
-	else if (braid_control::VOGEL_ALGORITHM || braid_control::SATELLITE)
+	else if (braid_control::VOGEL_ALGORITHM || braid_control::SATELLITE || braid_control::RACK_POLYNOMIAL || braid_control::DOODLE_Q_POLYNOMIAL)
 	{
 		input_control::ACCEPT_MAP |= input_control::peer_code;
 

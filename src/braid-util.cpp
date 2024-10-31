@@ -3,7 +3,7 @@ string invstr(string& str)
 void flip_braid(string& braid)
 void invert_braid(string& braid)
 void plane_reflect_braid(string& braid)
-void line_reflect_braid(string& braid)
+void line_reflect_braid(string& braid, int num_terms, int num_strings)
 void parse_braid(string word, int num_terms, vector<int>& braid_num, vector<int>& type)
 void convert_rep (char*& word, bool silent)
 bool valid_braid_input (string& input_string, int& num_terms, int& num_strings, bool raw_output, bool silent_output, bool output_as_input)
@@ -32,6 +32,36 @@ extern bool SIDEWAYS_SEARCH;
 #include <ctype.h>
 #include <debug-control.h>
 #include <braid-util.h>
+
+/*
+generic_braid_data::generic_braid_data(string w, string t)
+{
+if (debug_control::DEBUG >= debug_control::DETAIL)
+  	debug << "generic_braid_data (constructor): w = \"" << w << "\", t = \"" << t << "\"" << endl;
+	
+	title = t;
+	
+	string::size_type pos = w.find('{');
+	if (pos != string::npos)
+	{
+		if (w.substr(pos).find("welded") != string::npos)
+			braid_character |= character::welded;
+
+		if (w.substr(pos).find("doodle") != string::npos)
+			braid_character |= character::doodle;
+
+		if (w.substr(pos).find("flat") != string::npos)
+			braid_character |= character::flat;
+
+			braid_word = w.substr(0,pos);
+
+if (debug_control::DEBUG >= debug_control::DETAIL)
+  	debug << "generic_braid_data (constructor): braid_word =  " << braid_word << endl;
+
+	}
+	
+}
+*/
 
 
 /* invstr creates the inverse of src and returns it to the call.
@@ -92,193 +122,188 @@ string invstr(string& str)
    unchanged.  Thus, for a braid on n strands, crossing +/-s_i is changed to +/-s_{n-i}
    and t_i is changed to t_{n-i}.  This has the same effect as an ambient isotopy of R^3 
    that turns over the braid, when considered to be laid on the plane R^2.
+   
+   The function requires that it be provided with a valid braid word.
 */
-void flip_braid(string& braid)
+void flip_braid(string& braid, int num_terms, int num_strings)
 {
 
 if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "braid::flip_braid: flipping braid " << braid << endl;
 
-	int num_terms;
-	int num_strings;
+	vector<int> braid_num(num_terms);
+    vector<int> type(num_terms);
 
-	if (valid_braid_input(braid, num_terms, num_strings))
+	parse_braid(braid, num_terms, braid_num, type);
+
+	ostringstream oss;
+	
+	for (int i=0; i< num_terms; i++)
 	{
-		vector<int> braid_num(num_terms);
-	    vector<int> type(num_terms);
-
-		parse_braid(braid, num_terms, braid_num, type);
-
-		ostringstream oss;
+		if (type[i] == generic_braid_data::crossing_type::POSITIVE)
+			oss << "s";
+		else if (type[i] == generic_braid_data::crossing_type::NEGATIVE)
+			oss << "-s";
+		else 
+			oss << "t";
 		
-		for (int i=0; i< num_terms; i++)
-		{
-			if (type[i] == braid_crossing_type::POSITIVE)
-				oss << "s";
-			else if (type[i] == braid_crossing_type::NEGATIVE)
-				oss << "-s";
-			else 
-				oss << "t";
-			
-			oss << num_strings - braid_num[i];
-		}
-		
-		braid = oss.str();
+		oss << num_strings - braid_num[i];
+	}
+	
+	braid = oss.str();
 		
 if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "braid::flip_braid: to give braid " << braid << endl;
 
-	}
-	else
+}
+
+/* shift_braid increments each of the braid numbers by one, effectively adding a disconnected strand below the braid.
+  
+   The function requires that it be provided with a valid braid word.
+*/
+void shift_braid(string& braid, int num_terms)
+{
+
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+	debug << "braid::shift_braid: flipping braid " << braid << endl;
+
+	vector<int> braid_num(num_terms);
+    vector<int> type(num_terms);
+
+	parse_braid(braid, num_terms, braid_num, type);
+
+	ostringstream oss;
+	
+	for (int i=0; i< num_terms; i++)
 	{
-if (debug_control::DEBUG >= debug_control::DETAIL)
-	debug << "braid::flip_braid: not a valid braid, doing nothing" << endl;
+		if (type[i] == generic_braid_data::crossing_type::POSITIVE)
+			oss << "s";
+		else if (type[i] == generic_braid_data::crossing_type::NEGATIVE)
+			oss << "-s";
+		else 
+			oss << "t";
+		
+		oss << braid_num[i]+1;
 	}
+	
+	braid = oss.str();
+		
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+	debug << "braid::shift_braid: to give braid " << braid << endl;
 	
 }
 
 /* invert_braid reverses the order of the braid generators and their signs.
    This has the same effect as reflecting the braid in a vertical line.
+   
+   The function requires that it be provided with a valid braid word.
 */
-void invert_braid(string& braid)
+void invert_braid(string& braid, int num_terms)
 {
 
 if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "braid::invert_braid: inverting (vertical line reflecting) braid " << braid << endl;
 
-	int num_terms;
-	int num_strings;
+	vector<int> braid_num(num_terms);
+    vector<int> type(num_terms);
 
-	if (valid_braid_input(braid, num_terms, num_strings))
+	parse_braid(braid, num_terms, braid_num, type);
+
+	ostringstream oss;
+	
+	for (int i=num_terms-1; i >= 0; i--)
 	{
-		vector<int> braid_num(num_terms);
-	    vector<int> type(num_terms);
-
-		parse_braid(braid, num_terms, braid_num, type);
-
-		ostringstream oss;
+		if (type[i] == generic_braid_data::crossing_type::POSITIVE)
+			oss << "-s";
+		else if (type[i] == generic_braid_data::crossing_type::NEGATIVE)
+			oss << "s";
+		else 
+			oss << "t";
 		
-		for (int i=num_terms-1; i >= 0; i--)
-		{
-			if (type[i] == braid_crossing_type::POSITIVE)
-				oss << "-s";
-			else if (type[i] == braid_crossing_type::NEGATIVE)
-				oss << "s";
-			else 
-				oss << "t";
-			
-			oss << braid_num[i];
-		}
-		
-		braid = oss.str();
+		oss << braid_num[i];
+	}
+	
+	braid = oss.str();
 		
 if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "braid::invert_braid: to give braid " << braid << endl;
 
-	}
-	else
-	{
-if (debug_control::DEBUG >= debug_control::DETAIL)
-	debug << "braid::invert_braid: not a valid braid, doing nothing" << endl;
-	}
-	
 }
 
 /* plane_reflect_braid interchanges the sign of classical crossings.
    This has the same effect as reflecting the braid in the plane of the diagram.
    This is the same as Jeremy green's "vertical mirror"
+   
+   The function requires that it be provided with a valid braid word.
 */
-void plane_reflect_braid(string& braid)
+void plane_reflect_braid(string& braid, int num_terms)
 {
 
 if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "braid::plane_reflect_braid: reflecting braid " << braid << endl;
 
-	int num_terms;
-	int num_strings;
+	vector<int> braid_num(num_terms);
+    vector<int> type(num_terms);
 
-	if (valid_braid_input(braid, num_terms, num_strings))
+	parse_braid(braid, num_terms, braid_num, type);
+
+	ostringstream oss;
+	
+	for (int i=0; i< num_terms; i++)
 	{
-		vector<int> braid_num(num_terms);
-	    vector<int> type(num_terms);
-
-		parse_braid(braid, num_terms, braid_num, type);
-
-		ostringstream oss;
+		if (type[i] == generic_braid_data::crossing_type::POSITIVE)
+			oss << "-s";
+		else if (type[i] == generic_braid_data::crossing_type::NEGATIVE)
+			oss << "s";
+		else 
+			oss << "t";
 		
-		for (int i=0; i< num_terms; i++)
-		{
-			if (type[i] == braid_crossing_type::POSITIVE)
-				oss << "-s";
-			else if (type[i] == braid_crossing_type::NEGATIVE)
-				oss << "s";
-			else 
-				oss << "t";
-			
-			oss << braid_num[i];
-		}
-		
-		braid = oss.str();
+		oss << braid_num[i];
+	}
+	
+	braid = oss.str();
 		
 if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "braid::plane_reflect_braid: to give braid " << braid << endl;
-
-	}
-	else
-	{
-if (debug_control::DEBUG >= debug_control::DETAIL)
-	debug << "braid::plane_reflect_braid: not a valid braid, doing nothing" << endl;
-	}
-	
 }
 
 /* line_reflect_braid reflects the braid in a horizontal line south of the braid diagram.
    It reverses the strand numbering of a braid and toggles the classical crossing types.
    Thus, for a braid on n strands, crossing +/-s_i is changed to -/+s_{n-i}
    and t_i is changed to t_{n-i}.  
+   
+   The function requires that it be provided with a valid braid word.
 */
-void line_reflect_braid(string& braid)
+void line_reflect_braid(string& braid, int num_terms, int num_strings)
 {
 
 if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "braid::line_reflect_braid: (horizontal) line reflecting braid " << braid << endl;
 
-	int num_terms;
-	int num_strings;
+	vector<int> braid_num(num_terms);
+    vector<int> type(num_terms);
 
-	if (valid_braid_input(braid, num_terms, num_strings))
+	parse_braid(braid, num_terms, braid_num, type);
+
+	ostringstream oss;
+	
+	for (int i=0; i< num_terms; i++)
 	{
-		vector<int> braid_num(num_terms);
-	    vector<int> type(num_terms);
-
-		parse_braid(braid, num_terms, braid_num, type);
-
-		ostringstream oss;
+		if (type[i] == generic_braid_data::crossing_type::POSITIVE)
+			oss << "-s";
+		else if (type[i] == generic_braid_data::crossing_type::NEGATIVE)
+			oss << "s";
+		else 
+			oss << "t";
 		
-		for (int i=0; i< num_terms; i++)
-		{
-			if (type[i] == braid_crossing_type::POSITIVE)
-				oss << "-s";
-			else if (type[i] == braid_crossing_type::NEGATIVE)
-				oss << "s";
-			else 
-				oss << "t";
-			
-			oss << num_strings - braid_num[i];
-		}
-		
-		braid = oss.str();
+		oss << num_strings - braid_num[i];
+	}
+	
+	braid = oss.str();
 		
 if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "braid::line_reflect_braid: to give braid " << braid << endl;
 
-	}
-	else
-	{
-if (debug_control::DEBUG >= debug_control::DETAIL)
-	debug << "braid::line_reflect_braid: not a valid braid, doing nothing" << endl;
-	}
-	
 }
 
 void parse_braid(string word, int num_terms, vector<int>& braid_num, vector<int>& type)
@@ -290,13 +315,13 @@ void parse_braid(string word, int num_terms, vector<int>& braid_num, vector<int>
 	{
 	    if (*cptr == '-')
 	    {
-			type[i] = braid_crossing_type::NEGATIVE;
+			type[i] = generic_braid_data::crossing_type::NEGATIVE;
 			cptr++;
 	    }
 	    else if (*cptr == 't' || *cptr == 'T')
-			type[i] = braid_crossing_type::VIRTUAL;
+			type[i] = generic_braid_data::crossing_type::VIRTUAL;
         else
-			type[i] = braid_crossing_type::POSITIVE;
+			type[i] = generic_braid_data::crossing_type::POSITIVE;
 
         cptr++;
         char* mark = cptr; /* mark where we start the number */
@@ -360,10 +385,10 @@ void convert_rep (string& word, bool silent)
 	word = oss.str();
 }
 
-/* valid_braid_input returns a boolean indicating whether input is a valid braid, 
-   num_terms and num_strings may or may not have been set if the input is invalid 
-   
-   If the braid includes the doodle qualifier, the function checks that only positive
+/* valid_braid_input returns a boolean indicating whether input is a valid braid, num_terms and num_strings may or may not have been 
+   set if the input is invalid 
+    
+   Qualifiers may be appended to the input_string.  If the braid includes the doodle qualifier, the function checks that only positive 
    classical crossings have been specified.
    
    input_string needs to be a reference, since we might be converting the representation if we're presented with an abcABC format braid
@@ -372,16 +397,20 @@ bool valid_braid_input (string& input_string, int& num_terms, int& num_strings, 
 {
 	char*       mark;
 	int         number;
+	string 		qualifiers;
 
 if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "braid::valid_braid_input: presented with input_string " << input_string << endl;
 	
-	/* first check and then remove any unwanted qualifiers from the input string */
+	/* first check and then remove (temporarily) any unwanted qualifiers from the input string 
+	   if we have qualifiers, note if they include the "doodle" qualifier
+	*/
 	bool doodle_braid = false;
 	string::size_type pos = input_string.find('{');
 	
 	if (pos != string::npos)
 	{
+		qualifiers = input_string.substr(pos);
 		
    		if (input_string.substr(pos).find("doodle") != string::npos)
    			doodle_braid = true;
@@ -416,6 +445,9 @@ if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 	}
 	
 	char* inbuf = c_string(input_string);
+	
+	/* return any qualifiers to the input_string */
+	input_string = input_string+qualifiers;
 	
     /* evaluate the number of terms in the word by counting the number of
        s and t characters - we scan the input at this point
@@ -502,3 +534,8 @@ if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 	return true;
 }
 
+/*bool valid_braid_input (generic_braid_data& braid, bool raw_output, bool silent_output, bool output_as_input)
+{
+	return valid_braid_input(braid.braid_word,braid.num_terms, braid.num_strands,raw_output,silent_output,output_as_input);
+}
+*/

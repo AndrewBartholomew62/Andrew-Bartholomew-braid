@@ -244,7 +244,7 @@ debug << endl;
 string braid_reduce (string word)
 {
 
-if (debug_control::DEBUG >= debug_control::DETAIL) 
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE) 
 	debug << "braid_reduce: presented with " << word << endl;
 
 	int num_terms = num_braid_terms(word);
@@ -350,7 +350,7 @@ void braid_reduce (vector<int>& braid_num, vector<int>& type, int& basepoint, ve
 	
 	base_strand = basepoint;	
 		
-if (debug_control::DEBUG >= debug_control::INTERMEDIATE) 
+if (debug_control::DEBUG >= debug_control::DETAIL) 
 {
 	debug << "braid_reduce: initial base_crossing = " << base_crossing + 1 << ", base_strand = " << base_strand << endl;
 	debug << "braid_reduce: component record = ";
@@ -364,7 +364,7 @@ if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 	*/		
 	reset_basepoint(base_strand, base_crossing, braid_num, type, num_terms, component_record);
 
-if (debug_control::DEBUG >= debug_control::INTERMEDIATE) 
+if (debug_control::DEBUG >= debug_control::DETAIL) 
 {
 	debug << "braid_reduce: adjusted base_crossing = " << base_crossing + 1 << ", base_strand = " << base_strand << endl;
 	debug << "braid_reduce: braid_num: ";
@@ -378,7 +378,7 @@ if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 
 	int num_initial_components = component_record.size();
 
-if (debug_control::DEBUG >= debug_control::INTERMEDIATE) 
+if (debug_control::DEBUG >= debug_control::DETAIL) 
 	debug << "braid_reduce: num_initial_components = " << num_initial_components << endl;
 
 	int passes_remaining = 2; // we want to go around the following loop at least twice because we'll cycle the braid
@@ -390,7 +390,7 @@ if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 			break;
 		}
 
-if (debug_control::DEBUG >= debug_control::INTERMEDIATE) 
+if (debug_control::DEBUG >= debug_control::DETAIL) 
 	debug << "braid_reduce: scanning crossings, passes_remaining = " << passes_remaining << endl;
 	
 		passes_remaining--; 
@@ -402,19 +402,19 @@ if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 		{		
 			/* compare the ith and i+1st crossing */
 
-if (debug_control::DEBUG >= debug_control::INTERMEDIATE) 
+if (debug_control::DEBUG >= debug_control::DETAIL) 
 	debug << "braid_reduce: i = " << i << ", comparing braid_num entries " << braid_num[i] << " and " << braid_num[i+1] 
 	      << ", with types " << type[i] << " and " << type[i+1] << endl;
 
 			if (	braid_num[i] == braid_num[i+1] && 
-					( (type[i] == braid_crossing_type::POSITIVE && type[i+1] == braid_crossing_type::NEGATIVE) || 
-					  (type[i] == braid_crossing_type::NEGATIVE && type[i+1] == braid_crossing_type::POSITIVE) || 
-					  (type[i] == braid_crossing_type::VIRTUAL &&  type[i+1] == braid_crossing_type::VIRTUAL) 
+					( (type[i] == generic_braid_data::crossing_type::POSITIVE && type[i+1] == generic_braid_data::crossing_type::NEGATIVE) || 
+					  (type[i] == generic_braid_data::crossing_type::NEGATIVE && type[i+1] == generic_braid_data::crossing_type::POSITIVE) || 
+					  (type[i] == generic_braid_data::crossing_type::VIRTUAL &&  type[i+1] == generic_braid_data::crossing_type::VIRTUAL) 
 					)
 			   )
 			{
 
-if (debug_control::DEBUG >= debug_control::INTERMEDIATE) 
+if (debug_control::DEBUG >= debug_control::DETAIL) 
 	debug << "braid_reduce: inverse pair found at braid_num value " << braid_num[i] <<endl;
 
 				/* we've got an inverse pair, first adjust the basepoint and copmponent_record if necessary.  
@@ -449,7 +449,7 @@ if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 				num_terms -= 2;
 				reduced = true;		
 
-if (debug_control::DEBUG >= debug_control::INTERMEDIATE) 
+if (debug_control::DEBUG >= debug_control::DETAIL) 
 {
 	debug << "braid_reduce: reduced braid to: " << endl;
 	debug << "braid_reduce: braid_num: ";
@@ -469,21 +469,21 @@ if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 					{
 						base_crossing -= 2;
 
-if (debug_control::DEBUG >= debug_control::INTERMEDIATE) 
+if (debug_control::DEBUG >= debug_control::DETAIL) 
 	debug << "braid_reduce: base_crossing reduced by 2 to " << base_crossing << endl;
 					}
 					else if (base_crossing > i)
 					{
 						base_crossing--;
 
-if (debug_control::DEBUG >= debug_control::INTERMEDIATE) 
+if (debug_control::DEBUG >= debug_control::DETAIL) 
 	debug << "braid_reduce: base_crossing decremented to " << base_crossing << endl;
 					}
 	
 					reset_basepoint(base_strand, base_crossing, braid_num, type, num_terms, component_record);
 				}
 										
-if (debug_control::DEBUG >= debug_control::INTERMEDIATE) 
+if (debug_control::DEBUG >= debug_control::DETAIL) 
 	debug << "braid_reduce: base_crossing = " << base_crossing + 1 << ", base_strand = " << base_strand << endl;
 
 				/* step i backwards ready for the next loop */
@@ -509,7 +509,7 @@ if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 				upper_count++;
 		}
 		
-if (debug_control::DEBUG >= debug_control::INTERMEDIATE) 
+if (debug_control::DEBUG >= debug_control::DETAIL) 
 	debug << "braid_reduce: upper_crossing = " << upper_crossing << ", upper_count = " << upper_count << endl;
 
 		lower_crossing = upper_crossing;
@@ -526,7 +526,7 @@ if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 				lower_count++;
 		}
 
-if (debug_control::DEBUG >= debug_control::INTERMEDIATE) 
+if (debug_control::DEBUG >= debug_control::DETAIL) 
 	debug << "braid_reduce: lower_crossing = " << lower_crossing << ", lower_count = " << lower_count << endl;
 
 		/* remove any single upper or lower crossing */
@@ -547,7 +547,7 @@ if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 
 					}
 
-if (debug_control::DEBUG >= debug_control::INTERMEDIATE) 
+if (debug_control::DEBUG >= debug_control::DETAIL) 
 {
 	debug << "braid_reduce: removing upper_crossing with number = " << braid_num[i] << ", type = " << type[i] << endl;
 	debug << "braid_reduce: base_crossing = " << base_crossing + 1 << ", base_strand = " << base_strand << endl;
@@ -562,7 +562,7 @@ if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 							component_record[j]--;
 					}
 
-if (debug_control::DEBUG >= debug_control::INTERMEDIATE) 
+if (debug_control::DEBUG >= debug_control::DETAIL) 
 {
 	debug << "braid_reduce: component record adjusted to: ";
 	for ( unsigned int i=0; i< component_record.size(); i++)
@@ -583,7 +583,7 @@ if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 						{
 							base_crossing--;
 
-if (debug_control::DEBUG >= debug_control::INTERMEDIATE) 
+if (debug_control::DEBUG >= debug_control::DETAIL) 
 	debug << "braid_reduce: base_crossing decremented to " << base_crossing << endl;
 						}
 							
@@ -614,7 +614,7 @@ if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 					if (!(i == base_crossing && lower_crossing == base_strand))
 							base_strand--;		
 
-if (debug_control::DEBUG >= debug_control::INTERMEDIATE) 
+if (debug_control::DEBUG >= debug_control::DETAIL) 
 {
 	debug << "braid_reduce: removing lower_crossing with number = " << braid_num[i] << ", type = " << type[i] << endl;
 	debug << "braid_reduce: base_crossing = " << base_crossing + 1 << ", base_strand = " << base_strand << endl;
@@ -645,7 +645,7 @@ if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 						{
 							base_crossing--;
 
-if (debug_control::DEBUG >= debug_control::INTERMEDIATE) 
+if (debug_control::DEBUG >= debug_control::DETAIL) 
 	debug << "braid_reduce: base_crossing decremented to " << base_crossing << endl;
 
 						}
@@ -672,7 +672,7 @@ if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 			if (num_terms != 0)
 				base_crossing = (base_crossing + num_terms - 1) % num_terms;
 
-if (debug_control::DEBUG >= debug_control::INTERMEDIATE) 
+if (debug_control::DEBUG >= debug_control::DETAIL) 
 {
 	debug << "braid_reduce: after cycling, braid becomes: " << endl;
 	debug << "braid_reduce: braid_num: ";
@@ -688,7 +688,7 @@ if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 	} while (passes_remaining);
 
 
-if (debug_control::DEBUG >= debug_control::INTERMEDIATE) 
+if (debug_control::DEBUG >= debug_control::DETAIL) 
 	debug << "braid_reduce: final num_terms = " << num_terms << endl;
 
 	/* write the base strand back to the basepoint parameter */
