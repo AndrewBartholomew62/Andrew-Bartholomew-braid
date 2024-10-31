@@ -5,7 +5,10 @@ This header file is intended to hold common utilities not
 related to any particular template class
 
 **************************************************/
+
 #include <sstream>
+#include <vector>
+#include <list>
 
 template <class T> T gcd (T i, T j)
 {
@@ -89,7 +92,8 @@ void print_state(istream& is);
 bool fileExists(const std::string& filename);
 void substitute_string_variable(string& str, char ch1, char ch2);
 char next_variable (string variables);
+int least_common_multiple (list<int>& l);
+int least_common_multiple (vector<int>& v);
 
 // This function is used only for debugging .h files
 void breakpoint();
-

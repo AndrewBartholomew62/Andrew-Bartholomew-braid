@@ -9,6 +9,7 @@ used by the programme
 #include <braid-util.h>
 #include <debug-control.h>
 #include <generic-code.h>
+//#include <seifert.h>
 
 
 template <class T> class Rational : public rational<T>

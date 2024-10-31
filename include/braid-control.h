@@ -21,6 +21,7 @@ struct braid_control
 	static bool		BYPASS_FUNDAMENTAL_EQUATION_CHECK;
 	static bool		CALCULATE_DELTA_0_ONLY;
 	static bool		CALCULATE_MOD_P;
+	static bool 	CLASSICAL_ONLY;
 	static bool		COMMUTATIVE_AUTOMORPHISM;
 	static bool		COMPLEX_STUDY_DELTA_1;
 	static bool    	CUSTOM_WEYL;
@@ -28,6 +29,7 @@ struct braid_control
 	static bool     DEVELOPMENT_MODE;	
 	static bool		DISPLAY_DELTA_1_ONLY;
 	static bool		DOODLE_ALEXANDER;
+	static bool 	DOODLE_Q_POLYNOMIAL;
 	static bool		DOWKER_CODE;
 	static bool		DYNNIKOV_TEST;
 	static bool		EQUALITY_TEST;
@@ -35,7 +37,7 @@ struct braid_control
 	static bool		EXPANDED_BRACKET_POLYNOMIAL;
 	static bool     EXTRA_OUTPUT;
 	static bool		FIXED_POINT_INVARIANT;
-	static bool		FLAT_VOGEL_MOVES;
+	static bool		FLAT_CROSSINGS;
 	static bool		FLIP_BRAID;
 	static bool		GAUSS_CODE;
 	static bool		GCD_BACK_SUBSTITUTING;
@@ -70,6 +72,7 @@ struct braid_control
 	static bool     QUATERNION;
 	static bool     RACK_POLYNOMIAL;
 	static bool     RAW_OUTPUT;
+	static bool 	REDUCE_BRAIDS;
 	static bool		LINE_REFLECT_BRAID;
 	static bool		PLANE_REFLECT_BRAID;
 	static bool		RELAXED_PARITY;
@@ -91,23 +94,28 @@ struct braid_control
 	static bool		VERIFY_DELTA_0;
 	static bool		VOGEL_ALGORITHM;
 	static bool		VOGEL_HEIGHT_ONLY;
+	static bool		VOGEL_TURNING_NUMBER;
 	static bool    	WAIT_SWITCH;
 	static bool		WELDED_BRAID;
 	static bool    	WEYL;
 	static bool 	ZIG_ZAG_DELTA;
-
 
 	static bool		Sn_matrix_top_down; //true if Sn = Sn = I^{n-1} x S x I^{k-n-1}, false if Sn = I^{k-n-1} x S x I^{n-1}
 	static bool     first_time;
 
 	static int 		REMOVE_COMPONENT; // used to identify a component of a peer code to be removed
 	static int		SWITCH_POWER; // used to control whether powers of switches are calculated.
+	
+	static int		HC_INCLUDE_EDGE; // used by hamiltonian_circuit if we are to include a specific edge in the circuit.
+
+	static int		INFINITE_CYCLE;
 
 	/* RACK_TERMS is the default for number of positive and negative terms added to
 	a braid to calculate the rack polynomial.  The default is set in the function
 	rack_poly_invariant
-	*/
 	static int		RACK_TERMS; 
+	static int 		INFINITY_COEFFICIENTS;
+	*/
 	
 	/* SATELLITE acts as a flag and indicates the number of strands to be added, if the default of 2 is not required */
 	static int		SATELLITE;
@@ -117,9 +125,13 @@ struct braid_control
 	static int wait_threshold;
 	static int wait_count;
 	static int reset_count; // number of times wait_count has reached wait_threshold
+
+	/* ST_pair_type is an enumeration of the type of pairs of finite switches S and T */
+	enum class ST_pair_type {FLAT_ESSENTIAL_VIRTUAL, ESSENTIAL_VIRTUAL, ESSENTIAL_WELDED, ESSENTIAL_DOODLE};
+
+//	enum infinity {LEGACY_DIAGONAL, FIXED_WRITHE, FIXED_TURNING, WRITHE_ONLY, WRITHE_CYCLE};
 	
+	enum cycle {BRAID_RTC=-2, UNSPECIFIED=-1};
 };
 
 
-/* ST_pair_type is an enumeration of the type of pairs of finite switches S and T */
-enum class ST_pair_type {FLAT_ESSENTIAL_VIRTUAL, ESSENTIAL_VIRTUAL, ESSENTIAL_WELDED, ESSENTIAL_DOODLE};

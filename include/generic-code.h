@@ -73,9 +73,9 @@ public:
 	};
 
 	int type;
-	int head;
+	int head_semi_arc;
 	
-	component_character():type(CLOSED),head(-1){}
+	component_character():type(CLOSED),head_semi_arc(-1){}
 };
 
 class generic_code_data
@@ -161,7 +161,7 @@ public:
 	   functions, it it more natural to include the indication of long status in the generic code data.
     */
    	
-	int immersion;
+	int immersion_character;
 	int num_crossings;
 	int num_components;
 
@@ -174,8 +174,8 @@ public:
 	matrix<int> zig_zag_count;  // used by parity arrow polynomial
 
 
-	generic_code_data(): type(unknown),num_open_components(0),head_zig_zag_count(0),immersion(character::CLOSED),num_crossings(0),num_components(0) {}
-	generic_code_data(int n, int c): type(unknown),head(-1),head_zig_zag_count(0),immersion(character::CLOSED),num_crossings(n),num_components(c),
+	generic_code_data(): type(unknown),num_open_components(0),head_zig_zag_count(0),immersion_character(character::CLOSED),num_crossings(0),num_components(0) {}
+	generic_code_data(int n, int c): type(unknown),head(-1),head_zig_zag_count(0),immersion_character(character::CLOSED),num_crossings(n),num_components(c),
 	                                 code_table(matrix<int>(CODE_TABLE_SIZE,n)),num_component_edges(vector<int>(c)), 
 									 first_edge_on_component(vector<int>(c)),term_crossing(vector<int>(2*n)), orig_crossing(vector<int>(2*n)), 
 									 shortcut_crossing(vector<int>(n)){}
@@ -222,4 +222,6 @@ bool valid_knotoid_input(generic_code_data& code_data);
 string over_preferred_gauss_code(generic_code_data& code_data, bool unoriented);
 int amalgamate_zig_zag_counts(int a, int b);
 string read_dowker_code (string input_string);
-bool non_prime_immersion(generic_code_data& code_data, bool crossing_test);
+int three_connected(generic_code_data& code_data, bool flat_crossings);
+bool valid_multi_linkoid_input(generic_code_data& code_data);
+int code_data_writhe(generic_code_data& code_data);
