@@ -33,6 +33,9 @@ extern bool SIDEWAYS_SEARCH;
 #include <debug-control.h>
 #include <braid-util.h>
 
+// AB_isalpha is needed because isalpha is overloaded and cannot be determined from count_if
+bool AB_isalpha (char& c) {return isalpha(c);}
+
 /*
 generic_braid_data::generic_braid_data(string w, string t)
 {
@@ -67,6 +70,7 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 /* invstr creates the inverse of src and returns it to the call.
    The string src must be composed of si, -si, and ti components only.
    The inverse of ti is again ti.
+   That is, it inverts string as an element of the corresponding braid group
 */
 string invstr(string& str)
 {
@@ -306,6 +310,25 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 
 }
 
+/* reverse_orientation returns a braid that is the orientation reverse of its input.
+   The orientation reverse is obtained by a sequence of symmetries equivalent to rotating
+   the braid by 180 degrees, so that the strand at the bottom of the end of the braid 
+   becomes the start of the top strand.
+   
+   Note that the function is passedits  parameter by value, so works with a local copy 
+*/
+string reverse_orientation(string braid)
+{
+	int num_terms=count_if(braid.begin(),braid.end(),AB_isalpha);				
+	int num_strings = num_braid_strands(braid);	
+	
+	invert_braid(braid, num_terms);
+	flip_braid(braid, num_terms, num_strings);
+	plane_reflect_braid(braid, num_terms);
+	return braid;
+}
+
+
 void parse_braid(string word, int num_terms, vector<int>& braid_num, vector<int>& type)
 {
 	char* braid_word = c_string(word);
@@ -383,6 +406,41 @@ void convert_rep (string& word, bool silent)
 	}
 
 	word = oss.str();
+}
+
+/* num_braid_strands returns the number of strings in a braid word, it is the responsibility 
+   of the calling code to ensure that the braid_string supplied is valid
+*/
+int num_braid_strands(string braid_string)
+{
+	string braid_terms = braid_string.substr(0, braid_string.find('{'));
+	int num_terms=count_if(braid_terms.begin(),braid_terms.end(),AB_isalpha);				
+
+	char* inbuf = c_string(braid_terms);
+	
+	int num_strings = 0;
+	char* cptr = inbuf;
+	for ( int i = 0; i< num_terms; i++)
+	{
+		if (*cptr == '-')
+			cptr++;
+
+		cptr++;
+		char* mark = cptr; /* mark where we start the number */
+
+		/* look for the end of the number */
+		while (isdigit(*cptr))
+			cptr++;
+
+		int number;
+    	get_number(number, mark);
+		if (number > num_strings)
+			num_strings = number;
+	}
+	num_strings++;
+	delete [] inbuf;
+	
+	return num_strings;
 }
 
 /* valid_braid_input returns a boolean indicating whether input is a valid braid, num_terms and num_strings may or may not have been 

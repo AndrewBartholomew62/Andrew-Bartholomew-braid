@@ -10,6 +10,7 @@
 #include <fstream>
 #include <cstring>
 #include <iomanip>
+#include <map>
 
 using namespace std;
 
@@ -51,10 +52,6 @@ int debug_control::DEBUG = debug_control::OFF;
 #endif
 
 
-#ifdef INITIALIZE_POLYNOMIAL
-	#include <polynomial.h>
-#endif
-
 #ifdef INITIALIZE_MATRIX	
 	#include <matrix.h>
 #endif
@@ -65,6 +62,10 @@ int debug_control::DEBUG = debug_control::OFF;
 
 #ifdef INITIALIZE_RATIONAL
 	#include <rational.h>
+#endif
+
+#ifdef INITIALIZE_POLYNOMIAL
+	#include <polynomial.h>
 #endif
 
 #ifdef INITIALIZE_SURD
@@ -177,7 +178,7 @@ void set_debug_option(char* start, char* end)
 		cout << "\t\tbigreal{+:-:*:/:==:gt:out:in:sum:diff:num_len:carry:all}, bitmap: no default" << endl;
 #endif
 #ifdef INITIALIZE_MATRIX
-		cout << "\t\tmatrix{det:inv:*:all}, bitmap: no default" << endl;
+		cout << "\t\tmatrix{gen:det:inv:*:all}, bitmap: default general" << endl;
 #endif
 #ifdef INITIALIZE_POLYNOMIAL
 		cout << "\t\tpoly{no-gen:san:+:*:/:in:gcd:all}, bitmap: general debug included unless no-gen specified" << endl;
@@ -231,6 +232,8 @@ void set_debug_option(char* start, char* end)
 	else if (!strcmp(loc_buf,"matrix"))
 	{
 #ifdef INITIALIZE_MATRIX
+		matrix_control::DEBUG |= matrix_control::general; // set default debug option
+		debug << "debug: setting debug option matrix_control::general\n";		
 		if (pptr)
 		{
 			/* check for any parameters */
@@ -241,7 +244,7 @@ void set_debug_option(char* start, char* end)
 	else if (!strcmp(loc_buf,"poly"))
 	{
 #ifdef INITIALIZE_POLYNOMIAL
-		polynomial_control::DEBUG |= polynomial_control::general;
+		polynomial_control::DEBUG |= polynomial_control::general; // set default debug option
 		debug << "debug: setting debug option polynomial_control::general\n";		
 
 		if (pptr)
@@ -486,10 +489,20 @@ void set_debug_option_parameter(char *pptr, string option)
 	else if (option == "matrix")
 	{
 #ifdef INITIALIZE_MATRIX	
+		if (!strcmp(pptr,"gen"))
+		{
+			matrix_control::DEBUG |= matrix_control::general;
+			debug << "debug: setting debug option matrix_control::general\n";		
+		}
 		if (!strcmp(pptr,"det"))
 		{
 			matrix_control::DEBUG |= matrix_control::immanant;
 			debug << "debug: setting debug option matrix_control::immanant\n";		
+		}
+		if (!strcmp(pptr,"ech"))
+		{
+			matrix_control::DEBUG |= matrix_control::echelon;
+			debug << "debug: setting debug option matrix_control::echelon\n";		
 		}
 		if (!strcmp(pptr,"*"))
 		{

@@ -3,8 +3,8 @@
 
                   A. Bartholomew 25th November, 2001
 
-string invstr(string& str)
 void print_prog_params (ostream& os, string level, string prefix)
+void print_switch_data(ostream& s, generic_switch_data& switch_data, string prefix)
 string long_knot_concatenation (string ic1, string ic2)
 string set_long_knot_infinity_point (string input_string)
 string parse_long_knot_input_string (string input_string)
@@ -19,7 +19,12 @@ void display_fixed_point_switch(matrix<int>& M, ostream& os, bool number_from_ze
 void Kamada_double_covering(string& braid, int num_terms, int num_strings)
 void commutative_automorphism_invariant(const Qpmatrix& phi, const Qpmatrix& psi, string input_string, string title)
 matrix<int> permutation_cycles (generic_code_data& code_data)
-
+void print_k_chain(ostream& os, const vector<scalar> k_chain, generic_switch_data& switch_data, int k)
+void print_k_chain(ostream& os, const vector<int> k_chain, generic_switch_data& switch_data, int k)
+void colouring_invariant(matrix<int>& Su, matrix<int>& Sd, matrix<int>& invSu, matrix<int>& invSd, 
+						   matrix<int>& Tu, matrix<int>& Td, braid_control::ST_pair_type pair_type, string input_string, string title, generic_switch_data& switch_data)
+void determine_cohomology_generators(generic_switch_data& switch_data)
+vector<int> smallest_parent_birack(matrix<int>& Su, matrix<int>& Sd, vector<int> labels)
 **************************************************************************/
 #include <string>
 #include <sstream>
@@ -29,6 +34,7 @@ matrix<int> permutation_cycles (generic_code_data& code_data)
 #include <cstring>
 #include <algorithm>
 #include <iomanip>
+#include <map>
 
 using namespace std;
 
@@ -39,15 +45,31 @@ extern ofstream     debug;
 extern bool SIDEWAYS_SEARCH;
 
 #include <util.h>
+#include <scalar.h> // includes bigint.h and rational.h
 #include <quaternion-scalar.h>
 #include <polynomial.h>
 #include <matrix.h>
-#include <ctype.h>
+#include <braid-util.h>
+#include <generic-code.h>
 #include <braid.h>
 
-string braid_to_generic_code (string braid, int num_terms, int code_type);
+string braid_to_generic_code (string braid, int num_terms, int code_type,vector<int>* braid_term=0);
 bool Yang_Baxter_satisfied (matrix<int>& U, matrix<int>& D, bool rack_condition = false);
-bool rat_minor_determinant (Qpmatrix* Matrix_rep, int N, int Nr1, int Nc1, int Nc2, int* rperm, int* cperm, string title, polynomial<scalar,char,bigint>& hcf);
+bool rat_minor_determinant (Qpmatrix* Matrix_rep, int N, int Nr1, int Nc1, int Nc2, int* rperm, int* cperm, string title, polynomial<scalar,char>& hcf);
+void display_fixed_point_switch(matrix<int>& M, ostream& os, bool number_from_zero);
+colouring_data num_fixed_points(matrix<int>& Su, matrix<int>& Sd, matrix<int>& invSu, matrix<int>& invSd, matrix<int>& Tu, matrix<int>& Td, 
+                     string input_string, int num_terms, int num_strings, generic_switch_data& switch_data, vector<int>* image_size_count = 0);
+bool distinguish_modified_string (matrix<int>& Su, matrix<int>& Sd, matrix<int>& invSu, matrix<int>& invSd, 
+						   matrix<int>& Tu, matrix<int>& Td, string input_string, int num_terms,int num_strings,generic_switch_data& switch_data);
+
+
+void braid_colouring_invariant(matrix<int>& Su, matrix<int>& Sd, matrix<int>& invSu, matrix<int>& invSd, matrix<int>& Tu, matrix<int>& Td,
+			braid_control::ST_pair_type pair_type, string input_string, string title, generic_switch_data& switch_data, int period);
+
+void peer_code_colouring_invariant(matrix<int>& Su, matrix<int>& Sd, matrix<int>& invSu, matrix<int>& invSd, matrix<int>& Tu, matrix<int>& Td,
+			braid_control::ST_pair_type pair_type, string input_string, string title, generic_switch_data& switch_data, int period);
+			
+
 
 void print_prog_params (ostream& os, string level, string prefix)
 {
@@ -55,14 +77,20 @@ void print_prog_params (ostream& os, string level, string prefix)
 	os << prefix << "braid_control::ALEXANDER = " << braid_control::ALEXANDER << endl;
 	os << prefix << "braid_control::ARROW_POLYNOMIAL = " << braid_control::ARROW_POLYNOMIAL << endl;
 	os << prefix << "braid_control::BURAU = " << braid_control::BURAU << endl;
+	os << prefix << "braid_control::BIRACK_HOMOLOGY = " << braid_control::BIRACK_HOMOLOGY << endl;
+	os << prefix << "braid_control::BIRACK_POLYNOMIAL = " << braid_control::BIRACK_POLYNOMIAL << endl;
+	os << prefix << "braid_control::BRAID_PERMUTATION = " << braid_control::BRAID_PERMUTATION << endl;
 	os << prefix << "braid_control::COMMUTATIVE_AUTOMORPHISM = " << braid_control::COMMUTATIVE_AUTOMORPHISM << endl;
+	os << prefix << "braid_control::COCYCLE_INVARIANT = " << braid_control::COCYCLE_INVARIANT << endl;
+	os << prefix << "braid_control::COHOMOLOGY = " << braid_control::COHOMOLOGY << endl;
 	os << prefix << "braid_control::DOODLE_ALEXANDER = " << braid_control::DOODLE_ALEXANDER << endl;
 	os << prefix << "braid_control::DOWKER_CODE = " << braid_control::DOWKER_CODE << endl;
 	os << prefix << "braid_control::DYNNIKOV_TEST = " << braid_control::DYNNIKOV_TEST << endl;
-	os << prefix << "braid_control::FIXED_POINT_INVARIANT = " << braid_control::FIXED_POINT_INVARIANT << endl;
+	os << prefix << "braid_control::FINITE_SWITCH_INVARIANT = " << braid_control::FINITE_SWITCH_INVARIANT << endl;
 	os << prefix << "braid_control::GAUSS_CODE = " << braid_control::GAUSS_CODE << endl;
 	os << prefix << "braid_control::HAMILTONIAN = " << braid_control::HAMILTONIAN << endl;
 	os << prefix << "braid_control::HOMFLY = " << braid_control::HOMFLY << endl;
+	os << prefix << "braid_control::HOMOLOGY = " << braid_control::HOMOLOGY << endl;
 	os << prefix << "braid_control::IMMERSION_CODE = " << braid_control::IMMERSION_CODE << endl;
 	os << prefix << "braid_control::JONES_POLYNOMIAL = " << braid_control::JONES_POLYNOMIAL << endl;
 	os << prefix << "braid_control::KAUFFMAN_BRACKET = " << braid_control::KAUFFMAN_BRACKET << endl;
@@ -75,6 +103,7 @@ void print_prog_params (ostream& os, string level, string prefix)
 	os << prefix << "braid_control::QUATERNION = " << braid_control::QUATERNION << endl;
 	os << prefix << "braid_control::SAWOLLEK = " << braid_control::SAWOLLEK << endl;
 	os << prefix << "braid_control::SATELLITE = " << braid_control::SATELLITE << endl;
+	os << prefix << "braid_control::SUMMARY_TEST = " << braid_control::SUMMARY_TEST << endl;
 	os << prefix << "braid_control::SWITCH_POLYNOMIAL_INVARIANT = " << braid_control::SWITCH_POLYNOMIAL_INVARIANT << endl;
 	os << prefix << "braid_control::VOGEL_ALGORITHM = " << braid_control::VOGEL_ALGORITHM << endl;
 	os << prefix << "braid_control::WELDED_BRAID = " << braid_control::WELDED_BRAID << endl;
@@ -92,12 +121,13 @@ void print_prog_params (ostream& os, string level, string prefix)
 		os << prefix << "braid_control::CUSTOM_WEYL = " << braid_control::CUSTOM_WEYL << endl;
 		os << prefix << "braid_control::DELTA_1_UNIT_CHECK = " << braid_control::DELTA_1_UNIT_CHECK << endl;
 		os << prefix << "braid_control::DISPLAY_DELTA_1_ONLY = " << braid_control::DISPLAY_DELTA_1_ONLY << endl;
+		os << prefix << "braid_control::DOUBLE_BIRACKS = " << braid_control::DOUBLE_BIRACKS << endl;
 		os << prefix << "braid_control::EQUALITY_TEST = " << braid_control::EQUALITY_TEST << endl;
 		os << prefix << "braid_control::EXPANDED_BRACKET_POLYNOMIAL = " << braid_control::EXPANDED_BRACKET_POLYNOMIAL << endl;
 		os << prefix << "braid_control::EXTRA_OUTPUT = " << braid_control::EXTRA_OUTPUT << endl;
 		os << prefix << "braid_control::FLAT_CROSSINGS = " << braid_control::FLAT_CROSSINGS << endl;
 		os << prefix << "braid_control::FLIP_BRAID = " << braid_control::FLIP_BRAID << endl;
-		os << prefix << "braid_control::GCD_BACK_SUBSTITUTING = " << braid_control::GCD_BACK_SUBSTITUTING << endl;
+//		os << prefix << "braid_control::GCD_BACK_SUBSTITUTING = " << braid_control::GCD_BACK_SUBSTITUTING << endl;
 		os << prefix << "braid_control::INVERT_BRAID = " << braid_control::INVERT_BRAID << endl;
 		os << prefix << "braid_control::KAMADA_DOUBLE_COVERING = " << braid_control::KAMADA_DOUBLE_COVERING << endl;
 		os << prefix << "braid_control::LINE_REFLECT_BRAID = " << braid_control::LINE_REFLECT_BRAID << endl;
@@ -106,14 +136,15 @@ void print_prog_params (ostream& os, string level, string prefix)
 		os << prefix << "braid_control::NORMALIZING_Q_POLYNOMIALS = " << braid_control::NORMALIZING_Q_POLYNOMIALS << endl;
 		os << prefix << "braid_control::NUMERATOR_GCD = " << braid_control::NUMERATOR_GCD << endl;
 		os << prefix << "braid_control::OUTPUT_AS_INPUT = " << braid_control::OUTPUT_AS_INPUT << endl;
-		os << prefix << "braid_control::PLANE_REFLECT_BRAID = " << braid_control::PLANE_REFLECT_BRAID << endl;
+		os << prefix << "braid_control::PLANE_REFLECT_INPUT = " << braid_control::PLANE_REFLECT_INPUT << endl;
 		os << prefix << "braid_control::PRIME_WEYL = " << braid_control::PRIME_WEYL << endl;
 		os << prefix << "braid_control::QUANTUM_WEYL = " << braid_control::QUANTUM_WEYL << endl;
-		os << prefix << "braid_control::RACK_POLYNOMIAL = " << braid_control::RACK_POLYNOMIAL << endl;
 		os << prefix << "braid_control::RAW_OUTPUT = " << braid_control::RAW_OUTPUT << endl;
 		os << prefix << "braid_control::RELAXED_PARITY = " << braid_control::RELAXED_PARITY << endl;
+		os << prefix << "braid_control::REFINE_RACK_POLYNOMIAL = " << braid_control::REFINE_RACK_POLYNOMIAL << endl;
 		os << prefix << "braid_control::REMOVE_PEER_CODE_COMPONENT = " << braid_control::REMOVE_PEER_CODE_COMPONENT << endl;
 		os << prefix << "braid_control::REMOVE_REIDEMEISTER_II_MOVES = " << braid_control::REMOVE_REIDEMEISTER_II_MOVES << endl;
+		os << prefix << "braid_control::REVERSE_INPUT_ORIENTATION = " << braid_control::REVERSE_INPUT_ORIENTATION << endl;
 		os << prefix << "braid_control::SILENT_OPERATION = " << braid_control::SILENT_OPERATION << endl;
 		os << prefix << "braid_control::STATUS_INFORMATION = " << braid_control::STATUS_INFORMATION << endl;
 		os << prefix << "braid_control::STUDY_RHO_MAPPING = " << braid_control::STUDY_RHO_MAPPING << endl;
@@ -123,8 +154,76 @@ void print_prog_params (ostream& os, string level, string prefix)
 		os << prefix << "braid_control::TRUNCATED_WEYL = " << braid_control::TRUNCATED_WEYL << endl;
 		os << prefix << "braid_control::VERIFY_DELTA_0 = " << braid_control::VERIFY_DELTA_0 << endl;
 		os << prefix << "braid_control::WAIT_SWITCH = " << braid_control::WAIT_SWITCH << endl;
+		os << prefix << "braid_control::wait_threshold = " << braid_control::wait_threshold << endl;
 	}
 }
+
+/*
+	string title;
+	string definition;
+	int size; // records the size of finite biracks
+	
+	matrix<int> Su;
+	matrix<int> Sd;
+	list<string> cocycle_string; // _s string format
+	list<vector<int> > cocycle_scalar; // _i integer format
+*/
+void print_switch_data(ostream& s, generic_switch_data& switch_data, string prefix)
+{
+
+	s << prefix << "switch title = " << switch_data.title << endl;
+	s << prefix << "definition = " << switch_data.definition << endl;
+	s << prefix << "size = " << switch_data.size << endl;
+	s << prefix << "cocycles_calculated = " << switch_data.cocycles_calculated << endl;
+	s << prefix << "biquandle = " << switch_data.biquandle << endl;
+	s << prefix << "Su: ";
+	display_fixed_point_switch(switch_data.Su, s, false); // number_from_zero = false
+//	print(switch_data.Su,s,3,prefix);
+	s << " Sd: ";
+	display_fixed_point_switch(switch_data.Sd, s, false); // number_from_zero = false
+//	print(switch_data.Sd,s,3,prefix);
+	s << endl;
+
+	if (switch_data.cocycle_string.size() != 0)
+	{
+		s << prefix << "cocycle_string:" << endl;
+		list<string>::iterator lptr = switch_data.cocycle_string.begin();
+		while (lptr != switch_data.cocycle_string.end())
+		{
+			s << prefix << "  " << *lptr << endl;
+			lptr++;
+		}
+	}
+	else
+		s << prefix << "cocycle_string empty" << endl;
+
+	if (switch_data.cocycle_scalar.size() != 0)
+	{
+		s << prefix << "cocycle_scalar:" << endl;
+		list<vector<scalar> >::iterator lptr = switch_data.cocycle_scalar.begin();
+		while (lptr != switch_data.cocycle_scalar.end())
+		{
+			s << prefix << "  ";
+			for (size_t i=0; i< lptr->size(); i++)
+				s<< (*lptr)[i] << ' ';
+			s << endl;
+			lptr++;
+		}
+	}
+	else
+		s << prefix << "cocycle_scalar empty" << endl;
+		
+	if (switch_data.chain_map.size() != 0)
+	{
+		s << prefix << "chain_map: ";
+		for (size_t i=0; i < switch_data.chain_map.size(); i++)
+			s << switch_data.chain_map[i] << ' ';
+		s << endl;
+	}
+	else
+		s << prefix << "chain_map empty" << endl;
+}
+
 
 /* long_knot_concatenation yields a peer_code string representation of the concatination of the long knots
    determined by the input codes code1 and code2. The input codes can be either peer codes or immersion codes.
@@ -377,7 +476,7 @@ bool Yang_Baxter_satisfied (matrix<int>& U, matrix<int>& D,bool rack_condition)
 	int n = U.numcols();
 
 if (debug_control::DEBUG >= debug_control::BASIC)
-	debug << "  S-Yang-Baxter rules: " << endl;
+	debug << "Yang_Baxter_satisfied: S-Yang-Baxter rules: " << endl;
 
 	vector<int> rof(3); //rule of five
 	for (int i =0; i< n; i++)
@@ -390,8 +489,8 @@ if (debug_control::DEBUG >= debug_control::BASIC)
 			{
 				rof[2]=k;
 				
-if (debug_control::DEBUG >= debug_control::DETAIL)
-	debug << "    rof: " << rof[0] << " " << rof[1] << " " << rof[2] << endl;
+if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
+	debug << "Yang_Baxter_satisfied: rof: " << rof[0] << " " << rof[1] << " " << rof[2] << endl;
 
 				int& a = rof[0];
 				int& b = rof[1];
@@ -399,62 +498,62 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 					
 				/* Up interchange */
 				int& a_up_b = U[b][a];
-if (debug_control::DEBUG >= debug_control::DETAIL)
-	debug << "      a_up_b = " << a_up_b <<endl;
+if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
+	debug << "Yang_Baxter_satisfied:     a_up_b = " << a_up_b <<endl;
 
 				int& b_up_c = U[c][b];
-if (debug_control::DEBUG >= debug_control::DETAIL)
-	debug << "      b_up_c = " << b_up_c <<endl;
+if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
+	debug << "Yang_Baxter_satisfied:     b_up_c = " << b_up_c <<endl;
 
 				int& a_up_b__up_c = U[c][a_up_b];
-if (debug_control::DEBUG >= debug_control::DETAIL)
-	debug << "      a_up_b__up_c = " << a_up_b__up_c <<endl;
+if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
+	debug << "Yang_Baxter_satisfied:     a_up_b__up_c = " << a_up_b__up_c <<endl;
 
 				if (rack_condition)
 				{
 					/* a^bc = a^{cb^c} */
 					int& a_up_c = U[c][a];						
-if (debug_control::DEBUG >= debug_control::DETAIL)
-	debug << "      a_up_c = " << a_up_c <<endl;
+if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
+	debug << "Yang_Baxter_satisfied:     a_up_c = " << a_up_c <<endl;
 
 					if (a_up_b__up_c != U[b_up_c][a_up_c])
 					{
-if (debug_control::DEBUG >= debug_control::DETAIL)
-	debug << "      rack up interchange condition fails" << endl;
+if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
+	debug << "Yang_Baxter_satisfied:   rack up interchange condition fails" << endl;
 if (debug_control::DEBUG >= debug_control::BASIC)
-	debug << "    fails" << endl;
+	debug << "Yang_Baxter_satisfied:   fails" << endl;
 	
 						return false;
 					}
 					else
 					{
-if (debug_control::DEBUG >= debug_control::DETAIL)
-	debug << "      a_up_b__up_c == U[b_up_c][a_up_c]\n" << endl;
+if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
+	debug << "Yang_Baxter_satisfied:   a_up_b__up_c == U[b_up_c][a_up_c]" << endl;
 					}
 				}
 				else 
 				{
 					int& c_down_b = D[b][c];					
-if (debug_control::DEBUG >= debug_control::DETAIL)
-	debug << "      c_down_b = " << c_down_b <<endl;
+if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
+	debug << "Yang_Baxter_satisfied:     c_down_b = " << c_down_b <<endl;
 
 					int& a_up__c_down_b = U[c_down_b][a];
-if (debug_control::DEBUG >= debug_control::DETAIL)
-	debug << "      a_up__c_down_b = " << a_up__c_down_b <<endl;
+if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
+	debug << "Yang_Baxter_satisfied:     a_up__c_down_b = " << a_up__c_down_b <<endl;
 					
 					if (a_up_b__up_c != U[b_up_c][a_up__c_down_b])
 					{
-if (debug_control::DEBUG >= debug_control::DETAIL)
-	debug << "      up interchange condition fails" << endl;
+if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
+	debug << "Yang_Baxter_satisfied:   up interchange condition fails" << endl;
 if (debug_control::DEBUG >= debug_control::BASIC)
-	debug << "    fails" << endl;
+	debug << "Yang_Baxter_satisfied:   fails" << endl;
 	
 						return false;
 					}
 					else
 					{
-if (debug_control::DEBUG >= debug_control::DETAIL)
-	debug << "      a_up_b__up_c == U[b_up_c][a_up__c_down_b]\n" << endl;
+if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
+	debug << "Yang_Baxter_satisfied:   a_up_b__up_c == U[b_up_c][a_up__c_down_b]" << endl;
 					}
 				}
 
@@ -462,72 +561,72 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 				{
 					/* Down interchange */
 					int& c_up_b = U[b][c];
-if (debug_control::DEBUG >= debug_control::DETAIL)
-	debug << "      c_up_b = " << c_up_b <<endl;
+if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
+	debug << "Yang_Baxter_satisfied:     c_up_b = " << c_up_b <<endl;
 
 					int& b_down_c = D[c][b];
-if (debug_control::DEBUG >= debug_control::DETAIL)
-	debug << "      b_down_c = " << b_down_c <<endl;
+if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
+	debug << "Yang_Baxter_satisfied:     b_down_c = " << b_down_c <<endl;
 
 					int& a_down_b = D[b][a];
-if (debug_control::DEBUG >= debug_control::DETAIL)
-	debug << "      a_down_b = " << a_down_b <<endl;
+if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
+	debug << "Yang_Baxter_satisfied:     a_down_b = " << a_down_b <<endl;
 
 					int& a_down_b__down_c = D[c][a_down_b];
-if (debug_control::DEBUG >= debug_control::DETAIL)
-	debug << "      a_down_b__down_c = " << a_down_b__down_c <<endl;
+if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
+	debug << "Yang_Baxter_satisfied:     a_down_b__down_c = " << a_down_b__down_c <<endl;
 
 					int& a_down__c_up_b = D[c_up_b][a];
-if (debug_control::DEBUG >= debug_control::DETAIL)
-	debug << "      a_down__c_up_b = " << a_down__c_up_b <<endl;
+if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
+	debug << "Yang_Baxter_satisfied:     a_down__c_up_b = " << a_down__c_up_b <<endl;
 					
 					if (a_down_b__down_c != D[b_down_c][a_down__c_up_b])
 					{
-if (debug_control::DEBUG >= debug_control::DETAIL)
-	debug << "      down interchange condition fails" << endl;
+if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
+	debug << "Yang_Baxter_satisfied:   down interchange condition fails" << endl;
 if (debug_control::DEBUG >= debug_control::BASIC)
-	debug << "    fails" << endl;
+	debug << "Yang_Baxter_satisfied:   fails" << endl;
 	
 						return false;
 					}
 					else
 					{
-if (debug_control::DEBUG >= debug_control::DETAIL)
-	debug << "      a_down_b__down_c == D[b_down_c][a_down__c_up_b]\n" << endl;
+if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
+	debug << "Yang_Baxter_satisfied:   a_down_b__down_c == D[b_down_c][a_down__c_up_b]" << endl;
 					}
 					
 					/* Rule of five */
 					int& b_up_a = U[a][b];
-if (debug_control::DEBUG >= debug_control::DETAIL)
-	debug << "      b_up_a = " << b_up_a <<endl;
+if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
+	debug << "Yang_Baxter_satisfied:     b_up_a = " << b_up_a <<endl;
 	
 					int& a_up_c = U[c][a];
-if (debug_control::DEBUG >= debug_control::DETAIL)
-	debug << "      a_up_c = " << a_up_c <<endl;
+if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
+	debug << "Yang_Baxter_satisfied:     a_up_c = " << a_up_c <<endl;
 	
 					int& c_down_a = D[a][c];
-if (debug_control::DEBUG >= debug_control::DETAIL)
-	debug << "      c_down_a = " << c_down_a <<endl;
+if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
+	debug << "Yang_Baxter_satisfied:     c_down_a = " << c_down_a <<endl;
 	
 					int& b_up__c_down_a = U[c_down_a][b];
-if (debug_control::DEBUG >= debug_control::DETAIL)
-	debug << "      b_up__c_down_a = " << b_up__c_down_a <<endl;
+if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
+	debug << "Yang_Baxter_satisfied:     b_up__c_down_a = " << b_up__c_down_a <<endl;
 		
 					int& c_down__b_up_a = D[b_up_a][c];
-if (debug_control::DEBUG >= debug_control::DETAIL)
-	debug << "      c_down__b_up_a = " << c_down__b_up_a <<endl;
+if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
+	debug << "Yang_Baxter_satisfied:     c_down__b_up_a = " << c_down__b_up_a <<endl;
 	
 					int& a_down_b__up___c_down__b_up_a = U[c_down__b_up_a][a_down_b];
-if (debug_control::DEBUG >= debug_control::DETAIL)
-	debug << "      a_down_b__up___c_down__b_up_a = " << a_down_b__up___c_down__b_up_a <<endl;
+if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
+	debug << "Yang_Baxter_satisfied:     a_down_b__up___c_down__b_up_a = " << a_down_b__up___c_down__b_up_a <<endl;
 	
 					
 					if (a_down_b__up___c_down__b_up_a != D[b_up__c_down_a][a_up_c])
 					{
-if (debug_control::DEBUG >= debug_control::DETAIL)
-	debug << "      rule of five condition fails" << endl;
+if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
+	debug << "Yang_Baxter_satisfied:   rule of five condition fails" << endl;
 if (debug_control::DEBUG >= debug_control::BASIC)
-	debug << "  fails" << endl;
+	debug << "Yang_Baxter_satisfied: fails" << endl;
 	
 						return false;
 					}	
@@ -537,7 +636,7 @@ if (debug_control::DEBUG >= debug_control::BASIC)
 	}
 	
 if (debug_control::DEBUG >= debug_control::BASIC)
-	debug << "    OK" << endl;
+	debug << "Yang_Baxter_satisfied:   OK" << endl;
 
 	return true;
 }
@@ -1387,7 +1486,7 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 	if (!braid_control::CALCULATE_DELTA_0_ONLY && (braid_control::ALWAYS_CALCULATE_DELTA_1 || delta_0 == Qpolynomial("0")))
 	{
 		/* hcf is used only in single variable examples */
-		polynomial<scalar,char,bigint> hcf = delta_0.getn();
+		polynomial<scalar,char> hcf = delta_0.getn();
 
 if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
     debug << "\ncommutative_automorphism_invariant:hcf initialized to " << hcf << endl;
@@ -1411,7 +1510,7 @@ if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 			for (int Nc1= 0; Nc1< matrix_N_size; Nc1++)
 			{
 			
-				Qpolynomial det = polynomial<scalar,char,bigint> ("0");
+				Qpolynomial det = polynomial<scalar,char> ("0");
 				
 				/* take out the N columns of the matrix rep starting from column N*j */
 				for (int i=0; i<Nc1*N; i++)
@@ -1614,4 +1713,763 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << endl;
 }
 		return perm;
+}
+
+void print_k_chain(ostream& os, const vector<scalar> k_chain, generic_switch_data& switch_data, int k)
+{
+	int n = switch_data.size;
+	int nn = n*n;
+	
+	int initial_factor = 1;
+	for (int j=0; j< k-1; j++)
+		initial_factor *= n;
+
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
+{
+	debug << "print_k_chain: k_chain: ";
+	for (size_t i=0; i< k_chain.size(); i++)
+		debug << k_chain[i] << ' ';
+	debug << "n = " << n << ", k = " << k << endl;
+	debug << "print_k_chain: initial_factor = " << initial_factor << endl;
+}
+	
+	vector<int>& chain_map = switch_data.chain_map;
+	vector<int> reverse_map(n*nn,-1); // only the first num_chain_generators places will have values;
+	for (int i=0; i< n*nn; i++)
+	{
+		if (chain_map[i] != -1)
+			reverse_map[chain_map[i]] = i;
+	}
+	
+//if (debug_control::DEBUG >= debug_control::DETAIL)
+//	debug << "print_k_chain: generator ";
+	
+	ostringstream oss;
+	bool first = true;
+	
+	for (size_t i=0; i< k_chain.size(); i++)
+	{
+		scalar coefficient = k_chain[i];
+		
+		if (coefficient != scalar(0))
+		{
+//if (debug_control::DEBUG >= debug_control::DETAIL)
+//	debug << coefficient << ' ';
+			
+			int k_tuple = (braid_control::BIRACK_HOMOLOGY?i:reverse_map[i]);				
+			vector<int> p(k);
+			int factor = initial_factor;
+			for (int j=0; j< k-1; j++)
+			{
+				p[j] = k_tuple/factor;
+				k_tuple %= factor;
+				factor /=n;
+			}
+			p[k-1] = k_tuple;
+
+if (debug_control::DEBUG >= debug_control::DETAIL)
+{
+	for (int j=0; j< k; j++)
+		debug << "(, p" << j+1 << '=' << p[j];
+	debug << ") " << endl;
+}
+
+			/* We need to accommodate mod-p scalars but write the non-zero element of Z_2 as 1 not -1 */
+			if (coefficient == scalar(-1) && !(braid_control::CALCULATE_MOD_P && mod_p::get_p() == 2))
+				oss << '-';  
+			else if (coefficient < scalar(0))
+				oss << coefficient;
+			else
+			{
+				if (!first)
+					oss << '+';			
+		
+				if (coefficient != scalar(1))
+					oss << coefficient;
+			}
+			
+			oss << '(';
+			for (int j=0; j< k-1; j++)
+				oss << p[j] << ',';
+			oss << p[k-1] << ')';
+			
+			first = false;
+		}
+		else
+		{
+if (debug_control::DEBUG >= debug_control::DETAIL)
+	debug << 0 << ' ';
+		}
+	}
+	
+//if (debug_control::DEBUG >= debug_control::DETAIL)
+//	debug << "\nprint_k_chain: generates " << oss.str() << endl;
+	
+	os << oss.str();
+}
+
+void print_k_chain(ostream& os, const vector<int> k_chain, generic_switch_data& switch_data, int k)
+{
+	vector<scalar> scalar_k_chain(k_chain.size());
+	for (size_t i=0; i < k_chain.size(); i++)
+		scalar_k_chain[i] = scalar(k_chain[i]);
+	
+	print_k_chain(os, scalar_k_chain, switch_data,k);
+}
+
+/* colouring_invariant is a broker function for colouring invariants for braid and peer code input.  It is used by
+		BIRACK_POLYNOMIAL
+		COCYCLE_INVARIANT
+		colouring-invariant (the default when FINITE_SWITCH_INVARIANT == true)
+
+	The function calls either peer_code_colouring_invariant or braid_colouring_invariant depending on the input type.  In
+	preparation for BIRACK_POLYNOMIAL, the function evaluates the writhe and turning number of the input.
+	
+	In the case of BIRACK_POLYNOMIAL it first evaluates the period of the permutation W that determines how many terms are required.
+
+	In the case of COCYCLE_INVARIANT, the function sets num_chain_generators and chain_map in the switch data if cohomology 
+	generators were read from the input file
+*/
+void colouring_invariant(matrix<int>& Su, matrix<int>& Sd, matrix<int>& invSu, matrix<int>& invSd, 
+						   matrix<int>& Tu, matrix<int>& Td, braid_control::ST_pair_type pair_type, string input_string, string title, generic_switch_data& switch_data)
+{		
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+  	debug << "colouring_invariant: presented with input_string =  " << input_string << endl;
+
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+{
+  	debug << "colouring_invariant: presented with switch_data:" << endl;
+  	print_switch_data(debug,switch_data,"colouring_invariant: ");
+  	debug << "colouring_invariant: presented with Su:" << endl;
+  	print(Su, debug, 3, "colouring_invariant:   ");  
+  	debug << "colouring_invariant: presented with Sd:" << endl;
+  	print(Sd, debug, 3, "colouring_invariant:   ");  
+}
+
+	if (title.length())
+   	{
+		if (!braid_control::SILENT_OPERATION)
+			cout << "\n\n" << title << endl;
+		if (!braid_control::RAW_OUTPUT)
+			output << "\n\n" << title;
+   	}
+   	else if (!braid_control::SILENT_OPERATION)
+   	{
+		cout << "\n\n" << input_string << endl;
+	}
+		
+
+	if (!braid_control::RAW_OUTPUT)
+	{
+		output << (braid_control::OUTPUT_AS_INPUT? "\n;" : "\n");
+	   	output << input_string << endl;		
+	}
+	
+	int n = switch_data.size;
+	int nn = n*n;
+	int nnn = n*nn;
+
+	int period = 1;
+	
+	if (braid_control::BIRACK_POLYNOMIAL && switch_data.biquandle == false)
+	{
+		/* determine the cycle structure of W, the sideways map of S followed by a twist.  
+
+		   The sideways twitch map of a switch is T(a,b) = (t_a(b),t^b(a)), i.e S_{-}^{+} (a,b) = (b_{a^{-1}}, a^{b_{a^{-1}}}), 
+		   where ^ and _ are switch actions.
+		*/
+		
+		
+		int n = Su.numrows();
+		matrix<int> twitch_u(n,n,-1);
+		matrix<int> twitch_d(n,n,-1);
+		
+		matrix<int> inv_D(n,n,-1); // initialised to -1 to support doubled biracks
+		
+		for (int i=0; i< n; i++)
+		for (int j=0; j< n; j++)
+		{
+			if (Sd[i][j] == -1)
+				continue; // this is for doubled biracks
+				
+			inv_D[i][Sd[i][j]] = j; // inverts the map D_i given by the row Sd[i][]
+		}
+		
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
+{
+	debug << "colouring_invariant: inv_D:" << endl;
+	print (inv_D,debug,3,"colouring_invariant: ");
+}
+	
+		for (int a=0; a< n; a++)
+		for (int b=0; b< n; b++)
+		{
+			int x = inv_D[a][b];  // D_a^{-1}(b)
+
+if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
+	debug << "colouring_invariant:   a = " << a << " b = " << b << " x = " << x << endl;
+	
+			if (x == -1)
+				continue; // for doubled biracks			
+
+			twitch_d[a][b] = x;
+			twitch_u[b][a] = Su[x][a];
+		}
+
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
+{
+	debug << "colouring_invariant: twitch_u:" << endl;
+	print (twitch_u,debug,3,"colouring_invariant: ");
+	debug << "colouring_invariant: twitch_d:" << endl;
+	print (twitch_d,debug,3,"colouring_invariant: ");
+	
+}		
+		/* Determine the permutation W = \tau \circ T.  We enumerate pairs of X^2 via first*n+second so that
+		   for i in the range 0 to n*n the pair is (a,b) = (i/n, i%n).  The map T is then given by T(a,b)=(b_a,a^b)
+		   where the up and down actions are twitch_u and twitch_d; that is T(a,b) = (twitch_d[a][b], twitch_u[b][a])
+		   so that W(a,b) = (twitch_u[b][a],twitch_d[a][b])
+		   
+		*/
+		vector<int> perm(n*n,-1); // initialized to -1 to handle doubled biracks
+				
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+	debug << "colouring_invariant: permutation W = \\tau\\circ T" << endl;
+
+		for (int i=0; i< n*n; i++)
+		{
+			if (twitch_u[i%n][i/n] == -1) // twitch_u[b][a]
+				continue;
+				
+			perm[i] = n*twitch_u[i%n][i/n]+twitch_d[i/n][i%n];
+					
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+	debug << "colouring_invariant:   term " << i << ", W(" << i/n << ',' << i%n << ") = (" << twitch_u[i%n][i/n] << ',' << twitch_d[i/n][i%n] << "), perm " << perm[i] << endl;
+		}
+
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+{
+	debug << "colouring_invariant: perm W = ";
+	for (int i=0; i< n*n; i++)
+		debug << perm[i] << ' ';
+	debug << endl;
+}
+
+		/* Determine the period of the birack polynomial.  The twist introduced by the birack polynomial takes (x_0,y_0) = ((b,a),(c,a)) to 
+		   (y_1,x_1) = ((c_b,a^b), (b^c,a^c)), so results in a pair (x_1,y_1) where x_1=(b^c,a^c) and y_1=(c_b,a^b).
+		   
+		   For undoubled biracks W is a permutation of X^2 and so repeated application of a diagonal entry in X^2 always results in another
+		   diagonal entry.  For doubled biracks, W may not be defined, meaning there is no colouring by the double of the knot with a twist 
+		   added.  However, if repeated applicationof W is always defined for diagonal entries, we may still determine a period for each
+		   diagonal entry and take the least common multiple as in the un-doubled case.
+		*/
+		vector<int> diagonal_period(n);
+		bool birack_polynomial_defined = true;
+		
+		for (int i=0; i< n; i++)
+		{
+			int next_term=i*(n+1);
+			for (int j=0; j< n*n; j++)
+			{
+				next_term = perm[next_term];
+				if(next_term == -1)
+				{
+					birack_polynomial_defined = false;
+					break;
+				}
+				else if (next_term %(n+1) == 0)
+				{
+					/* we're at another diagonal entry */
+					diagonal_period[i] = j+1;
+					break;
+				}
+			}
+			
+		}
+
+		if (!birack_polynomial_defined)
+		{
+			if (!braid_control::SILENT_OPERATION)			
+				cout << "Birack polynomial is not defined for this doubled birack" << endl;
+					
+			if (!braid_control::RAW_OUTPUT)
+			{
+				output << (braid_control::OUTPUT_AS_INPUT? "\n;" : "\n");
+				output << "Birack polynomial is not defined for this doubled birack";
+			}
+			
+			return;
+		}
+
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+	debug << "colouring_invariant: W permutation is defined for this doubled birack" << endl;
+			
+					
+						
+		/* If we're not doubling biracks, record the cycles in W_cycles and the length of each cycle of W in W_cycles. 
+		   This is for debugging purposes only, we do not need this information to determine the period.
+		*/
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+	debug << "colouring_invariant: W = ";
+		int num_W_cycles = -1; 
+		vector<int> flags(n*n);
+		bool found;
+		int start;	
+		do
+		{
+			found = false;
+			int i;
+		
+			/* look for another starting place in flags */
+			for (i=0; i<n*n; i++)
+			{
+				if (!flags[i] && perm[i] != -1) // the -1 test is for doubled biracks
+				{
+					num_W_cycles++;
+					start = i;
+					flags[i] = 1;
+					found = true;
+					break;
+				}
+			}
+	
+			if (found)
+			{
+				if (perm[i] == start)
+				{							
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+	debug << '(' << i << ')';
+				}
+				else
+				{
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+{
+	debug << '(';
+	debug << i;
+}
+					do
+					{
+						flags[perm[i]] = 1;
+						i = perm[i];
+
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+{
+	debug << ' ';
+	debug << i;
+}	
+					} while (perm[i] != -1 && perm[i] != start);
+				
+					if (perm[i] == -1)
+					{
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+	debug << "!!)";
+						
+					}
+                            
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+	debug << ')';
+				}
+			}
+		} while (found);
+		
+		num_W_cycles++; // adjust to correct count value	
+								
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+{
+	debug << endl;
+	debug << "colouring_invariant: num_W_cycles = " << num_W_cycles << endl;
+}
+		
+		period = least_common_multiple(diagonal_period);	
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+  	debug << "colouring_invariant: period = " << period << endl;
+//return; // XXX FOR TESTING ONLY
+
+		if (!braid_control::SILENT_OPERATION && braid_control::EXTRA_OUTPUT)			
+			cout << "period of birack = " << period << endl;
+			
+		if (!braid_control::RAW_OUTPUT && braid_control::EXTRA_OUTPUT)
+		{
+			output << (braid_control::OUTPUT_AS_INPUT? "\n;" : "\n");
+			output << "period of birack = ";
+			output << period << endl;
+		}
+	}
+
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+  	debug << "colouring_invariant: period = " << period << endl;
+	
+	if (braid_control::COCYCLE_INVARIANT && switch_data.cocycles_calculated && switch_data.num_chain_generators == 0)
+	{
+		/* If we have read cohomology generators from the input file, cocycles_calculated will be true but we will not
+		   have num_chain_generators or chain_map in the switch data, in which case we calculate them now 
+		*/
+		vector<int> chain_map(nnn,-1);
+		int num_chain_generators=0;
+				
+		if (braid_control::BIRACK_HOMOLOGY)
+		{
+			num_chain_generators = nnn;
+		}
+		else
+		{
+			/* We enumarate the n-tuples x_1,...,x_n by ordering them in lexicographical order,
+			   omitting any that include a pair x_i = x_{i+1}
+			*/
+			for (int p1=0; p1<n; p1++)
+			{		
+				for (int p2=0; p2<n; p2++)
+				{
+					if (p2==p1)
+						continue;
+		
+					for (int p3=0; p3<n; p3++)
+					{
+						if (p3==p2)
+							continue;
+						
+						chain_map[p1*nn + p2*n + p3] = num_chain_generators;
+						num_chain_generators++;							
+					}
+				}
+			}
+		}
+		
+		switch_data.num_chain_generators = num_chain_generators;
+		switch_data.chain_map = chain_map;
+	}
+	
+	if (input_string.find('(') != string::npos || input_string.find('[') != string::npos)
+	{
+		peer_code_colouring_invariant(Su,Sd,invSu,invSd,Tu,Td,pair_type,input_string,title,switch_data,period);
+	}
+	else
+	{
+		braid_colouring_invariant(Su,Sd,invSu,invSd,Tu,Td,pair_type,input_string,title,switch_data,period);
+	}
+}
+
+void determine_cohomology_generators(generic_switch_data& switch_data)
+{						
+	int n = switch_data.size;
+	int num_chain_generators = switch_data.num_chain_generators;
+	
+	int k = (braid_control::DOUBLE_BIRACKS?3:2);
+	
+//	list<vector<int> > cocycle_list;
+	list<string>::iterator lptr = switch_data.cocycle_string.begin();
+	while (lptr != switch_data.cocycle_string.end())
+	{
+if (debug_control::DEBUG >= debug_control::SUMMARY)	
+	debug << "determine_cohomology_generators: cohomology generator: " << *lptr << endl;
+	
+		int num_terms = count(lptr->begin(),lptr->end(),'X');
+
+if (debug_control::DEBUG >= debug_control::SUMMARY)	
+	debug << "determine_cohomology_generators: num_terms = " << num_terms << endl;
+
+		char* inbuf = c_string(*lptr);
+		char* c = inbuf;
+		vector<int> p(k);
+		scalar coefficient;
+		vector<scalar> generator(num_chain_generators);
+		vector<int>& chain_map = switch_data.chain_map;
+
+if (debug_control::DEBUG >= debug_control::SUMMARY)	
+{
+	debug << "determine_cohomology_generators: num_chain_generators = " << num_chain_generators << endl;
+	debug << "determine_cohomology_generators: chain_map: ";
+	for (size_t i=0; i< chain_map.size(); i++)
+		debug << chain_map[i] << ' ';
+	debug << endl;
+}
+		
+if (debug_control::DEBUG >= debug_control::SUMMARY)	
+	debug << "determine_cohomology_generators: inbuf = " << inbuf << endl;
+
+		for (int i=0; i< num_terms; i++)
+		{						
+
+if (debug_control::DEBUG >= debug_control::SUMMARY)	
+	debug << "determine_cohomology_generators: term " << i << " c = " << c << endl;
+	
+			while (*c != 'X' && *c != '-' && *c != '+' && !isdigit(*c))
+				c++;
+
+			
+			if (*c == '-')
+			{
+				if (*(c+1) == 'X')
+				{
+					c++;
+					coefficient = -1;
+				}
+				else
+				{
+					get_number(coefficient,c);
+					while(*c != 'X')
+						c++;
+				}
+			}
+			else if (*c == '+')
+			{
+				if (*(c+1) == 'X')
+				{
+					c++;
+					coefficient = 1;
+				}
+				else
+				{
+					get_number(coefficient,c);
+					while(*c != 'X')
+						c++;
+				}
+			}
+			else if (*c == 'X')
+			{
+				coefficient = 1;
+			}
+			else if (isdigit(*c))
+			{
+				get_number(coefficient,c);
+				while(*c != 'X')
+					c++;
+			}
+			else
+			{
+				cout << "Error reading cochomology generator from switch data!" << endl;
+				exit(0);
+			}
+			
+			
+if (debug_control::DEBUG >= debug_control::SUMMARY)	
+	debug << "determine_cohomology_generators:   coefficient = " << coefficient << ' ';
+			
+			c++;  // move past the X
+			c++; // move past the (
+						
+			for (int j=0; j< k; j++)
+			{				
+				get_number(p[j],c);
+				while (*c != ',' && *c != ')')
+					c++;
+				c++; // move past the comma or ')'
+			}
+			
+if (debug_control::DEBUG >= debug_control::SUMMARY)	
+{
+	for (int j=0; j< k; j++)
+		debug << "p[" << j << "] = " << p[j] << ' ';
+	debug << endl;
+}		
+			int term = p[k-1];
+			int factor = n;
+			for (int j=k-2; j>=0; j--)
+			{
+				term +=factor*p[j];
+				factor *=n;
+			}
+
+			if (braid_control::BIRACK_HOMOLOGY)
+			{
+				generator[term] = coefficient;
+
+if (debug_control::DEBUG >= debug_control::SUMMARY)	
+	debug << "determine_cohomology_generators:   term " << term << " coefficient = " << coefficient << endl;
+			}
+			else
+			{
+				int non_degenerate_term = chain_map[term];
+				generator[non_degenerate_term] = coefficient;
+			
+if (debug_control::DEBUG >= debug_control::SUMMARY)	
+	debug << "determine_cohomology_generators:   enumeration term " << term << " non_degenerate_term = " << non_degenerate_term << " coefficient = " << coefficient << endl;
+			}
+		}
+
+if (debug_control::DEBUG >= debug_control::SUMMARY)	
+{
+	debug << "determine_cohomology_generators: cohomology generator: ";
+	for (int i=0; i< num_chain_generators; i++)
+		debug << setw(2) << generator[i] << ' ';
+	debug << endl;
+}	
+		
+		switch_data.cocycle_scalar.push_back(generator);		
+		lptr++;
+		
+		delete [] inbuf;		
+	}
+	
+	/* write the final list of generators to the output file *
+	if (switch_data.cocycle_string.size() == 0)
+	{
+		if (!braid_control::SILENT_OPERATION)
+			cout << "no cohomology generators satisfying cocycle condition:" << endl;
+			    
+		if (!braid_control::RAW_OUTPUT)
+	 	{
+	   		output << (braid_control::OUTPUT_AS_INPUT? "\n;" : "\n");
+			output << "no cohomology generators satisfying cocycle condition:" << endl;
+	 	}	
+	}
+	else
+	{
+		
+		if (!braid_control::SILENT_OPERATION)
+		{
+			cout << switch_data.cocycle_string.size() << " cohomology generators satisfying cocycle condition:" << endl;
+			lptr = switch_data.cocycle_string.begin();
+			while (lptr != switch_data.cocycle_string.end())
+			{
+				cout << *lptr << endl;
+				lptr++;
+			};
+		}
+
+		if (!braid_control::RAW_OUTPUT)
+		{
+	   		output << (braid_control::OUTPUT_AS_INPUT? "\n;" : "\n");
+			output << switch_data.cocycle_string.size() << " cohomology generators satisfying cocycle condition:";
+	   		output << (braid_control::OUTPUT_AS_INPUT? "\n;" : "\n");
+			lptr = switch_data.cocycle_string.begin();
+			while (lptr != switch_data.cocycle_string.end())
+			{
+				output << *lptr;
+				output << (braid_control::OUTPUT_AS_INPUT? "\n;" : "\n");
+				lptr++;
+			};
+			output << flush;
+		}
+
+	}
+	*/
+}	
+
+/* smallest_parent_birack determines the smallest sub-birack of (Su,Sd) containing labels it is a recursive function, based on the fact that
+   labels determines a sub-birack if, and only if, for both Su and Sd, each row corresponding to labels contains an element of labels in each 
+   column corresponding to labels.
+   
+   If such a row and column is found containing some other label, the function recurses with that additional label.  Eventually, enough additional 
+   labels will have been added to form a birack.
+*/
+vector<int> smallest_parent_birack(matrix<int>& Su, matrix<int>& Sd, vector<int> labels)
+{
+	int n = Su.numrows();  // the size of the birack
+	int num_labels = labels.size(); 
+
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+{
+	debug << "smallest_parent_birack: presented with labels: ";
+	for (int i=0; i< num_labels; i++)
+		debug << labels[i] << ' ';
+	debug << endl;
+}
+
+	for (int i=0; i< num_labels; i++)
+	{
+		if (labels[i] >= n)
+		{
+			cout << "Error! smallest_parent_birack presented with invalid label set" << endl;
+			exit(0);
+		}
+	}
+	
+	int  new_label=-1;
+	bool sub_birack = true; 
+	
+	for (int m=0; m<2 && sub_birack; m++)
+	{
+		matrix<int>* mptr;
+		if (m==0)
+			mptr = &Su;
+		else
+			mptr = &Sd;
+			
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+	debug << "smallest_parent_birack: checking " << (m==0? "Su" : "Sd") << endl;
+			
+		matrix<int>& M = *mptr;
+
+		for (int i=0; i< num_labels && sub_birack; i++)
+		{
+			int row = labels[i];
+			
+			for (int j=0; j< num_labels; j++)
+			{
+				int col = labels[j];
+				
+//				if (find(labels.begin(),labels.end(), M[row][col]) == labels.end())
+				if (M[row][col] != -1 && find(labels.begin(),labels.end(), M[row][col]) == labels.end()) // -1 test to support doubled biracks
+				{
+
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+	debug << "smallest_parent_birack:   row " << row << ", column " << col << " contains element " << M[row][col] << " not in label set, recursing" << endl;
+
+					new_label = M[row][col];
+					sub_birack = false;
+					break;
+				}
+			}
+		}
+		
+	}
+	
+	if (sub_birack)
+	{
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+	debug << "smallest_parent_birack: label set identifies a birack" << endl;
+		return labels;
+	}
+	else
+	{
+		vector<int> new_labels(num_labels+1);
+		new_labels[0] = new_label;
+		
+		for (int i=0; i< num_labels; i++)
+			new_labels[i+1] = labels[i];
+			
+		return smallest_parent_birack(Su, Sd, new_labels);		
+	}	
+}
+
+
+/* For a switch map, writing \Delta(x) = x^{x^{-1}} the biquandle condition requires that x_{\Delta(x)} = \Delta(x) for all x.
+
+   \Delta(x) = i if U_{xi} = x, and the biquandle condition requires that x_i=i; that is, D_{ix} = i.   
+*/
+bool switch_biquandle_test(matrix<int>& U, matrix<int>& D)
+{
+	int n=U.numcols();
+	
+	for (int x =0; x< n; x++)
+	{
+
+if (debug_control::DEBUG >= debug_control::DETAIL)
+	debug << "switch_biquandle_test: x = " << x << endl;
+
+		int i; 
+		
+		for (i =0; i< n; i++)
+		{
+			if (U[x][i] == x) 
+				break;
+		}
+		
+if (debug_control::DEBUG >= debug_control::DETAIL)
+	debug << "switch_biquandle_test: Delta(x) = " << i << endl;
+
+		if (D[i][x] != i)
+		{
+		
+if (debug_control::DEBUG >= debug_control::DETAIL)
+	debug << "switch_biquandle_test: fails" << endl;
+		
+			return false;
+		}
+	}
+	
+if (debug_control::DEBUG >= debug_control::DETAIL)
+	debug << "switch_biquandle_test: OK" << endl;
+
+	return true;
 }

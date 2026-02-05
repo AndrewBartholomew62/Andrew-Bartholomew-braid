@@ -346,6 +346,15 @@ void print_code_data(ostream& s, generic_code_data& code_data, string prefix)
 	};	
 	s << endl;
 	
+	s << prefix << "multi_virtual = " << code_data.multi_virtual << endl;
+	if (code_data.multi_virtual)
+	{
+		s << prefix << "virtual_index: ";
+		for (int i=0; i< num_crossings; i++)
+			s << code_data.virtual_index[i] << ' ';
+		s << endl;
+	}
+	
 	s << prefix << "head = " << code_data.head << endl;
 	s << prefix << "num_open_components = " << code_data.num_open_components << endl;
 	s << prefix << "head_zig_zag_count = " << code_data.head_zig_zag_count << endl;
@@ -485,7 +494,7 @@ if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
 	}
 	else if (input_string.find("L:") != string::npos)
 		code_data.immersion_character = generic_code_data::character::LONG_KNOT;
-	else if (input_string.find("$") != string::npos || input_string.find("@") != string::npos ||
+	else if (input_string.find("$") != string::npos || input_string.find("%") != string::npos ||
 	         count(input_string.begin(),input_string.end(),'^') > 1)
 	{
 		int num_components = count(input_string.begin(),input_string.end(),',')+1;
@@ -494,9 +503,9 @@ if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
 		code_data.component_type = vector<component_character>(num_components);
 
 		code_data.num_open_components = count(input_string.begin(),input_string.end(),'^') + count(input_string.begin(),input_string.end(),'$')
-		                                + count(input_string.begin(),input_string.end(),'@');
+		                                + count(input_string.begin(),input_string.end(),'%');
 if (debug_control::DEBUG >= debug_control::SUMMARY)
-	debug << "read_peer_code: multi-linkoid inialization determined " << num_components << " components" << code_data.num_open_components << " open components"  << endl;
+	debug << "read_peer_code: multi-linkoid inialization determined " << num_components << " components " << code_data.num_open_components << " open components"  << endl;
 	
 	}
 	else
@@ -507,9 +516,10 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 	int num_crossings = 0;
 	char* cptr = strchr(inbuf,'/');
 	cptr++;
+
 	while (*cptr != '\0')
 	{
-		if (*cptr == '+' || *cptr == '-' || *cptr == '*' || *cptr == '#' )
+		if (*cptr == '+' || *cptr == '-' || *cptr == '*' || *cptr == '#' || *cptr == '@' )
 			num_crossings++;
 
 		cptr++;
@@ -625,11 +635,11 @@ if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
 					code_data.component_type[component].head_semi_arc = 2*i; // the even peer terminating at this crossing
 					cptr++;
 				}			
-				else if (*cptr == '@' && code_data.immersion_character == generic_code_data::character::MULTI_LINKOID) // @ sign after peer
+				else if (*cptr == '%' && code_data.immersion_character == generic_code_data::character::MULTI_LINKOID) // % sign after peer
 				{
 
 if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
-	debug << "read_peer_code:     KNOT_TYPE_END_LEG odd head indicator " << "\'@\'" << endl;
+	debug << "read_peer_code:     KNOT_TYPE_END_LEG odd head indicator " << "\'%\'" << endl;
 
 					code_data.component_type[component].type = component_character::KNOT_TYPE_END_LEG;
 					cptr++;
@@ -655,10 +665,10 @@ if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
 				record_odd_head_semi_arc = component_character::PURE_END_LEG;
 				cptr++;
 			}			
-			else if (*cptr == '@' && code_data.immersion_character == generic_code_data::character::MULTI_LINKOID) // @ before peer
+			else if (*cptr == '%' && code_data.immersion_character == generic_code_data::character::MULTI_LINKOID) // % before peer
 			{
 if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
-	debug << "read_peer_code:     KNOT_TYPE_START_LEG even head indicator " << "\'@\'" << endl;
+	debug << "read_peer_code:     KNOT_TYPE_START_LEG even head indicator " << "\'%\'" << endl;
 	
 				code_data.component_type[component].type = component_character::KNOT_TYPE_START_LEG;
 				cptr++;
@@ -704,6 +714,7 @@ if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
 	
 	/* now do the labels */
 	int count = 0;
+	vector<int> virtual_index(num_crossings);
 	while (*cptr != '\0')
 	{
 		if (isdigit(*cptr))
@@ -715,15 +726,36 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 					
 			exit(0);
 		}
+
 		
 		if (*cptr == '+')
 			code_table[generic_code_data::table::LABEL][count++] = generic_code_data::POSITIVE;
 		else if (*cptr == '-')
 			code_table[generic_code_data::table::LABEL][count++] = generic_code_data::NEGATIVE;
 		else if (*cptr == '*')
+		{
 			code_table[generic_code_data::table::LABEL][count++] = generic_code_data::VIRTUAL;
+			if (isdigit(*(cptr+1)))
+			{
+				char* mark = cptr+1;
+				while (isdigit(*(cptr+1))) cptr++;
+
+				get_number (virtual_index[count-1],mark); // count has already been incremented
+				
+				if (virtual_index[count-1] != 0 && virtual_index[count-1] != 1)
+				{
+					code_data.multi_virtual = true;
+				}
+			}
+			else
+			{
+				virtual_index[count-1] = 1;
+			}
+		}
 		else if (*cptr == '#')
 			code_table[generic_code_data::table::LABEL][count++] = generic_code_data::FLAT;
+		else if (*cptr == '@')
+			code_table[generic_code_data::table::LABEL][count++] = generic_code_data::SINGULAR;
 		cptr++;	
 	}
 
@@ -779,6 +811,7 @@ if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
 	code_data.first_edge_on_component = first_edge_on_component;
 	code_data.term_crossing = term_crossing;
 	code_data.orig_crossing = orig_crossing;
+	code_data.virtual_index = virtual_index;
 	
 if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
 {
@@ -803,6 +836,7 @@ if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
    
    If the code to be written is a PURE_KNOTOID, then the component_type vector is required.
    If the code to be written is a MULTI_LINKOID, then the head is required.
+   If the code to be written has multi_virtual = true, then virtual_index is required
 */
 void write_peer_code(ostream& s, const generic_code_data& code_data, bool zig_zags, bool labelled)
 {
@@ -834,7 +868,7 @@ void write_peer_code(ostream& s, const generic_code_data& code_data, bool zig_za
 				s << ", ";
 			
 			if (code_data.immersion_character == generic_code_data::character::MULTI_LINKOID && code_data.component_type[i].type == component_character::KNOT_TYPE_START_LEG)
-				s << '@';
+				s << '%';
 			
 			for (int j = 0; j< code_data.num_component_edges[i]/2; j++)
 			{
@@ -870,7 +904,7 @@ void write_peer_code(ostream& s, const generic_code_data& code_data, bool zig_za
 			}
 	
 			if (code_data.immersion_character == generic_code_data::character::MULTI_LINKOID && code_data.component_type[i].type == component_character::KNOT_TYPE_END_LEG)
-				s << '@';
+				s << '%';
 		}
 	}
 	
@@ -912,9 +946,16 @@ void write_peer_code(ostream& s, const generic_code_data& code_data, bool zig_za
 			else if (code_table[generic_code_data::table::LABEL][i] == generic_code_data::NEGATIVE)
 				s << "-";
 			else if (code_table[generic_code_data::table::LABEL][i] == generic_code_data::VIRTUAL)
+			{
 				s << "*";
-			else // (code_table[generic_code_data::table::LABEL][i] == generic_code_data::FLAT)
+				
+				if (code_data.multi_virtual && code_data.virtual_index[i] != 0 && code_data.virtual_index[i] != 1)
+					s << code_data.virtual_index[i];
+			}
+			else if (code_table[generic_code_data::table::LABEL][i] == generic_code_data::FLAT)
 				s << "#";
+			else // if (code_table[generic_code_data::table::LABEL][i] == generic_code_data::NEGATIVE)
+				s << "@";
 			
 			if (i< num_crossings-1)
 				s << " ";
@@ -1784,7 +1825,9 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug_control::DEBUG = debug_save;
 }
 
-/* read_planar_diagram converts the PD data in input_string to a Gauss code and reads the resultant Gauss code into code_data */
+/* read_planar_diagram converts PD data in input_string of the form X[3,1,4,2] X[4,2,5,3] X[7,6,8,5] X[6,1,7,8] to a Gauss code and reads the resultant 
+   Gauss code into code_data.  If the PD data includes a zero as an edge label we increment all elements to produce a code that is numbered from 1.
+*/
 void read_planar_diagram (generic_code_data& code_data, string input_string)
 {
 if (debug_control::DEBUG >= debug_control::SUMMARY)
@@ -1796,6 +1839,7 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 
 	istringstream iss(input_string);
 	char c = 0;
+	bool zero_label_detected = false;
 
 	for (int i=0; i< num_crossings; i++)
 	{
@@ -1805,10 +1849,22 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 		for (int j=0; j< 4; j++)
 		{
 			iss >> PD_data[i][j];
-			iss >> c;
+			iss >> c; // the comma
+			
+			if (PD_data[i][j] == 0)
+				zero_label_detected = true;
 		}
 	}
-
+	
+	if (zero_label_detected)
+	{
+		for (int i=0; i< num_crossings; i++)
+		{	
+			for (int j=0; j< 4; j++)
+				PD_data[i][j]++;
+		}	
+	}
+	
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 {
 	debug << "read_planar_diagram: PD_data: " << endl;

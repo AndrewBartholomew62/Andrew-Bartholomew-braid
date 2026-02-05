@@ -29,10 +29,13 @@ extern ofstream     output;
 extern ifstream     input;
 
 #include <util.h>
+#include <scalar.h>
 #include <quaternion-scalar.h>
 #include <polynomial.h>
 #include <matrix.h>
 #include <braid.h>
+#include <braid-util.h>
+#include <generic-code.h>
 #include <gauss-orientation.h>
 #include <reidemeister.h>
 
@@ -2220,21 +2223,44 @@ if (debug_control::DEBUG >= debug_control::BASIC)
 }	
 					}
 					
-					/* Now we can create a generic_code_data object for the component, write it to an ostringstream and read it back */
+					/* Now we can create a generic_code_data object for the component, write it to an ostringstream and read it back,
+					   start by re-writing the final ODD_TERMINATING and EVEN_TERMINATING crosing data into the component_code_table 
+					*/										
+					for (int j=0; j< num_cpt_crossings; j++)
+					{
+						component_code_table[generic_code_data::table::ODD_TERMINATING][j] = component_code_table[generic_code_data::table::OPEER][j];
+						component_code_table[generic_code_data::table::EVEN_TERMINATING][j] = 2*j;
+					}
+
 					generic_code_data component_peer_code;
 					component_peer_code.type = generic_code_data::peer_code;
 					component_peer_code.num_crossings = num_cpt_crossings;
 					component_peer_code.num_components = graphical_cpt_u_component_count[i];
 					component_peer_code.code_table = component_code_table;
-
+					component_peer_code.num_component_edges = vector<int>(component_peer_code.num_components);						
+					
+					for (int j=0; j < component_peer_code.num_components-1; j++)
+						component_peer_code.num_component_edges[j] = first_edge_on_g_component[j+1] - first_edge_on_g_component[j];						
+					
+					component_peer_code.num_component_edges[component_peer_code.num_components-1] = 2*num_cpt_crossings - first_edge_on_g_component[component_peer_code.num_components-1];						
 					
 if (debug_control::DEBUG >= debug_control::BASIC)
 {
 	debug << "bracket_polynomial:   graphical component " << i << " initial code_table" << endl;
     print(component_code_table, debug, 4, "bracket_polynomial:   ");
 }				
+
 					ostringstream oss;
 					write_peer_code(oss,component_peer_code);
+
+if (debug_control::DEBUG >= debug_control::BASIC)
+{
+	debug << "bracket_polynomial: component code_data ";
+	write_peer_code(debug,component_peer_code,true);
+	debug << endl;
+    print_code_data(debug,component_peer_code,"bracket_polynomial:   ");
+}				
+					
 					read_peer_code (component_peer_code, oss.str());
 
 					
@@ -2682,7 +2708,7 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 			{
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "bracket_polynomial:   term before arrow_factor and parity_factor = " << term << endl;
-				for (int i=0; i< arrow_factor.numvars(); i++)
+				for (int i=0; i< arrow_factor.nv; i++)
 				{
 					char ch = arrow_factor.getvar(i);
 					int index=0;
@@ -2703,7 +2729,7 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 				term *= arrow_factor; // == 1 in the case of PARITY_VARIANT
 				term *= parity_factor;
 				
-				for (int i=0; i< relaxed_parity_factor.numvars(); i++)
+				for (int i=0; i< relaxed_parity_factor.nv; i++)
 				{
 					char ch = relaxed_parity_factor.getvar(i);
 					int index=0;
@@ -2920,7 +2946,7 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 	{
 		if (variant == ARROW_VARIANT)
 		{
-			for (int i=0; i< bracket_poly.numvars(); i++)
+			for (int i=0; i< bracket_poly.nv; i++)
 			{
 				char ch = bracket_poly.getvar(i);
 				int index=0;

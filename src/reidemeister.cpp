@@ -4764,6 +4764,8 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 							code_data.zig_zag_count.clear();
 					}
 
+					for (int i=0; i< code_data.num_crossings; i++)
+						code_data.num_component_edges[i] = new_last_component_edge[i] - new_first_component_edge[i]+1;
 					
 					/* write the modified code to a string */
 					ostringstream oss;

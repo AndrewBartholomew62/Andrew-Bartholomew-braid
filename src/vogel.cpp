@@ -229,7 +229,7 @@ if (braid_control::VOGEL_DEBUG)
 		   in a left or right turning cycle */
 		if (braid_control::VOGEL_TURNING_NUMBER && initial_code_data)
 		{
-			if (!braid_control::RACK_POLYNOMIAL)
+			if (!braid_control::BIRACK_POLYNOMIAL)
 			{
 				/* write the initial code data turning cycles to the output file */
 			    output << "\n\nturning_cycles:" << endl;
@@ -900,7 +900,17 @@ if (braid_control::VOGEL_DEBUG)
 	debug << "vogel: new code data after reading new peer_code: " << endl;
 	print_code_data(debug,code_data,"vogel: ");
 }
+			if (braid_control::EXTRA_OUTPUT)
+			{
+				if (!braid_control::RAW_OUTPUT)
+				{
+					output << (braid_control::OUTPUT_AS_INPUT? "\n;" : "\n");
+					output << "Vogel move " << e1 << " and " << e2 << ": ";
+					write_peer_code(output,code_data);
+					output << endl;
 
+				}
+			}
 		}	
 	} while (!closed_braid);
 

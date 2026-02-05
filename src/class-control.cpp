@@ -12,7 +12,7 @@
 #include <cstring>
 #include <algorithm>
 #include <iomanip>
-
+#include <map>
 using namespace std;
 
 extern ofstream debug;
@@ -33,10 +33,14 @@ extern ofstream debug;
 #endif
 
 #ifdef INITIALIZE_SCALAR
-	Scalar* make_bigint() {return new bigint;}
-	Scalar* make_bigint(int a) {return new bigint(a);}
+	Scalar* make_int() {return new int_scalar;}
+	Scalar* make_int(int a) {return new int_scalar(a);}
+	Scalar* make_bigint() {return new bigint_scalar;}
+	Scalar* make_bigint(int a) {return new bigint_scalar(a);}
 	Scalar* make_mod_p() {return new mod_p;}
 	Scalar* make_mod_p(int a) {return new mod_p(a);}
+	Scalar* make_rational() {return new rational_scalar;}
+	Scalar* make_rational(int a) {return new rational_scalar(a);}
 	Scalar* make_big_rational() {return new big_rational;}
 	Scalar* make_big_rational(int a) {return new big_rational(a);}
 	
@@ -47,7 +51,9 @@ extern ofstream debug;
 	Scalar* (*make_scalar_int) (int) = make_big_rational;
 	
 	
-	/* The variant member of scalar is for debugging purposes only */
+	/* The variant member of scalar is for debugging and performmng variant-specifica actions, 
+	   such as in the calculation of Smith normal form
+	*/
 	int scalar::variant = scalar::BIGRATIONAL;
 	
 	/* We only need the if-else logic when we set  
@@ -55,11 +61,23 @@ extern ofstream debug;
 	*/
 	void scalar::set_variant(scalar_variant t)
 	{
-		if (t == BIGINT)
+		if (t == INT)
+		{
+			make_scalar = make_int;
+			make_scalar_int = make_int;
+			variant = INT;
+		}
+		else if (t == BIGINT)
 		{
 			make_scalar = make_bigint;
 			make_scalar_int = make_bigint;
 			variant = BIGINT;
+		}
+		else if (t == RATIONAL)
+		{
+			make_scalar = make_rational;
+			make_scalar_int = make_rational;
+			variant = RATIONAL;
 		}
 		else if (t == BIGRATIONAL)
 		{
@@ -78,10 +96,14 @@ extern ofstream debug;
 	
 	void scalar::show_variant (ostream& s)
 	{
-		if (variant == BIGRATIONAL)
-			s << "\nscalar::variant == BIGRATIONAL" << endl;
+		if (variant == INT)
+			s << "\nscalar::variant == INT" << endl;
 		else if (variant == BIGINT)
 			s << "\nscalar::variant == BIGINT" << endl;
+		else if (variant == RATIONAL)
+			s << "\nscalar::variant == RATIONAL" << endl;
+		else if (variant == BIGRATIONAL)
+			s << "\nscalar::variant == BIGRATIONAL" << endl;
 		else if (variant == MOD_P)
 			s << "\nscalar::variant == MOD_P" << endl;
 	}

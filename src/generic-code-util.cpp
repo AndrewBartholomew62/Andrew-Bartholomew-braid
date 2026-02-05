@@ -31,6 +31,11 @@ int  code_data_writhe(generic_code_data& code_data)
 
 using namespace std;
 
+namespace util
+{
+	string itos(long n);
+}
+
 extern ofstream     debug;
 extern ofstream     output;
 extern ifstream     input;
@@ -43,7 +48,9 @@ extern ifstream     input;
 #include <reidemeister.h>
 
 
-/* convert_gauss_code converts from OU to standard Gauss code format */
+/* convert_gauss_code converts from OU to standard Gauss code format i.e from
+   O1-O2+U1-O3+O4+U2+U3+U4+ to 1 2 -1 3 4 -2 -3 -4/- + + +
+*/
 string convert_gauss_code(string OU_gauss_code)
 {
 if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
@@ -70,6 +77,7 @@ if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 	char* inbuf = c_string(OU_gauss_code);
 	char* cptr = inbuf;
 	bool over_arc;
+	bool flat_gauss_code = true;
 	
 	for (int i=0; i< 2*num_crossings; i++)
 	{
@@ -82,9 +90,22 @@ if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 		}
 		
 		if (*cptr == 'O')
-			over_arc = true;
-		else
-			over_arc = false;
+		{
+			if (flat_gauss_code)
+				oss << 'R';
+
+			over_arc = true; // always set over_arc true for flat crossings to inhibit the output of minus signs
+		}
+		else // (*cptr == 'U')
+		{
+			if (flat_gauss_code)
+			{
+				oss << 'L';
+				over_arc = true;
+			}
+			else	
+				over_arc = false;
+		}
 
 if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "convert_gauss_code: crossing " << "cptr = " << *cptr << " over_arc = " << (over_arc?"true":"false");			
@@ -101,11 +122,20 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 			cptr++;
 		
 		if (*cptr == '-')
+		{
+			flat_gauss_code = false;
 			sign[crossing_num-1] = -1;
-		else
+			cptr++;
+		}
+		else if (*cptr == '+')
+		{
+			flat_gauss_code = false;
 			sign[crossing_num-1] = 1;
-
-		cptr++;
+			cptr++;
+		}
+		else
+			sign[crossing_num-1] = 0; // flat
+		
 		
 if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << ", sign = " << sign[crossing_num-1] << endl;			
@@ -120,8 +150,10 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 	{
 		if (sign[i] == 1)
 			oss << '+';
-		else
+		else if (sign[i] == -1)
 			oss << '-';
+		else
+			oss << '#';
 	}
 			
 	delete[] inbuf;
@@ -3581,3 +3613,68 @@ int  code_data_writhe(generic_code_data& code_data)
 	}
 	return writhe;
 }
+
+/* add_Reidemeister_1_loop adds a Reidemeister loop of the specified crossing type in the first edge of the last component of the diagram 
+   described by code_data.  This edge is always even, so the new crossing is then num_crossings and the new odd peer 2*num_crossings+1.
+   
+   By default, the function adds a positive turn; that is anticlockwise in the plane, so , so the type of the crossing is type 1.
+   Then for a positive crossing the label is '-' and for a negative crossing the label is '+'.
+*/   
+generic_code_data add_Reidemeister_1_loop (generic_code_data& code_data, bool positive_crossing, bool positive_turn = true)
+{
+
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
+{
+	debug << "add_Reidemeister_1_loop: presented with code ";
+	write_code_data(debug,code_data);
+	debug << endl;
+}
+
+	if (code_data.type != generic_code_data::code_type::peer_code)
+	{
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+	debug << "add_Reidemeister_1_loop: presented with code_data that is not a peer-code, returning code_data" << endl;
+	
+		return code_data;
+	}
+	else
+	{
+		ostringstream oss;
+		write_peer_code(oss,code_data);
+		string old_code = oss.str();
+		string::size_type pos = old_code.find(']');
+		int new_peer = 2*code_data.num_crossings+1;
+		
+		string new_code = old_code.substr(0,pos);
+		
+		if (positive_turn)  // anticlockwise turn, so type 1 crossing
+		{
+			new_code += " -" + util::itos(new_peer);
+			if (positive_crossing)
+				new_code += old_code.substr(pos,string::npos) + " -";
+			else
+				new_code += old_code.substr(pos,string::npos) + " +";
+		}
+		else // clockwise turn, so type 2 crossing
+		{
+			new_code += " " + util::itos(new_peer);
+			
+			if (positive_crossing)
+				new_code += old_code.substr(pos,string::npos) + " +";
+			else
+				new_code += old_code.substr(pos,string::npos) + " -";
+		}
+				
+		generic_code_data new_code_data;
+		read_peer_code(new_code_data,new_code);
+		
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
+{
+	debug << "add_Reidemeister_1_loop: produced code ";
+	write_code_data(debug,new_code_data);
+	debug << endl;
+}
+		return new_code_data;
+	}
+}
+
