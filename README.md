@@ -1,4 +1,4 @@
-# braid-programme
+# braid-programme v 31.2
 
 The braid programme was originally written to calculate matrix representations of virtual braid groups. It has evolved to include 
 tasks that relate to virtual knots, long knots, welded knots and knotoids but that do not involve a braid representation. However, 
