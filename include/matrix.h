@@ -20,10 +20,11 @@ struct matrix_control
 	static unsigned int DEBUG; //bitmap
 	enum parameters
 	{
-		general=1, // unused
+		general=1,
 		immanant=2, 
 		multiply=4, 
 		inverse=8, 
+		echelon=16, 
 		// 'all' also supported
 	};
 
@@ -161,6 +162,501 @@ template<class T, class St> inline T trace (const matrix<T,St> M)
 	return result;
 }
 
+template <class T, class St> 
+int non_zero_count(matrix<T,St>& mat, int row)
+{
+   int count = 0;
+   for ( unsigned int i = 0; i < mat.numcols(); i++)
+       if ( mat[row][i] != T(0))
+	   count += 1;
+   return (count);
+}
+
+template <class T, class St> T gcdn (const matrix<T,St>& mat, int row)
+{
+    T g = abs(mat[row][0]);
+
+    for (unsigned int i = 1; i<mat.numcols(); i++)
+       g = gcd(g, abs(mat[row][i]));
+
+    return (g);
+}
+
+/* if reduced form row reduce above the diagonal as well as below */
+template <class T, class St> 
+void echelon (matrix<T,St>& matrixref, bool field_coefficients, bool reduced_form = false, matrix<T,St>* P_ptr = 0)
+{
+	matrix<T,St> mat(matrixref);
+    int m = mat.numrows();
+	int n = mat.numcols();
+
+if (matrix_control::DEBUG & matrix_control::echelon)
+{
+	debug << "echelon: presented with mat " << endl;
+	print (mat,debug,3,"echelon:   ");
+	debug << "echelon: field_coefficients = " << field_coefficients << " reduced_form = " << reduced_form << endl;
+}
+
+	/* P is the product of the elementary row matrices taking matrixref to mat */
+	matrix<T,St> P(m,m);
+	for (int i=0; i< m; i++)
+	{
+	    for (int j=0; j<i; j++)
+			P[i][j]=0;
+		
+		P[i][i]=1;
+
+	    for (int j=i+1; j<m; j++)
+			P[i][j]=0;
+	}
+
+if (matrix_control::DEBUG & matrix_control::echelon)
+	debug << "echelon: num rows m = " << m << " num cols n = " << n << endl;
+
+    /* We use a row permutation vector, so that the i-th row of mat is stored in
+       the perm[i] slice of the matrix valarray.
+    */
+    vector<int> perm(m); 
+
+    for (int i = 0 ; i< m; i++)
+		perm[i] = i;
+
+    int r = 0; // r and c will be the position of the next pivot
+    int c = 0;
+    bool complete = false;
+
+	/* If we're not using field coefficients, we shall divide down by GCDs later, since we cannot guarantee to be able to scale P 
+	   by the same amount.  All we know is that at some point we have a mat with P*mat = matrixref and mat contains a row with a 
+	   common factor but that does not mean that the matrix P contains a row with the same common factor 
+	*/
+    if (false && field_coefficients && non_zero_count(mat,0) > 1 )
+    {
+		T g = gcdn (mat,0);
+		
+		if (g !=T(1))
+		{
+			for (int i = 0; i < n ; i++)
+			   mat[0][i] /= g;
+
+			for (int i = 0; i < m ; i++)
+			   P[0][i] /= g;
+
+if (matrix_control::DEBUG & matrix_control::echelon)
+	debug << "echelon: row 0 scaled by " << g << endl;
+		}
+    }
+
+
+    do
+    {
+		int p = r;
+		bool found = false;
+
+		/* look for the next pivot */
+		do
+		{
+	    	do // look down the current column for a pivot
+	    	{
+				if (mat[perm[p]][c] != T(0))
+				{						
+if (matrix_control::DEBUG & matrix_control::echelon)
+	debug << "echelon: found non-zero pivot entry " << mat[perm[p]][c] << " at row " << p << ", column " << c << endl;
+	
+					if (p !=r)
+					{
+						/* interchange rows r and p */
+						swap(perm[r],perm[p]);
+
+if (matrix_control::DEBUG & matrix_control::echelon)
+	debug << "echelon: interchanged rows " << r << " and " << p << endl;	
+					}
+					
+		    		found = true;
+	
+				}
+				else
+		    		p += 1;
+	    	} while ( !found && p < m);
+
+	    	if (!found) // move to the next column
+	    	{
+				p = r;
+				c += 1;
+	    	}
+		} while (!found && c < n );
+
+		if (!found)
+	    	complete = true;
+		else
+		{
+			/* having interchanged perm[r] and perm[p], the next pivot is now element (perm[r],c) */
+
+if (matrix_control::DEBUG & matrix_control::echelon)
+{
+	debug << "echelon: pivot (" << r << ',' << c << ')' << endl;
+	debug << "echelon: pivot row          : ";
+	for (int k=0; k<n; k++)
+		debug << setw(3) << mat[perm[r]][k];
+	debug << endl;
+}
+	    	if (field_coefficients &&  non_zero_count(mat,perm[r]) > 1)
+	    	{
+				// divide the row by the pivot so the pivot becomes 1				
+				T g = mat[perm[r]][c];
+				
+				if (g != T(1))
+				{
+					for (int i= 0; i< n ; i++)
+				    	mat[perm[r]][i] /= g;
+
+					for (int i= 0; i< m ; i++)
+				    	P[perm[r]][i] /= g;
+
+if (matrix_control::DEBUG & matrix_control::echelon)
+{
+	debug << "echelon: row " << r << " scaled by " << g << endl;
+	debug << "echelon: updated pivot row          : ";
+	for (int k=0; k<n; k++)
+		debug << setw(3) << mat[perm[r]][k];
+	debug << endl;
+}
+
+if (matrix_control::DEBUG & matrix_control::echelon)
+{
+//	debug << "echelon: matrix row reduced to" << endl;
+//	perm_print (mat,debug,3,perm,"echelon:   ");
+	
+	matrix<T,St> mat_test(m,n);
+	for (int i=0; i< m; i++)
+	for (int j=0; j< n; j++)
+		mat_test[i][j] = mat[perm[i]][j];
+
+		
+	matrix<T,St> P_test(m,m);
+	for (int i=0; i< m; i++)
+	for (int j=0; j< m; j++)
+		P_test[i][j] = P[perm[i]][j];
+
+//	debug << "echelon: elementary matrix" << endl;
+//	print (P_test,debug,3,"echelon:   ");
+		
+	matrix<T,St> PM = P_test*matrixref;
+	
+	if (PM != mat_test)
+	{
+		debug << "echelon: PM does not match mat " << endl;
+		print (PM,debug,3,"echelon:   ");
+
+		cout << "elementary matrix product does not match!" << endl;
+		exit(0);
+	}
+
+	T det = determinant(P_test);
+	debug << "echelon:   det(P_test) = " << det << endl;
+		
+}			
+
+				}
+	    	}
+			
+	    	for (int i = (reduced_form? 0:r+1) ; i < m; i++)
+			{
+				if (i == r)
+				{
+if (matrix_control::DEBUG & matrix_control::echelon)
+	debug << "echelon:   omitting row " << i << endl;
+					continue; //added for reduced echelon form
+				}
+					
+				if (mat[perm[i]][c] != T(0))
+				{
+if (matrix_control::DEBUG & matrix_control::echelon)
+	debug << "echelon:   procesing row " << i << endl;
+
+		    		if(false && field_coefficients && non_zero_count(mat,perm[i]) > 1)
+		    		{
+						T g = mat[perm[i]][c];
+						
+						if (g != T(1))
+						{
+							for (int j = 0 ;j < n ; j++)
+								mat[perm[i]][j] /= g;
+
+							for (int j= 0; j< m ; j++)
+						    	P[perm[i]][j] /= g;
+								
+if (matrix_control::DEBUG & matrix_control::echelon)
+	debug << "echelon:   row " << i << " scaled by " << g << endl;
+						}
+		    		}
+
+		    		T a = mat[perm[r]][c];
+		    		T b = mat[perm[i]][c];
+
+if (matrix_control::DEBUG & matrix_control::echelon)
+{
+	debug << "echelon:   replace row " << i << "      : ";
+	for (int k=0; k<n; k++)
+		debug << setw(3) << mat[perm[i]][k];
+	debug << endl;
+	debug << "echelon:   with a = mat(" << r <<',' << c << ") = " << a << " times row " << i << " : ";
+	for (int k=0; k<n; k++)
+		debug << setw(3) << a*mat[perm[i]][k];
+	debug << endl;
+	debug << "echelon:   minus b = mat(" << i <<',' << c << ") = " << b << " times row " << r << ": ";
+	for (int k=0; k<n; k++)
+		debug << setw(3) << b*mat[perm[r]][k];
+	debug << endl;	
+}
+
+					/* We have to adjust the whole row of mat because we have added the reduced form, so 
+					   cannot just adjust from column c as we did before: for (int j = c ; j< n; j++)
+					*/			    		
+		    		for (int j = 0 ; j< n; j++)
+		    		   mat[perm[i]][j] = a * mat[perm[i]][j] - b * mat[perm[r]][j];
+
+		    		for (int j = 0 ; j< m; j++)
+		    		   P[perm[i]][j] = a * P[perm[i]][j] - b * P[perm[r]][j];
+		    		 
+if (matrix_control::DEBUG & matrix_control::echelon)
+{
+	debug << "echelon:   giving             : ";
+	for (int k=0; k<n; k++)
+		debug << setw(3) << mat[perm[i]][k];
+	debug << endl;
+}
+
+if (matrix_control::DEBUG & matrix_control::echelon)
+{
+//	debug << "echelon: after single row operation matrix row reduced to" << endl;
+//	perm_print (mat,debug,3,perm,"echelon:   ");
+	
+	matrix<T,St> mat_test(m,n);
+	for (int i=0; i< m; i++)
+	for (int j=0; j< n; j++)
+		mat_test[i][j] = mat[perm[i]][j];
+		
+	matrix<T,St> P_test(m,m);
+	for (int i=0; i< m; i++)
+	for (int j=0; j< m; j++)
+		P_test[i][j] = P[perm[i]][j];
+
+//	debug << "echelon: elementary matrix" << endl;
+//		print (P_test,debug,3,"echelon:   ");
+		
+	matrix<T,St> PM = P_test*matrixref;
+	
+	if (PM != mat_test)
+	{
+		debug << "echelon: PM does not match mat " << endl;
+		print (PM,debug,3,"echelon:   ");
+		cout << "elementary matrix product does not match!" << endl;
+		exit(0);
+	}	
+
+	T det = determinant(P_test);
+	debug << "echelon:   det(P_test) = " << det << endl; //<< ", size " << sizeof(det) << endl;
+	
+}
+
+
+				}
+			}
+		} // end of processing the pivot
+
+if (matrix_control::DEBUG & matrix_control::echelon)
+{
+	debug << "echelon: matrix after processing pivot (" << r << ',' << c << ')' << endl;
+	matrix<T,St> mat_test(m,n);
+	for (int i=0; i< m; i++)
+	for (int j=0; j< n; j++)
+		mat_test[i][j] = mat[perm[i]][j];
+	print (mat_test,debug,3,"echelon:   ");
+}
+
+		if (c == n-1)
+	    	complete = true;
+		else  // move down the diagonal
+		{
+	    	c += 1;
+	    	r += 1;
+		}
+    } while (!complete && r < m);
+
+	/* final test */
+	matrix<T,St> mat_test(m,n);
+	for (int i=0; i< m; i++)
+	for (int j=0; j< n; j++)
+		mat_test[i][j] = mat[perm[i]][j];
+
+	matrix<T,St> P_test(m,m);
+	for (int i=0; i< m; i++)
+	for (int j=0; j< m; j++)
+		P_test[i][j] = P[perm[i]][j];
+
+	matrix<T,St> PM = P_test*matrixref;
+
+if (matrix_control::DEBUG & matrix_control::echelon)
+{
+//	debug << "echelon: final P " << endl;
+//	print (P_test,debug,3,"echelon:   ");
+
+	debug << "echelon: echelon form " << endl;
+	print (mat_test,debug,3,"echelon:   ");
+}
+		
+	if (PM != mat_test)
+	{
+
+if (matrix_control::DEBUG & matrix_control::echelon)
+{
+	debug << "echelon: PM does not match mat " << endl;
+	print (PM,debug,3,"echelon:   ");
+}	
+		cout << "elementary matrix product does not match!" << endl;
+		exit(0);
+	}
+	else
+	{
+if (matrix_control::DEBUG & matrix_control::general)
+{
+	debug << "echelon: elementary matrix product check matches calculated echelon form" << endl;
+}	
+	}		
+
+	/* remove common factors from mat before undoing the row permutation into matrixref */
+	bool scaled_result = false;
+	
+	for (int i=0 ; i< m ; i++)
+	{	
+    	if (!field_coefficients && non_zero_count(mat,perm[i]) > 1)
+    	{
+			T g = gcdn (mat,perm[i]);
+			
+			if (g !=T(1))
+			{
+				for (int j=i; j< n ; j++) // mat is in echelon form so mat[perm[i]][j] = 0 for j=0,...,i-1
+			    	mat[perm[i]][j] /= g;
+			
+				scaled_result = true;
+				
+if (matrix_control::DEBUG & matrix_control::general)
+	debug << "echelon: before returning, row " << i << " scaled by " << g << endl;
+			}
+    	}
+				
+	    for (int j = 0; j<n; j++)
+			matrixref[i][j] = mat[perm[i]][j];
+	}
+
+	if (!scaled_result)
+	{
+if (matrix_control::DEBUG & matrix_control::general)
+	debug << "echelon: no row scaling before returning" << endl;
+	}
+
+	if (P_ptr != 0)
+		*P_ptr = P_test;	
+}
+
+/* this inverse function is based on echelon reduction */
+template <class T, class St> 
+matrix<T,St> inverse (const matrix<T,St>& M, bool field_coefficients = false)
+{
+	int n=M.numrows();
+
+
+	
+	matrix<T,St> MI(n,2*n);
+	
+	for (int i=0; i<n; i++)
+	for (int j=0; j<n; j++)
+		MI[i][j] = M[i][j];
+
+
+	matrix<T,St> I(n,n);
+	
+	for (int i=0; i<n; i++)
+	{
+		for (int j=0; j<i; j++)
+			I[i][j] = 0;
+
+		I[i][i] = T(1);
+
+		for (int j=i+1; j<n; j++)
+			I[i][j] = 0;
+	}
+
+	for (int i=0; i<n; i++)
+	for (int j=0; j<n; j++)
+		MI[i][n+j] = I[i][j];
+
+if (matrix_control::DEBUG & matrix_control::inverse)
+{
+	debug << "inverse: initial MI:" << endl;
+	print(MI, debug, 3, "inverse: ");
+}
+	echelon(MI,field_coefficients,true);
+
+if (matrix_control::DEBUG & matrix_control::inverse)
+{
+	debug << "inverse: ecelon returned MI:" << endl;
+	print(MI, debug, 3, "inverse: ");
+}
+
+	/* invert any rows that have -1 in the leading diagonal */
+	for (int i=0; i<n; i++)
+	{
+		if (MI[i][i] == T(-1))
+		{			
+			for (int j=i; j<2*n; j++)
+				MI[i][j] *= T(-1);
+		}
+	}
+if (matrix_control::DEBUG & matrix_control::inverse)
+{
+	debug << "inverse: final MI:" << endl;
+	print(MI, debug, 3, "inverse: ");
+}
+	
+
+	matrix<T,St> Minv(n,n);
+
+
+	for (int i=0; i<n; i++)
+	for (int j=0; j<n; j++)
+		Minv[i][j] = MI[i][n+j];
+
+if (matrix_control::DEBUG & matrix_control::inverse)
+{
+	debug << "inverse: Minv:" << endl;
+	print(Minv, debug, 3, "inverse: ");
+}
+
+	
+	matrix<T,St> check = M*Minv;
+
+	if (check != I)
+	{
+
+if (matrix_control::DEBUG & matrix_control::inverse)
+{
+	debug << "inverse: inverse check..." << endl;
+	print(check, debug, 3, "inverse: ");
+}
+		cout << "\nincorrect inverse!" << endl;
+		exit(0);
+	}
+
+if (matrix_control::DEBUG & matrix_control::inverse)
+	debug << "OK" << endl;
+	
+if (matrix_control::DEBUG & matrix_control::general)
+	debug << "inverse: inverse check OK" << endl;
+
+	return Minv;
+}
+
 /* determinant uses a row and column permutation rperm and cperm, and the number of rows/columns n, 
    to evaluate the determinant of any sub-matrix of the square matrix M.  The recursion_level is used
    only for debugging purposes.
@@ -189,7 +685,8 @@ T immanant (const matrix<T,St>& M, string title, int n, int* rperm, int* cperm, 
 
 if (matrix_control::DEBUG & matrix_control::immanant)
 {
-	debug << "matrix::immanant: underlying matrix M = \n" << M << endl;
+	debug << "matrix::immanant: underlying matrix M = \n";
+	print (M,debug,0,"matrix::immanant: ");
 	debug << "matrix::immanant: n = " << n << endl;
 	debug << "matrix::immanant: matrix_control::WAIT_INFO = " << (matrix_control::WAIT_INFO?"true":"false") << endl;
 	debug << "matrix::immanant: matrix_control::COMFORT_DOTS = " << (matrix_control::COMFORT_DOTS?"true":"false") << endl;
@@ -589,15 +1086,20 @@ template<class T, class St> matrix<T,St> matrix<T,St>::operator *= (const matrix
 {
 	matrix<T,St>& loc = *this;
 
-	if (loc.rows != M.cols )
-		throw(matrix_error ("incompatible sizes in -= operator"));
+	if (loc.cols != M.rows )
+	{
+if (matrix_control::DEBUG & matrix_control::multiply)
+	debug << "matrix::operator *= : loc.cols = " << loc.cols <<  "M.rows = " << M.rows << endl;
+	
+		throw(matrix_error ("incompatible sizes in *= operator"));
+	}
 
 	matrix<T,St> result(loc.rows, M.cols);
 
 if (matrix_control::DEBUG & matrix_control::multiply)
 {
-	debug << "\nmatrix::operator *= : \n\t(*this) = " << *this <<  "\n\t      M = " << M << endl;
-	debug << "\nmatrix::operator *= : multiplication produces " << loc.numrows() << " by " << M.numcols() << " result";
+	debug << "matrix::operator *= : \n\t(*this) = " << *this <<  "\n\t      M = " << M << endl;
+	debug << "matrix::operator *= : multiplication produces " << loc.numrows() << " by " << M.numcols() << " result" << endl;
 }
 
 
@@ -606,16 +1108,21 @@ if (matrix_control::DEBUG & matrix_control::multiply)
 		for (size_t j=0; j< M.cols; j++)
 		{
 if (matrix_control::DEBUG & matrix_control::multiply)
-	debug << "\nmatrix::operator *= : element " << i << "," << j <<" contributions\n";	
+	debug << "matrix::operator *= : element " << i << "," << j <<" contributions" << endl;	
 			for (size_t k=0; k< loc.cols; k++)
 			{
+
+if (matrix_control::DEBUG & matrix_control::multiply)
+	debug << "matrix::operator *= : result[" << i << "][" << j <<"] stands at " << result[i][j] << endl;	
 				result[i][j] += loc[i][k]*M[k][j];
 if (matrix_control::DEBUG & matrix_control::multiply)
 {
 	T temp = loc[i][k]*M[k][j];
-	debug << "\t" << temp;
+	debug << "matrix::operator *= :   " << temp;
 }
 			}
+if (matrix_control::DEBUG & matrix_control::multiply)
+	debug << endl;
 		}
 	}
 	
@@ -651,8 +1158,11 @@ template<class T, class St> matrix<T,St> matrix<T,St>::operator -= (const int nu
 /* Currently this inverse function assumes that the determinant is non-zero */
 template<class T, class St> matrix<T,St> matrix<T,St>::inverse(bool adjunct_only) const
 {
+
 	const matrix<T,St>& M = *this;
 	int n = M.numrows();
+
+cout << "calculating inverse of " << n << " by " << n << " matrix" << endl;
 	
 	matrix<T,St> invM(n,n);
 	
@@ -681,6 +1191,7 @@ if (matrix_control::DEBUG & matrix_control::inverse)
 	
 		for (int j=0; j<n; j++)
 		{
+//cout << '#' << flush;			
 			/* take out column j */
 			for (int k=0; k < j; k++)
 				cperm[k] = k;
@@ -729,7 +1240,10 @@ template<class T, class St> bool matrix<T,St>::operator == (const matrix<T,St>& 
 	for (size_t j=0; j< loc.cols; j++)
 	{
 		if (loc[i][j] != M[i][j])
+		{
+//cout << "matrix elements " << i << ',' << j << " differ:" << " loc[i][j]  = " << loc[i][j] << ", M[i][j] = " << M[i][j] << endl;		
 			return false;
+		}
 	}
 	
 	return true;

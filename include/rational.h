@@ -120,6 +120,9 @@ if (rational_control::DEBUG)
 if (rational_control::DEBUG)
 	debug << "rational::operator >> : denominator = " << Q.d  << endl;
 	}
+
+	// added 30-10-25
+	Q = scaled_rational(Q);
 	
 	return is;
 }
@@ -152,6 +155,13 @@ template <class T> int num_len (const rational<T>& Q)
 template <class T> inline rational<T> scaled_rational(rational<T>& Q)
 {
 	T g;
+
+	// added 30-10-25
+	if (Q.d < T(0))
+	{
+		Q.n *= T(-1);
+		Q.d *= T(-1);
+	}
 	
     if ( Q.d != T(1) )
     {

@@ -100,6 +100,7 @@ public:
 		LEFT = 3, // LEFT and RIGHT used for labelling flat crossings in Gauss codes
 		RIGHT = 4,
 		ODD = 5,
+		SINGULAR = 6,
 		VOID = 9 // used as a marker when removing virtual Reidemeister II detours and as a generic void value
 	};
 
@@ -161,7 +162,7 @@ public:
 	   functions, it it more natural to include the indication of long status in the generic code data.
     */
    	
-	int immersion_character;
+	int immersion_character;  // a character enum value
 	int num_crossings;
 	int num_components;
 
@@ -172,13 +173,16 @@ public:
 	vector<int> orig_crossing;
 	vector<int> shortcut_crossing;  // used for knotoids
 	matrix<int> zig_zag_count;  // used by parity arrow polynomial
+	
+	bool multi_virtual;
+	vector<int> virtual_index; // used with multiple virtual knots
 
 
-	generic_code_data(): type(unknown),num_open_components(0),head_zig_zag_count(0),immersion_character(character::CLOSED),num_crossings(0),num_components(0) {}
+	generic_code_data(): type(unknown),num_open_components(0),head_zig_zag_count(0),immersion_character(character::CLOSED),num_crossings(0),num_components(0),multi_virtual(false) {}
 	generic_code_data(int n, int c): type(unknown),head(-1),head_zig_zag_count(0),immersion_character(character::CLOSED),num_crossings(n),num_components(c),
 	                                 code_table(matrix<int>(CODE_TABLE_SIZE,n)),num_component_edges(vector<int>(c)), 
 									 first_edge_on_component(vector<int>(c)),term_crossing(vector<int>(2*n)), orig_crossing(vector<int>(2*n)), 
-									 shortcut_crossing(vector<int>(n)){}
+									 shortcut_crossing(vector<int>(n)), multi_virtual(false), virtual_index(vector<int>(n)){}
 };
 
 /* next the class structure for tracking the crossing labels when converting Gauss codes to labelled peer codes */

@@ -9,8 +9,11 @@ This file was renamed from Quaternion.h to quaternion-scalar.h to avoid a confli
 another header file quaternion.h experienced in some operating systems, 
 such as Windows and MAC OS X.
 
+We cannot simply typedef quaternion<scalar> to Quaternion since we need to 
+re-define some of the operators
+
 ************************************************************************/
-#include <scalar.h>
+//#include <scalar.h>
 #include <quaternion.h>
 
 

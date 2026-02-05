@@ -49,4 +49,3 @@ inline int mod_p::nl ()
 		
 	return num;
 }
-

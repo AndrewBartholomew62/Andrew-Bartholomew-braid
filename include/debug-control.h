@@ -7,6 +7,6 @@ used by the debug subsystem.
 
 struct debug_control 
 {
-	enum level {OFF, SUMMARY, BASIC, INTERMEDIATE, DETAIL, EXHAUSTIVE};
+	enum level {OFF, SUMMARY, BASIC, INTERMEDIATE, DETAIL, EXHAUSTIVE}; 
 	static int DEBUG;	
 };

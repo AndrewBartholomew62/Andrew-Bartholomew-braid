@@ -17,11 +17,16 @@ struct braid_control
 	static bool		ALWAYS_CALCULATE_DELTA_1;
 	static bool		ARROW_POLYNOMIAL;
 	static bool		BIGELOW_KNOT_SEARCH;
+	static bool		BIRACK_HOMOLOGY;
+	static bool		BRAID_PERMUTATION;
 	static bool		BURAU;
 	static bool		BYPASS_FUNDAMENTAL_EQUATION_CHECK;
 	static bool		CALCULATE_DELTA_0_ONLY;
 	static bool		CALCULATE_MOD_P;
 	static bool 	CLASSICAL_ONLY;
+//	static bool 	CHECK_3_CYCLES;
+	static bool		COCYCLE_INVARIANT;
+	static bool		COHOMOLOGY;
 	static bool		COMMUTATIVE_AUTOMORPHISM;
 	static bool		COMPLEX_STUDY_DELTA_1;
 	static bool    	CUSTOM_WEYL;
@@ -30,22 +35,24 @@ struct braid_control
 	static bool		DISPLAY_DELTA_1_ONLY;
 	static bool		DOODLE_ALEXANDER;
 	static bool 	DOODLE_Q_POLYNOMIAL;
+	static bool 	DOUBLE_BIRACKS;
 	static bool		DOWKER_CODE;
 	static bool		DYNNIKOV_TEST;
 	static bool		EQUALITY_TEST;
 	static bool		EVEN_WRITHE;
 	static bool		EXPANDED_BRACKET_POLYNOMIAL;
 	static bool     EXTRA_OUTPUT;
-	static bool		FIXED_POINT_INVARIANT;
+	static bool		FINITE_SWITCH_INVARIANT;
 	static bool		FLAT_CROSSINGS;
 	static bool		FLIP_BRAID;
 	static bool		GAUSS_CODE;
-	static bool		GCD_BACK_SUBSTITUTING;
+//	static bool		GCD_BACK_SUBSTITUTING;
 	static bool		HAMILTONIAN;
 	static bool		HC_COUNT;
 	static bool		HC_EDGES;
 	static bool		HC_LIST_ALL;
 	static bool		HOMFLY;
+	static bool		HOMOLOGY;
 	static bool		IMMERSION_CODE;
 	static bool		INVERT_BRAID;
 	static bool		JONES_POLYNOMIAL;
@@ -54,6 +61,7 @@ struct braid_control
 	static bool		KNOTOID_BRACKET;
 	static bool		LONG_KNOT;  // used by the switch polynomial invariant template functions that don't have access to generic code data
 	static bool		LPGD;
+	static bool		MANTUROV_ALEXANDER;
 	static bool		MATRIX;
 	static bool		MOCK_ALEXANDER;
 	static bool     NORMALIZING_Q_POLYNOMIALS;
@@ -70,19 +78,22 @@ struct braid_control
 	static bool    	PRIME_WEYL;
 	static bool    	QUANTUM_WEYL;
 	static bool     QUATERNION;
-	static bool     RACK_POLYNOMIAL;
+	static bool     BIRACK_POLYNOMIAL;
 	static bool     RAW_OUTPUT;
 	static bool 	REDUCE_BRAIDS;
+	static bool     REFINE_RACK_POLYNOMIAL;
 	static bool		LINE_REFLECT_BRAID;
-	static bool		PLANE_REFLECT_BRAID;
+	static bool		PLANE_REFLECT_INPUT;
 	static bool		RELAXED_PARITY;
 	static bool		REMOVE_REIDEMEISTER_II_MOVES;
 	static bool		REMOVE_PEER_CODE_COMPONENT;
+	static bool		REVERSE_INPUT_ORIENTATION;
 //	static bool		REAL_STUDY_DELTA_1;
 	static bool		SAWOLLEK;
 	static bool		SILENT_OPERATION;
 	static bool		STATUS_INFORMATION;
 	static bool		STUDY_RHO_MAPPING;
+	static bool		SUMMARY_TEST; // used by the automated test subsystem
 	static bool		SWITCH_POLYNOMIAL_INVARIANT;
 	static bool		TEST_MODE;
 	static bool		TeX_POLYNOMIAL_OUTPUT;
@@ -91,6 +102,8 @@ struct braid_control
 	static bool		T_VARIABLE;
 	static bool		ULPGD;
 	static bool		UOPGC;
+	static bool		USE_BIGINT;
+	static bool		USE_RATIONALS;
 	static bool		VERIFY_DELTA_0;
 	static bool		VOGEL_ALGORITHM;
 	static bool		VOGEL_HEIGHT_ONLY;
@@ -125,6 +138,8 @@ struct braid_control
 	static int wait_threshold;
 	static int wait_count;
 	static int reset_count; // number of times wait_count has reached wait_threshold
+	static int birack_poly_writhe_limit; // determined the number of terms calculated for the COCYCLE_INVARIANT birack polynomial
+	static int homology_index; // determines the value of k when calculating H_k or H^k
 
 	/* ST_pair_type is an enumeration of the type of pairs of finite switches S and T */
 	enum class ST_pair_type {FLAT_ESSENTIAL_VIRTUAL, ESSENTIAL_VIRTUAL, ESSENTIAL_WELDED, ESSENTIAL_DOODLE};
@@ -133,5 +148,4 @@ struct braid_control
 	
 	enum cycle {BRAID_RTC=-2, UNSPECIFIED=-1};
 };
-
 

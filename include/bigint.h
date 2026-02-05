@@ -36,7 +36,8 @@ class bigint
 	
 public:
 	
-    bigint():n(1) {negative = false;}
+//    bigint():n(1) {negative = false;}
+    bigint():n(1,0),negative(false){}
     bigint(const int num);
     bigint(const unsigned long num);
 	
@@ -105,7 +106,7 @@ struct bigint_control
 		l_shift =  	0x00004000,
 		bool_conv =	0x00008000,
 		gcd =  		0x00010000,
-		// 'all' also supported
+		all =       0xffffffff,
 	};
 };
 

@@ -1,4 +1,3 @@
-#include <rational.h>
 
 class big_rational : public Scalar
 {

@@ -25,13 +25,22 @@ template <class T> T gcd (T i, T j)
    but the linear combination of the original integers that yields the gcd.  Thus 
    given a and b, put
    
-       r1 = a = x1 a + y1 b; where x1=1 and y1=0
-       r2 = b = x2 a + y2 b; where x2=0 and y2=1
+       a1 = a = x1 a + y1 b; where x1=1 and y1=0
+       b1 = b = x a + y b; where x=0 and y=1
    
    We start evaluating the gcd of a and b using Euclid's algorithm, so
    
-       r1 = q3 r2 + r3
+       a1 = q1 b1 + r1
    so
+       r1 = a1 - q1 b1
+          = (x1 a + y1 b) - q1(x a +y b)
+          = (x1 - q1 x)a + (y1 - q1 y)b
+
+	   a2 = b1 = x a + y b
+	   b2 = r1 = (x1 - q1 x)a + (y1 - q1 y)b
+
+	   and so on.  If rn == 0, gcd is bn
+
        r3 = r1 - q3 r2
           = (x1 a + y1 b) - q3(x2 a +y2 b)
           = (x1 - q3 x2)a + (y1 - q3 y2)b
@@ -42,16 +51,14 @@ template <class T> T ext_gcd (T a, T b, T& x, T& y)
 {
 	T x1 = T(1);
 	T y1 = T(0);
-//	T x = T(0);
-//	T y = T(1);
 	x = T(0);
 	y = T(1);
 	
-	T q = a/b;
-	T r = a % b;
-	
 	for (;;)
 	{
+		T r = (a % b + b)%b; // we always want r to be positive
+		T q = (a-r)/b; // calculates the quotient correctly for our choice of r
+
 		if (r == T(0))
 		{
 			return b;

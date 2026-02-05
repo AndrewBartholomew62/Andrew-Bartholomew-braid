@@ -1,3 +1,5 @@
+#include <rational.h>
+#include <bigint.h>
 
 /* Scalar is an abstract class providing the interface to our scalar types */
 class Scalar
@@ -36,9 +38,9 @@ public:
 class scalar
 {
 	Scalar* C;
-	static int variant;
 public:
-	enum scalar_variant {MOD_P, BIGINT, BIGRATIONAL};
+	static int variant;
+	enum scalar_variant {MOD_P, INT, BIGINT, RATIONAL, BIGRATIONAL};
 	static void set_variant(scalar_variant t);
 	static void show_variant(ostream& s);
 	
@@ -107,6 +109,8 @@ inline scalar::scalar(int a)
 
 /* finally, include the scalar classes that are based on Scalar */
 #include <mod-p-scalar.h>
+#include <int-scalar.h>
 #include <bigint-scalar.h>
+#include <rational-scalar.h>
 #include <big-rational-scalar.h>
 
