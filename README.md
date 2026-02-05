@@ -12,6 +12,9 @@ The tools provided by the programme support the following:
     Commutative automorphism switch invariants
     Finite-switch polynomial invariants (also known as rack polynomials)
     Fixed-point invariant of the braid representation of a knot or doodle
+    Colouring number invariant for virtual knots, links or doodles
+    Cocycle state sum invariants including the doubled-birack cocycle invariant
+    Birack polynomial invariants based on colouring numbers or cocycles
     Matrix-switch polynomial invariants
     Quaternionic polynomial invariants
     Sawollek's normalized Conway polynomial for a braid word
@@ -22,16 +25,19 @@ The tools provided by the programme support the following:
     Jones polynomial of a classical or virtual knot, link, knotoid or multi-knotoid
     Kauffman's Affine Index Polynomial for virtual knots or knotoids
     Kauffman bracket polynomial of a classical or virtual knot, link, knotoid or multi-knotoid
+    Manturov-Nikonov Alexander-like polynomial for flat virtual knots
     Turaev's extended bracket polynomial of a classical or virtual knotoid or multi-knotoid
     Parity arrow polynomial of a classical or virtual knot or knotoid
     Parity bracket polynomial of a classical or virtual knot or knotoid
-    Kim and Kim's Q polynomial for doodles with one component 
 
     Dynnikov test for the trivial braid
     Hamiltonian circuits within classical or flat knot or link diagram
     Vogel's algorithm for determining a braid word from a knot or link diagram
-    Prime test to determine whether a given diagram is prime; i.e is not a connected sum, or has a 3-connected shadow
-
+    The turning number of a knot or link diagram
+    Prime test to determine whether the shadow of a classical or virtual knot, link, knotoid or multi-linkoid diagram is 3-connected
+    The strand permutation determined by a braid
+    Homology and cohomology generator evaluation for biracks
+    
     Dowker(-Thistlethwaite) code for a braid or labelled peer code
     Gauss code for a labelled peer code or the closure of a braid word
     Labelled immersion code for a braid word
