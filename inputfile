@@ -1,5 +1,5 @@
 
-;                          Input file for braid programme version 28.0
+;                          Input file for braid programme version 31.2
 
 
 ; An input file may contain one or more braid definitions together with
@@ -20,74 +20,86 @@
 ; in the same set of brackets, separated by commas e.g. [quaternion, output, mod-p=3, wait]  
 ; The list of available options is as follows: 
 
-;[affine-index]           ; evaluate the affine index polynomial invariant
-;[alexander]              ; Alexander polynomial invariant
-;[arrow-polynomial]       ; evaluate the arrow polynomial invariant of a classical or virtual knot, link, knotoid or multi-knotoid
-;[automorphism]           ; commutative automorphism switch polynomial invariant
-;[burau]                  ; Burau polynomial invariant
-;[complex-delta1]         ; calculate Delta_1^C rather than Delta_1^H for quaternionic switches
-;[delta1-only]            ; display polynomial output for Delta_1 only
-;[doodle-Q-poly]          ; the Q-polynomial for doodles with one component
-;[double-braid]           ; calculate the Kamada double covering of all the braids in the input file
-;[dowker]                 ; evaluate Dowker(-Thistlethwaite) code
-;[dynnikov]               ; carry out  Dunnikiv test
-;[equality]               ; test for A=D or B=C in switch when calculating switch polynomial invariants
-;[extra-output]           ; display additional polynomial invariant output
-;[fixed-point]            ; finite biquandle fixed point invariant
-;[flat]                   ; create flat Reidemeister II moves when executing the Vogel algorithm 
-;[flip-braid]             ; flip all the braids in the input file
-;[format]                 ; format the output file so that it may be used as an input file later
-;[gauss]                  ; evaluate Gauss code
-;[hamiltonian]            ; determine a Hamiltonian circuit in the shadow of a knot or link
-;[HC-count]               ; count the number of Hamiltonian circuits in a diagram\n";
-;[HC-edges]               ; create Hamiltonian circuits from edges rather than crossings\n";
-;[HC-list-all]            ; find all of the Hamiltonian circuits in a diagram\n";
-;[homfly]                 ; evaluate HOMFLY polynomial
-;[immersion]              ; evaluate labelled immersion code
-;[info]                   ; display status information about a braid
-;[invert-braid]           ; invert all the braids in the input file
-;[jones-polynomial]       ;  evaluate the Jones polynomial
-;[kauffman-bracket]       ; evaluate the normalized Kauffman bracket polynomial
-;[knotoid-bracket]        ; evaluate the Turaev extended bracket polynomial for a knotoid
-;[line-reflect]           ; reflect all the braids in the file in a horizontal line drawn south of the braid
-;[lpgd]                   ; calculate the left preferred Gauss code, rather than a standard gauss code
-;[matrix]                 ; matrix switch polynomial invariant
-;[mock]                   ; mock Alexander polynomial invariants of knotoids
-;[mod-p=n]                ; calculate mod p with p=n (only used for non-Weyl algebra switches)
-;[no-auto-delta1]         ; only calculate Delta_1 if Delta_0 is zero
-;[no-even-writhe]         ; normalize the parity bracket polynomial with the full writhe rather than the even writhe
-;[no-expanded-bracket]    ; do not expand D=(-A^2-A^{-2}) in bracket polynomials
-;[no-normalize-bracket]   ; do not normalize bracket polynomial invariants
-;[normalize-quaternions]  ; normalize quaternionic polynomial invariants
-;[opgc]                   ; calculate the over preferred Gauss code, rather than a standard gauss code\n";
-;[OU-format]              ; write Gauss codes as a sequence (O|U)<crossing-num><crossing-sign>\n";
-;[parity-arrow]           ; evaluate Kaestner and Kauffman's parity arrow polynomial
-;[parity-bracket]         ; evaluate the Manturov parity bracket polynomial
-;[PD-format]              ; write Gauss codes in planar diagram format\n";
-;[peer]                   ; evaluate labelled peer code
-;[plane-reflect]          ; reflect all the braids in the file in the plane of the page
-;[power=n]                ; evaluate the nth power of the switch when calculating switch polynomial invariants
-;[prime]                  ; determine whether a given diagram is prime; i.e is not a connected sum or has a 3-connected shadow
-;[quaternion]             ; quaternionic polynomial invariant
-;[rack-polynomial]        ; evaluate the rack polynomial for the specified braids
-;[raw-output]             ; produce raw output, that is the result only without descriptive text
-;[reflect-braid]          ; reflect all the braids in the input file
-;[relaxed-parity]         ; evaluate the relaxed variant of the parity arrow polynomial
-;[remove=n]               ; remove the n-th component from a peer code
-;[rho]                    ; use the Study rho mapping for calculating Study determinants
-;[satellite[=n]]          ; calculate the peer code of the n-parallel cable satellite of a knot's peer code (default n=2)
-;[sawollek]               ; evaluate Sawolleks normalized Conway polynomial
-;[show-parity-peer-codes] ; show peer codes in addition to unoriented left preferred Gauss codes in parity bracket polynomial output;
-;[show-varmaps]           ; show variable mappings instead of substituting mapped variables in polynomial output
-;[silent]                 ; do not generate any output to the command line (stdout)
-;[TeX-polynomials]        ; display output polynomials in TeX format (not supported for the Jones polynomial)
-;[turning-number]         ; evaluate the turning number of a given diagram
-;[ulpgd]                  ; calculate the unoriented left preferred Gauss data, rather than a standard gauss code
-;[uopgc]                  ; calculate the unoriented over preferred Gauss code, rather than a standard gauss code
-;[vogel]                  ; use the Vogel algorithm to determine an equivalent braid word
-;[wait[=n]]               ; display determinant wait information, (based on nxn minors, so larger n produces less frequent output)
-;[weyl]                   ; Weyl algebra switch polynomial invariant 
-;[zig-zag-delta]          ; include delta with K_i and Lambda_i variables when calculating the arrow polynomial
+
+;[affine-index]              ; evaluate the affine index polynomial invariant
+;[alexander]                 ; Alexander polynomial invariant
+;[arrow-polynomial]          ; evaluate the arrow polynomial invariant of a classical or virtual knot, link, knotoid or multi-knotoid
+;[automorphism]              ; commutative automorphism switch polynomial invariant
+;[bigint]                    ; use arbitrary precision arithmetic for evaluating homology generators
+;[birack-homology]           ; calculate birack homology or cohomology, rather than the biquandle variant
+;[birack-polynomial]         ; calculate the birack-polynomial invariant of a peer code or braid closure
+;[braid-permutation]         ; calculate the strand permutation determined by a braid
+;[burau]                     ; Burau polynomial invariant
+;[classical]                 ; classical input only, no need to test conditions related to other knot theories
+;[cohomology=n]              ; determine the n-th cohomology generators for the finite switches provided in an input file, default n=3
+;[complex-delta1]            ; calculate Delta_1^C rather than Delta_1^H for quaternionic switches
+;[delta1-only]               ; display polynomial output for Delta_1 only
+;[doodle-Q-poly]             ; the Q-polynomial for doodles with one component
+;[double-braid]              ; calculate the Kamada double covering of all the braids in the input file
+;[dowker]                    ; evaluate Dowker(-Thistlethwaite) code
+;[dynnikov]                  ; carry out  Dunnikiv test
+;[equality]                  ; test for A=D or B=C in switch when calculating switch polynomial invariants
+;[extra-output]              ; display additional polynomial invariant output
+;[flat]                      ; create flat Reidemeister II moves when executing the Vogel algorithm 
+;[flip-braid]                ; flip all the braids in the input file
+;[format]                    ; format the output file so that it may be used as an input file later
+;[gauss]                     ; evaluate Gauss code
+;[hamiltonian]               ; determine a Hamiltonian circuit in the shadow of a knot or link
+;[HC-count]                  ; count the number of Hamiltonian circuits in a diagram\n";
+;[HC-edges]                  ; create Hamiltonian circuits from edges rather than crossings\n";
+;[HC-list-all]               ; find all of the Hamiltonian circuits in a diagram\n";
+;[homfly]                    ; evaluate HOMFLY polynomial
+;[homology=n]                ; determine the n-th homology generators for the finite switches provided in an input file, default n=3
+;[immersion]                 ; evaluate labelled immersion code
+;[info]                      ; display status information about a braid
+;[invert-braid]              ; invert all the braids in the input file
+;[jones-polynomial]          ; evaluate the Jones polynomial
+;[kauffman-bracket]          ; evaluate the normalized Kauffman bracket polynomial
+;[knotoid-bracket]           ; evaluate the Turaev extended bracket polynomial for a knotoid
+;[line-reflect]              ; reflect all the braids in the file in a horizontal line drawn south of the braid
+;[lpgd]                      ; calculate the left preferred Gauss code, rather than a standard gauss code
+;[manturov]                  ; evaluate the Manturov-Nikonov Alexander-like polynomial invariant for flat virtual knots
+;[matrix]                    ; matrix switch polynomial invariant
+;[mock]                      ; mock Alexander polynomial invariants of knotoids
+;[mod-p=n]                   ; calculate mod p with p=n (only used for non-Weyl algebra switches)
+;[no-auto-delta1]            ; only calculate Delta_1 if Delta_0 is zero
+;[no-even-writhe]            ; normalize the parity bracket polynomial with the full writhe rather than the even writhe
+;[no-expanded-bracket]       ; do not expand D=(-A^2-A^{-2}) in bracket polynomials
+;[no-normalize-bracket]      ; do not normalize bracket polynomial invariants
+;[no-reduce-braids]          ; do not remove Reidemeister 1 or 2 configurations from braid words determined by the Vogel algorithm
+;[no-refine-birack-poly]     ; do not refine the birack polynomial by the quandle image size
+;[normalize-quaternions]     ; normalize quaternionic polynomial invariants
+;[opgc]                      ; calculate the over preferred Gauss code, rather than a standard gauss code\n";
+;[OU-format]                 ; write Gauss codes as a sequence (O|U)<crossing-num><crossing-sign>\n";
+;[parity-arrow]              ; evaluate Kaestner and Kauffman's parity arrow polynomial
+;[parity-bracket]            ; evaluate the Manturov parity bracket polynomial
+;[PD-format]                 ; write Gauss codes in planar diagram format\n";
+;[peer]                      ; evaluate labelled peer code
+;[plane-reflect-input]       ; reflect all the braids and peer codes in the input file in the plane of the page
+;[power=n]                   ; evaluate the nth power of the switch when calculating switch polynomial invariants
+;[prime]                     ; determine whether a given diagram is prime; i.e is not a connected sum or has a 3-connected shadow
+;[quaternion]                ; quaternionic polynomial invariant
+;[rack-polynomial]           ; evaluate the rack polynomial for the specified braids
+;[rational]                  ; use rational coefficients for evaluating homology generators, may be combined with bigint for big-rationals
+;[raw-output]                ; produce raw output, that is the result only without descriptive text
+;[reflect-braid]             ; reflect all the braids in the input file
+;[relaxed-parity]            ; evaluate the relaxed variant of the parity arrow polynomial
+;[remove=n]                  ; remove the n-th component from a peer code
+;[reverse-input-orientation] ; reverse the orientation of the diagram represented by the input braid or labelled peer code;
+;[rho]                       ; use the Study rho mapping for calculating Study determinants
+;[satellite[=n]]             ; calculate the peer code of the n-parallel cable satellite of a knot's peer code (default n=2)
+;[sawollek]                  ; evaluate Sawolleks normalized Conway polynomial
+;[show-parity-peer-codes]    ; show peer codes in addition to unoriented left preferred Gauss codes in parity bracket polynomial output;
+;[show-varmaps]              ; show variable mappings instead of substituting mapped variables in polynomial output
+;[silent]                    ; do not generate any output to the command line (stdout)
+;[TeX-polynomials]           ; display output polynomials in TeX format (not supported for the Jones polynomial)
+;[turning-number]            ; evaluate the turning number of a given diagram
+;[ulpgd]                     ; calculate the unoriented left preferred Gauss data, rather than a standard gauss code
+;[uopgc]                     ; calculate the unoriented over preferred Gauss code, rather than a standard gauss code
+;[vogel]                     ; use the Vogel algorithm to determine an equivalent braid word
+;[wait[=n]]                  ; display determinant wait information, (based on nxn minors, so larger n produces less frequent output)
+;[weyl]                      ; Weyl algebra switch polynomial invariant 
+;[zig-zag-delta]             ; include delta with K_i and Lambda_i variables when calculating the arrow polynomial
 
 ; Titles
 ; ======
