@@ -193,7 +193,23 @@ pterm.pl = 2    pterm.prev = 0x8cd2670  pterm.next = NULL
 <h2><a name="Testing"></a>2. Automating regression testing</h2>
 
 <p>The source distribution for the braid programme includes support for automated regression testing via the <kbd>run-test</kbd> utility.  The programme <kbd>run-test</kbd> can be built from the Makefile
-supplied using <kbd>make run-test</kbd>.  The usage for run-test is as follows:</p>
+supplied using <kbd>make run-test</kbd>.  Note, however, that to build <kbd>run-test</kbd>, you need to comment out the hash-defines in the file
+<kbd>initialize.h</kbd>, which can be found in the <kbd>include</kbd> directory.  This file contains the following definitions that are required for 
+debugging the braid programme only.
+
+<pre>
+    #define INITIALIZE_BIGINT
+    #define INITIALIZE_MATRIX
+    #define INITIALIZE_POLYNOMIAL
+    #define INITIALIZE_QUATERNION
+    #define INITIALIZE_RATIONAL
+    #define INITIALIZE_MOD_P
+    #define INITIALIZE_SCALAR
+</pre>
+
+
+
+The usage for run-test is as follows:</p>
 
 <pre>
     Usage: 'run-test &lt;filename&gt;' runs every test in &lt;filename&gt;
