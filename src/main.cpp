@@ -621,8 +621,8 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 		}
 	}
 
-//	if (false && braid_control::DEVELOPMENT_MODE)  // 7/7/25 development modes clause moved until after the input file has been read
-	if (braid_control::DEVELOPMENT_MODE)
+	if (false && braid_control::DEVELOPMENT_MODE)  // 7/7/25 development modes clause moved until after the input file has been read
+//	if (braid_control::DEVELOPMENT_MODE)
 	{
 /*
 generic_code_data add_Reidemeister_1_loop (generic_code_data& code_data);
@@ -3272,40 +3272,99 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 
 if (braid_control::DEVELOPMENT_MODE)
 {
+					matrix<int> twitch_u(size,size,-1);
+					matrix<int> twitch_d(size,size,-1);
+					
+					matrix<int> inv_D(size,size,-1);
+					
+					for (int i=0; i< size; i++)
+					for (int j=0; j< size; j++)
+						inv_D[i][Sd[i][j]] = j; // inverts the map D_i given by the row Sd[i][]
+		
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
+	debug << "braid::main:   evaluate sideways twitch map of Su and Sd:" << endl;
+
+if (debug_control::DEBUG >= debug_control::DETAIL)
+{
+	debug << "braid::main:     inv_D:" << endl;
+	print (inv_D,debug,3,"braid::main:     ");
+}
 	
-//void cohomology_generators(generic_switch_data& switch_data);
-/*
-		list<vector<int> > calculate_colourings( generic_code_data& code_data, matrix<int>& Su, matrix<int>& Sd, matrix<int>& invSu, matrix<int>& invSd, matrix<int>& Tu, matrix<int>& Td);
+					/* The sideways twitch map of a switch is T(a,b) = (t_a(b),t^b(a)), i.e S_{-}^{+} (a,b) = (b_{a^{-1}}, a^{b_{a^{-1}}}), 
+					   where ^ and _ are switch actions.
+					*/
+					for (int a=0; a< size; a++)
+					for (int b=0; b< size; b++)
+					{
+						int x = inv_D[a][b];  // D_a^{-1}(b)
 
-		string input_string;
-		cout << "enter peer code: " << flush;
-		getline(cin, input_string);
+//if (debug_control::DEBUG >= debug_control::DETAIL)
+//	debug << "braid::main:     a = " << a << " b = " << b << " x = " << x << endl;
+			
+						twitch_d[a][b] = x;
+						twitch_u[b][a] = Su[x][a];
+					}
 
-		
-		generic_code_data code_data;
-		read_code_data (code_data, input_string);
-		
-		list<vector<int> > colourings = calculate_colourings(code_data,Su,Sd,invSu,invSd,Tu,Td);
-		
-		cout << "number of colourings = " << colourings.size() << endl;
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)	
+{
+	bool loc_newline = matrix_control::SINGLE_LINE_OUTPUT;
+	matrix_control::SINGLE_LINE_OUTPUT = false;
+	
+	debug << "braid::main:   sideways twitch up action twitch_u = " << endl;
+    print(twitch_u, debug, 3, "braid::main:   ");  
+	debug << "braid::main:   sideways twitch down action twitch_d = " << endl;
+    print(twitch_d, debug, 3, "braid::main:   ");  
 
-//	cohomology_generators(switch_cache[s]);			
-*/
-	vector<int> perm(size,-1);
+	matrix_control::SINGLE_LINE_OUTPUT = loc_newline;
+}
+	vector<int> right_turn_perm(size,-1);
+	int x;
+	int pi_x;
 	for (int i=0; i< size; i++)
 	{
-		if(perm[Sd[i][i]] != -1)
+		x = twitch_d[i][i];
+		pi_x = twitch_u[i][i];
+	}
+	
+	if (right_turn_perm[x] != -1)
+	{
+		cout << "right_turn_perm not a permutation" << endl;
+		exit(0);
+	}
+	else
+		right_turn_perm[x] = pi_x;
+	
+
+	vector<int> left_turn_perm(size,-1);
+	for (int i=0; i< size; i++)
+	{
+		/* find a,b such that b_a=i and a^b=i */
+		bool found = false;
+		for (int a=0; a< size && !found; a++)
+		for (int b=0; b< size && !found; b++)
 		{
-			cout << "perm = ";
-			for (int j=0; j< size; j++)
-				cout << perm[j] << ' ';
-			cout << ", i=" << i << ", Sd[i][i] = " << Sd[i][i] << endl;
-			
-			exit(0);
+			if (twitch_d[a][b] == i && twitch_u[b][a] == i)
+			{
+				found = true;
+				if (left_turn_perm[a] != -1)
+				{
+					cout << "left_turn_perm not a permutation" << endl;
+					exit(0);
+				}
+				else
+					left_turn_perm[a] = b;
+			}
 		}
-		else
-			perm[Sd[i][i]]=i;
-			
+	}
+
+	for (int i=0; i< size; i++)
+	{
+		if (right_turn_perm[i] != left_turn_perm[i])
+		{
+			cout << "left and right perms differ" << endl;
+			break;
+//			exit(0);
+		}
 	}
 	
 	continue;
@@ -5004,9 +5063,6 @@ void set_programme_short_option(char* cptr)
 
 	if (strchr(cptr, 'e'))
 		braid_control::EQUALITY_TEST = true;
-
-	if (strchr(cptr, 'E'))
-		braid_control::EXTRA_OUTPUT = true;
 
 	if (strchr(cptr, 'F'))
 		braid_control::BYPASS_FUNDAMENTAL_EQUATION_CHECK = true;

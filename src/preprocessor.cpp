@@ -45,6 +45,9 @@ string expand_string (string input_string,map<string,string>& var_map);
 /* max_lines == -2 indicates an override to include a single line from each include file */
 string preprocess_file (ostream& os, ifstream& input, list<pair<string,int> > history, int max_lines = -1, string testname="")
 {
+	bool first_line_sent_to_output = false;
+	bool switch_line_sent_to_output = false;
+	
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "preprocess_file: max_lines = " << max_lines << ", testname = " << testname << endl;
 	
@@ -168,8 +171,10 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 					list<pair<string,int> > include_history = history;
 					include_history.push_back({include_file,line_number});	
 
+					recursion_level++;
+					
 if (debug_control::DEBUG >= debug_control::SUMMARY)
-	debug << "preprocess_file: recursing to level " << ++recursion_level << endl;											
+	debug << "preprocess_file: recursing to level " << recursion_level << endl;											
 					preprocess_file(os,is,include_history,(max_lines == -2? max_lines: max_lines_to_include));
 				}
 			}
@@ -235,14 +240,40 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 		}
 		else
 		{				
-			os << next_line << endl;
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+{
+	debug << "preprocess_file: first_line_sent_to_output = " << first_line_sent_to_output;
+	debug << " switch_line_sent_to_output = " << switch_line_sent_to_output << endl;
+}
+
+			if (first_line_sent_to_output)
+			{
+				/* If we are in an included file, and max_lines == -2, then only put out a second line if it is a cocycle */
+				if (recursion_level > 0 && max_lines == -2)
+				{
+					if(switch_line_sent_to_output && next_line.find('C') != string::npos)
+						os << next_line << endl;
+				}
+				else
+				{
+					os << next_line << endl;
+				}	
+			}
+			else
+			{
+				os << next_line << endl;
+				if (next_line.find('S') != string::npos)
+					switch_line_sent_to_output = true;
+			}
 			
 			if (next_line.length() && next_line[0] != ';' && next_line.substr(0,2) != "--")
 			{
 				++output_lines;
 				
-				if (max_lines == -2)
+				if (recursion_level > 0 && max_lines == -2 && first_line_sent_to_output)
 					break;
+				else
+					first_line_sent_to_output = true;
 			}
 
 			if (output_lines == max_lines)
