@@ -3,8 +3,6 @@ OBJFILES = util.o debug.o bigint.o class-control.o input.o preprocessor.o\
            braid-util.o gauss-to-peer.o generic-code-io.o generic-code-util.o gauss-orientation.o reidemeister.o \
            main.o bracket.o braid.o  braidfns.o generic-code.o hamiltonian.o vogel.o vogelfns.o homology.o                    
 
-PREP_OBJFILES = debug.o preprocessor-main.o preprocessor.o          
-
 TEST_OBJFILES = debug.o run-test.o preprocessor.o          
          
 DEPS     = ./include/* 
@@ -13,9 +11,6 @@ COMPILE  = g++ -Wall -Wno-misleading-indentation -std=c++11 -I ./include -g -c $
 
 all: $(OBJFILES)
 	g++ -o braid $(OBJFILES) 
-
-preprocess: $(PREP_OBJFILES)
-	g++ -o preprocess $(PREP_OBJFILES)
 
 run-test: $(TEST_OBJFILES)
 	g++ -o run-test $(TEST_OBJFILES)
