@@ -28,9 +28,9 @@ public:
 	friend T trace <> (const matrix<T,St> M);
 	friend void echelon <> (matrix<T,St>& matrixref, bool field_coefficients, bool reduced_form, matrix<T,St>* P_ptr);
 	friend matrix<T,St> inverse <> (const matrix<T,St>& M,bool field_coefficients);
-	friend T determinant <> (const matrix<T,St>& M, string title, int n, int* rperm, int* cperm);
-	friend T permanent <> (const matrix<T,St>& M, string title, int n, int* rperm, int* cperm);
-	friend T immanant <> (const matrix<T,St>& M, string title, int n, int* rperm, int* cperm, bool permanent, int recursion_level);
+	friend T determinant <> (const matrix<T,St>& M, string title, int n, vector<int> rperm, vector<int> cperm);
+	friend T permanent <> (const matrix<T,St>& M, string title, int n, vector<int> rperm, vector<int> cperm);
+	friend T immanant <> (const matrix<T,St>& M, string title, int n, vector<int> rperm, vector<int> cperm, bool permanent, int recursion_level);
 	friend int non_zero_count <> (matrix<T,St>& mat, int row);
 
 	

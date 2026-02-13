@@ -919,7 +919,7 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 		if (!zero_Delta_kp1)
 		{		
 			if (!silent_operation)
-				cout << "Starting inverse calculation for Delta_kp1_P (" << Delta_kp1_P.numrows() << "x" << Delta_kp1_P.numcols() << ")..." << flush;
+				cout << "Starting inverse calculation for Delta_kp1_P (" << Delta_kp1_P.numrows() << "x" << Delta_kp1_P.numcols() << ")..." << endl;
 
 			if (field_coefficients)
 				Delta_kp1_P_inv = inverse(Delta_kp1_P, field_coefficients);

@@ -668,15 +668,11 @@ if (matrix_control::DEBUG & matrix_control::general)
 */
 
 template <class T, class St> 
-T immanant (const matrix<T,St>& M, string title, int n, int* rperm, int* cperm, bool permanent, int recursion_level=0)
+T immanant (const matrix<T,St>& M, string title, int n, vector<int> rperm, vector<int> cperm, bool permanent, int recursion_level=0)
 {
-
-	// last change 3/9/06
-	
     T zero = T(St(0));
     T det = zero;
     T temp = zero;
-	bool clean_up_perms = false;
 
 	/* We are starting a new immanant calculation if recursion_level == 0 */
 	if (!recursion_level)
@@ -694,20 +690,19 @@ if (matrix_control::DEBUG & matrix_control::immanant)
 }
 	}
 	
-	if (rperm == 0)
+	if (rperm.size() == 0)
 	{
 	
 if (matrix_control::DEBUG & matrix_control::immanant)
 	debug << "matrix::immanant: default parameters provided, creating permutations" << endl;
 	
 		n = M.numcols();
-		rperm = new int[M.numrows()];
+		rperm = vector<int>(M.numrows());
 		for (size_t i=0; i< M.numrows(); i++)
 			rperm[i] = i;
-		cperm = new int[n];
+		cperm = vector<int>(n);
 		for (int i=0; i< n; i++)
 			cperm[i] = i;
-		clean_up_perms = true;
 	}
 
 
@@ -737,15 +732,9 @@ if (matrix_control::DEBUG & matrix_control::immanant && n >= matrix_control::DET
 
 	if (n==1)
 	{
-
 if (matrix_control::DEBUG & matrix_control::immanant && n >= matrix_control::DET_DEBUG_LIMIT)
 	debug << "matrix::immanant: returning single element " << M[rperm[0]][cperm[0]] << endl;
 
-		if (clean_up_perms)
-		{
-			delete[] rperm;
-			delete[] cperm;
-		}
 		return M[rperm[0]][cperm[0]];
 	}
     else if (n == 2)
@@ -782,8 +771,8 @@ if (matrix_control::DEBUG & matrix_control::immanant && n >= matrix_control::DET
     }
     else
     {
-		int sub_r_perm[n-1];
-		int sub_c_perm[n-1];
+		vector<int> sub_r_perm(n-1);
+		vector<int> sub_c_perm(n-1);
 		bool evaluate_along_row = true;
 		
 		/* Look to see whether there are more zeros along the top row or left column
@@ -950,22 +939,17 @@ if (matrix_control::DEBUG & matrix_control::immanant && n >= matrix_control::DET
     debug << n << "-immanant: " << det << endl;
 }
 
-	if (clean_up_perms)
-	{
-		delete[] rperm;
-		delete[] cperm;
-	}
     return det;
 }
 
 template <class T, class St> 
-T determinant (const matrix<T,St>& M, string title="untitled", int n=0, int* rperm=0, int* cperm=0)
+T determinant (const matrix<T,St>& M, string title="untitled", int n=0, vector<int> rperm=vector<int>(0), vector<int> cperm=vector<int>(0))
 {
 	return immanant (M, title, n, rperm, cperm, false); // permanent = false
 }
 
 template <class T, class St> 
-T permanent (const matrix<T,St>& M, string title="untitled", int n=0, int* rperm=0, int* cperm=0)
+T permanent (const matrix<T,St>& M, string title="untitled", int n=0, vector<int> rperm=vector<int>(0), vector<int> cperm=vector<int>(0))
 {
 	return immanant (M, title, n, rperm, cperm, true); // permanent = true
 }
@@ -1172,8 +1156,8 @@ cout << "calculating inverse of " << n << " by " << n << " matrix" << endl;
 if (matrix_control::DEBUG & matrix_control::inverse)
 	debug << "\nmatrix::inverse: det(M) = " << det << endl;
 
-	int rperm[n];
-	int cperm[n];
+	vector<int> rperm(n);
+	vector<int> cperm(n);
 	for (int i=0; i<n; i++)
 		rperm[i]=cperm[i]=i;
 

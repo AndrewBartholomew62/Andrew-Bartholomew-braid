@@ -12,4 +12,3 @@ class-control and the debug subsystem
 #define INITIALIZE_SCALAR
 
 
-
