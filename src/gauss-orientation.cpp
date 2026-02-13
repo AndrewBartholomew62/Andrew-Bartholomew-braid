@@ -27,7 +27,6 @@ gauss_orientation_data left_preferred(gauss_orientation_data g, bool unoriented=
 bool gauss_orientation_data::operator == (gauss_orientation_data& b) const
 
 **************************************************************************/
-using namespace std;
 #include <fstream>
 #include <iostream>
 #include <cstring>
@@ -35,6 +34,7 @@ using namespace std;
 #include <iomanip>
 #include <algorithm>
 
+using namespace std;
 
 /********************* External variables ************************/
 extern ofstream     debug;
@@ -859,8 +859,8 @@ if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
 						/* look for the component and places of the two occurrences of crossing i+1 in the original gauss_data */
 						int first_component = -1;
 						int second_component = -1;
-						int first_place;
-						int second_place;
+						int first_place=0;
+						int second_place=0;
 						
 						int component = 0;
 						for (int j=0; j< num_terms; j++)
@@ -1040,7 +1040,7 @@ if (debug_control::DEBUG >= debug_control::EXHAUSTIVE)
 						else
 						{
 							/* the first and second occurrences are reversed if second_component appears before first_component */
-							bool reversed_occurrences;
+							bool reversed_occurrences=false;
 							for (int j=0; j < num_components; j++)
 							{
 								if (component_perm[j] == first_component)

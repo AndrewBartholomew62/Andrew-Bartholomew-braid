@@ -26,8 +26,6 @@ bool classical_gauss_to_peer_code(generic_code_data gauss_code_data, generic_cod
 #include <iomanip>
 #include <ctype.h>
 
-
-
 using namespace std;
 
 extern ofstream     debug;
@@ -1648,14 +1646,14 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 				else if (best_match_count == 3)
 				{
 					int up_count = 0;
-					int down_count = 0;
+//					int down_count = 0;
 	
 			        for (int i=0; i< 3; i++)
 			        {
 						if (candidate_gauss_arc_direction[fringe[first_fringe_index+i]] == gc_pc_xlabels::direction::UPWARDS)
 							up_count++;
-						else 
-							down_count++;
+//						else 
+//							down_count++;
 					}
 					
 					int new_fringe_edge = PD_data[best_crossing][(first_PD_index+1)%4];

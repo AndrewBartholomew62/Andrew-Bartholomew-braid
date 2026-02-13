@@ -2602,11 +2602,11 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 		   
 		   In a knot-type knotoid, we're being given a peer code of a knot and could consider the leg to be on any edge
 		*/ 
-		int r_perm[num_classical_crossings];
+		vector<int> r_perm(num_classical_crossings);
 		for (int i=0; i< num_classical_crossings; i++)
 			r_perm[i] = i;
 			
-		int c_perm[num_classical_crossings];
+		vector<int> c_perm(num_classical_crossings);
 //		for (int i=0; i< num_classical_crossings; i++)
 //			c_perm[i] = i+1;			
 
@@ -3910,14 +3910,14 @@ if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 			output << endl;
 		}					
 						
-	
+/*	
 		int number_of_k_tuples = 0;
 		for (int i=0; i< num_chain_generators; i++)
 			number_of_k_tuples += abs(k_chain[c][i]);
 					
-//if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
-//	debug << "cocycle_invariant:  3-chain " << c << " contains " << number_of_k_tuples << " 3-tuples" << endl;
-	
+if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
+	debug << "cocycle_invariant:  3-chain " << c << " contains " << number_of_k_tuples << " 3-tuples" << endl;
+*/	
 		list<vector<scalar> >::iterator lptr = switch_data.cocycle_scalar.begin();
 		int cocycle_index = 0;
 		char variable_char = 's'; //(braid_control::BIRACK_POLYNOMIAL? 's': 't');

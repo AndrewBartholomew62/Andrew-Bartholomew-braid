@@ -1217,7 +1217,7 @@ bool Gauss_Reidemeister_II_labels(int start_edge, int end_bigon_edge_a, int end_
 
 	component = code_table[generic_code_data::table::COMPONENT][(start_edge %2 ? (start_edge-1)/2: start_edge/2)];
 
-	int end_edge;
+	int end_edge=-1;
 	
 	for (int i = 0; i < code_data.num_component_edges[component]; i++)
 	{

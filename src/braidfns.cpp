@@ -55,7 +55,7 @@ extern bool SIDEWAYS_SEARCH;
 
 string braid_to_generic_code (string braid, int num_terms, int code_type,vector<int>* braid_term=0);
 bool Yang_Baxter_satisfied (matrix<int>& U, matrix<int>& D, bool rack_condition = false);
-bool rat_minor_determinant (Qpmatrix* Matrix_rep, int N, int Nr1, int Nc1, int Nc2, int* rperm, int* cperm, string title, polynomial<scalar,char>& hcf);
+bool rat_minor_determinant (Qpmatrix* Matrix_rep, int N, int Nr1, int Nc1, int Nc2, vector<int> rperm, vector<int> cperm, string title, polynomial<scalar,char>& hcf);
 void display_fixed_point_switch(matrix<int>& M, ostream& os, bool number_from_zero);
 colouring_data num_fixed_points(matrix<int>& Su, matrix<int>& Sd, matrix<int>& invSu, matrix<int>& invSd, matrix<int>& Tu, matrix<int>& Td, 
                      string input_string, int num_terms, int num_strings, generic_switch_data& switch_data, vector<int>* image_size_count = 0);
@@ -1491,8 +1491,8 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
     debug << "\ncommutative_automorphism_invariant:hcf initialized to " << hcf << endl;
 
-		int rperm[matrix_size];
-		int cperm[matrix_size];
+		vector<int> rperm(matrix_size);
+		vector<int> cperm(matrix_size);
 
 		/* take out a (N) row and (N) column from the matrix representation 
 		   and calculate the determinant of what is left

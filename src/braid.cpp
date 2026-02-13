@@ -671,7 +671,7 @@ void dynnikov(string input_string, int num_strings, int num_terms)
 
 
 	/* assign alpha = (0,1,...,0,1) in Z^2n */
-    bigint alpha[2*num_strings];
+    vector<bigint> alpha(2*num_strings);
 
 	for (int i=0; i<num_strings; i++)
     {
@@ -924,7 +924,7 @@ int braid_to_dowker (string braid, int num_terms, int*& code)
     bool string_found;
    
 	/* record the signed value of i for each \sigma_i in braid_num */
-    int braid_num[num_terms];
+    vector<int> braid_num(num_terms);
 	
 	char* inbuf = c_string(braid);
 	cptr = inbuf;
@@ -964,7 +964,7 @@ int braid_to_dowker (string braid, int num_terms, int*& code)
 	   	   labels are stored at even locations, odd labels at odd
 		   locations
 		*/
-    	int label[2*num_terms];
+    	vector<int> label(2*num_terms);
 		
 		for (i=0;i<2*num_terms;i++)
 	    	label[i] = 0;
@@ -4334,7 +4334,7 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 			*/
 		
 			/* set up an array of num_strings integers to control the additional crossing types */
-			int crossing_type[num_strings];
+			vector<int> crossing_type(num_strings);
 			for (int i=0; i<num_strings; i++)
 				crossing_type[i] = generic_braid_data::crossing_type::VIRTUAL;
 			
@@ -4831,7 +4831,7 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 					{
 											
 if (debug_control::DEBUG >= debug_control::SUMMARY)
-  	debug << "braid_colouring_invariant:      cocycle invariants: : ";
+  	debug << "braid_colouring_invariant:      cocycle invariants: ";
 
 						for (int i=0; i< num_invariants; i++)
 						{						
@@ -4879,7 +4879,7 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 							else
 								cout << "Birack polynomial = ";
 								
-							for (int j=period-1; j >=0; j--)
+							for (int j=num_invariant_terms-1; j >=0; j--)
 							{
 								if (coefficient_poly[i][j].non_zero())
 								{									
@@ -4939,7 +4939,7 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 						}
 		
 						bool first_term=true;
-						for (int j=period-1; j >=0; j--)
+						for (int j=num_invariant_terms-1; j >=0; j--)
 						{
 							if (coefficient_poly[i][j].non_zero())
 							{

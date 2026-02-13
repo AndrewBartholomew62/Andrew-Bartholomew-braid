@@ -433,7 +433,7 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 			   or backwards with respect to the label orientation when we leave the crossing on the selected edge.
 			*/
 			int edge = 0;
-			bool forwards;
+			bool forwards=false;
 
 			int peer = code_table[generic_code_data::table::OPEER][0];
 			int peer_component = 0;

@@ -699,7 +699,7 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 				   on a shortcut edge, when tracing smoothed diagram component.  Note that valid_braid_input has already 
 				   checked that the knotoid leg and conseqently the head lie on the first component of the knotoid diagram.
 				*/
-				int semi_arc;  // the first immersion semi-arc of the shortcut
+				int semi_arc=-1;  // the first immersion semi-arc of the shortcut
 				
 				if (code_table[generic_code_data::table::LABEL][head] == generic_code_data::POSITIVE)
 					semi_arc = code_table[generic_code_data::table::OPEER][head];

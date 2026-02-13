@@ -268,7 +268,7 @@ if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 				int edge = first_edge_on_component[i]+j;
 				
 				/* find edge in the initial edge_map */
-				int position;
+				int position=-1;
 				for (int k=0; k< num_edges; k++)
 				{
 					if (initial_edge_map[k] == edge)
@@ -2743,7 +2743,7 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 }
 
 	ostringstream oss;
-	int place = 0;
+//	int place = 0;
 	for (int k=0; k< num_components; k++)
 	{
 		int component = min_component_perm[k];
@@ -2783,7 +2783,7 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 			if (i < num_component_terms-1)
 				oss << ' ';
 				
-			place++;
+//			place++;
 		}
 		if (k < num_components-1)
 			oss << ',';
@@ -3316,7 +3316,7 @@ if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 			}
 			else if (peer_code_data.immersion_character == generic_code_data::character::PURE_KNOTOID)
 			{
-				int semi_arc;  // the first immersion semi-arc of the shortcut
+				int semi_arc=-1;  // the first immersion semi-arc of the shortcut
 				int head = peer_code_data.head;
 								
 				if (code_table[generic_code_data::table::LABEL][head] == generic_code_data::POSITIVE)
