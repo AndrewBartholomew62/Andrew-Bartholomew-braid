@@ -4104,13 +4104,13 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 		
 	string option = argument.substr(start);
 	
-	if (option.find("affine-index"))
+	if (option == "affine-index")
 	{
    		braid_control::AFFINE_INDEX = true;
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: AFFINE_INDEX read from " << source << endl;
 	}
-	else if (option.find("alexander"))
+	else if (option == "alexander")
 	{
    		braid_control::SWITCH_POLYNOMIAL_INVARIANT = true;
 		braid_control::ALEXANDER = true;
@@ -4125,13 +4125,13 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: SWITCH_POLYNOMIAL_INVARIANT read from " << source << endl;
 	}
-	else if (option.find("arrow-polynomial"))
+	else if (option == "arrow-polynomial")
 	{
    		braid_control::ARROW_POLYNOMIAL = true;
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: ARROW_POLYNOMIAL read from " << source << endl;
 	}
-	else if (option.find("automorphism"))
+	else if (option == "automorphism")
 	{
    		braid_control::SWITCH_POLYNOMIAL_INVARIANT = true;
 		braid_control::ALEXANDER = false;
@@ -4146,19 +4146,19 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: COMMUTATIVE_AUTOMORPHISM read from " << source << endl;
 	}
-	else if (option.find("bigint"))
+	else if (option == "bigint")
 	{
     	braid_control::USE_BIGINT = true;
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: braid_control::USE_BIGINT read from " << source << endl;
 	}
-	else if (option.find("birack-homology"))
+	else if (option == "birack-homology")
 	{
    		braid_control::BIRACK_HOMOLOGY = true;
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: BIRACK_HOMOLOGY read from " << source << endl;
 	}	
-	else if (option.find("birack-polynomial"))
+	else if (option == "birack-polynomial")
 	{
 		braid_control::SWITCH_POLYNOMIAL_INVARIANT = true;
 		braid_control::ALEXANDER = false;
@@ -4187,13 +4187,13 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 
 		}		
 	}
-	else if (option.find("braid-permutation"))
+	else if (option == "braid-permutation")
 	{
    		braid_control::BRAID_PERMUTATION = true;
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: BRAID_PERMUTATION read from " << source << endl;
 	}	
-	else if (option.find("burau"))
+	else if (option == "burau")
 	{
    		braid_control::SWITCH_POLYNOMIAL_INVARIANT = true;
 		braid_control::ALEXANDER = false;
@@ -4208,13 +4208,13 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: BURAU read from " << source << endl;
 	}	
-	else if (option.find("classical"))
+	else if (option == "classical")
 	{
     	braid_control::CLASSICAL_ONLY = true;
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: CLASSICAL_ONLY read from " << source << endl;
 	}
-	else if (option.find("cocycle"))
+	else if (option == "cocycle")
 	{
    		braid_control::SWITCH_POLYNOMIAL_INVARIANT = true;
 		braid_control::ALEXANDER = false;
@@ -4236,7 +4236,7 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 //	debug << "set_programme_long_option: also setting FINITE_SWITCH_INVARIANT = true and DOUBLE_BIRACKS = true "<< endl;
 }
 	}
-	else if (option.find("cohomology"))
+	else if (option == "cohomology")
 	{
     	braid_control::COHOMOLOGY = true;
     	braid_control::CLASSICAL_ONLY = true;
@@ -4259,7 +4259,7 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: COHOMOLOGY read from " << source << "braid_control::homology_index = " << braid_control::homology_index << endl;
 	}
-	else if (option.find("colouring-invariant"))
+	else if (option == "colouring-invariant")
 	{
 		braid_control::SWITCH_POLYNOMIAL_INVARIANT = true;
 		braid_control::ALEXANDER = false;
@@ -4274,7 +4274,7 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: FINITE_SWITCH_INVARIANT read from " << source << endl;
 	}
-	else if (option.find("complex-delta1"))
+	else if (option == "complex-delta1")
 	{
     	braid_control::COMPLEX_STUDY_DELTA_1= true;
 		braid_control::QUATERNION = true;
@@ -4282,33 +4282,33 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: COMPLEX_STUDY_DELTA_1 read from " << source << endl;
 	}
 /*
-	else if (option.find("three-cycles")
+	else if (option == "three-cycles")
 	{
     	braid_control::CHECK_3_CYCLES = true;
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: CHECK_3_CYCLES read from " << source << endl;
 	}
 */	
-	else if (option.find("delta0-only"))
+	else if (option == "delta0-only")
 	{
     	braid_control::CALCULATE_DELTA_0_ONLY = true;
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: DISPLAY_DELTA_0_ONLY read from " << source << endl;
 	}
-	else if (option.find("delta1-only"))
+	else if (option == "delta1-only")
 	{
     	braid_control::DISPLAY_DELTA_1_ONLY = true;
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: DISPLAY_DELTA_1_ONLY read from " << source << endl;
 	}
-/*    else if (option.find("doodle")
+/*    else if (option == "doodle")
 	{
 		braid_control::DOODLE_CONDITIONS = true;
 		braid_control::FLAT_CROSSINGS = true;
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_options: DOODLE_CONDITIONS read from " << source << endl;
 	} */
-    else if (option.find("development"))
+    else if (option == "development")
 	{
 		braid_control::DEVELOPMENT_MODE = true;
 		
@@ -4319,92 +4319,92 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: DEVELOPMENT_MODE read from " << source << endl;
 	}
-	else if (option.find("doodle-Q-poly"))
+	else if (option == "doodle-Q-poly")
 	{
    		braid_control::DOODLE_Q_POLYNOMIAL = true;
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: DOODLE_Q_POLYNOMIAL read from " << source << endl;
 	}
-    else if (option.find("double-biracks"))
+    else if (option == "double-biracks")
 	{
 		braid_control::DOUBLE_BIRACKS = true;
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: DOUBLE_BIRACKS read from " << source << endl;
 	}
-    else if (option.find("double-braid"))
+    else if (option == "double-braid")
 	{
 		braid_control::KAMADA_DOUBLE_COVERING = true;
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: KAMADA_DOUBLE_COVERING read from " << source << endl;
 	}
-    else if (option.find("dowker"))
+    else if (option == "dowker")
 	{
 		braid_control::DOWKER_CODE = true;
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: DOWKER_CODE read from " << source << endl;
 	}
-	else if (option.find("dynnikov"))
+	else if (option == "dynnikov")
 	{
     	braid_control::DYNNIKOV_TEST = true;
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: DYNNIKOV_TEST read from " << source << endl;
 	}
-	else if (option.find("equality"))
+	else if (option == "equality")
 	{
     	braid_control::EQUALITY_TEST = true;
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: EQUALITY_TEST read from " << source << endl;
 	}
-	else if (option.find("extra-output"))
+	else if (option == "extra-output")
 	{
     	braid_control::EXTRA_OUTPUT = true;
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: EXTRA_OUTPUT read from " << source << endl;
 	}
-    else if (option.find("flat-crossings"))
+    else if (option == "flat-crossings")
 	{
 		braid_control::FLAT_CROSSINGS = true;
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_options: FLAT_CROSSINGS read from " << source << endl;
 	}
-	else if (option.find("flip-braid"))
+	else if (option == "flip-braid")
 	{
 		braid_control::FLIP_BRAID = true;
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: FLIP_BRAID read from " << source << endl;
 	}
-	else if (option.find("format"))
+	else if (option == "format")
 	{
     	braid_control::OUTPUT_AS_INPUT = true;
 		braid_control::EXTRA_OUTPUT = false; 
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: braid_control::OUTPUT_AS_INPUT read from " << source << endl;
 	}
-	else if (option.find("gauss"))
+	else if (option == "gauss")
 	{
 		braid_control::GAUSS_CODE = true;
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: GAUSS_CODE read from " << source << endl;
 	}
-	else if (option.find("hamiltonian"))
+	else if (option == "hamiltonian")
 	{
     	braid_control::HAMILTONIAN = true;
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: HAMILTONIAN read from " << source << endl;
 	}
-	else if (option.find("HC-count"))
+	else if (option == "HC-count")
 	{
     	braid_control::HC_COUNT = true;
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: HC_COUNT read from " << source << endl;
 	}
-	else if (option.find("HC-edges"))
+	else if (option == "HC-edges")
 	{
     	braid_control::HC_EDGES = true;
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: HC_EDGES read from " << source << endl;
 	}
-	else if (option.find("HC-include-edge"))
+	else if (option == "HC-include-edge")
 	{
 		size_t pos = option.find('=');
 		if (pos != string::npos)
@@ -4419,19 +4419,19 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: HC_INCLUDE_EDGE read from " << source << ", HC_INCLUDE_EDGE = " << braid_control::HC_INCLUDE_EDGE << endl;
 	}
-	else if (option.find("HC-list-all"))
+	else if (option == "HC-list-all")
 	{
     	braid_control::HC_LIST_ALL = true;
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: HC_LIST_ALL read from " << source << endl;
 	}
-	else if (option.find("homfly"))
+	else if (option == "homfly")
 	{
     	braid_control::HOMFLY = true;
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: HOMFLY read from " << source << endl;
 	}
-	else if (option.find("homology"))
+	else if (option == "homology")
 	{
     	braid_control::HOMOLOGY = true;
     	braid_control::CLASSICAL_ONLY = true;
@@ -4454,61 +4454,61 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: HOMOLOGY read from " << source << "braid_control::homology_index = " << braid_control::homology_index << endl;
 	}
-	else if (option.find("immersion"))
+	else if (option == "immersion")
 	{
 		braid_control::IMMERSION_CODE = true;
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: IMMERSION_CODE read from " << source << endl;
 	}
-	else if (option.find("info"))
+	else if (option == "info")
 	{
 		braid_control::STATUS_INFORMATION = true;
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: STATUS_INFORMATION read from " << source << endl;
 	}
-	else if (option.find("invert-braid"))
+	else if (option == "invert-braid")
 	{
 		braid_control::INVERT_BRAID = true;
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: INVERT_BRAID read from " << source << endl;
 	}
-	else if (option.find("jones-polynomial"))
+	else if (option == "jones-polynomial")
 	{
    		braid_control::JONES_POLYNOMIAL = true;
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: JONES_POLYNOMIAL read from " << source << endl;
 	}
-	else if (option.find("kauffman-bracket"))
+	else if (option == "kauffman-bracket")
 	{
    		braid_control::KAUFFMAN_BRACKET = true;
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: KAUFFMAN_BRACKET read from " << source << endl;
 	}
-	else if (option.find("knotoid-bracket"))
+	else if (option == "knotoid-bracket")
 	{
    		braid_control::KNOTOID_BRACKET = true;
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: KNOTOID_BRACKET read from " << source << endl;
 	}
-	else if (option.find("line-reflect-braid"))
+	else if (option == "line-reflect-braid")
 	{
 		braid_control::LINE_REFLECT_BRAID = true;
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: LINE_REFLECT_BRAID read from " << source << endl;
 	}
-	else if (option.find("lpgd"))
+	else if (option == "lpgd")
 	{
     	braid_control::LPGD = true;
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: braid_control::LPGD read from " << source << endl;
 	}
-	else if (option.find("manturov"))
+	else if (option == "manturov")
 	{
     	braid_control::MANTUROV_ALEXANDER = true;
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: braid_control::MANTUROV_ALEXANDER read from " << source << endl;
 	}
-	else if (option.find("matrix"))
+	else if (option == "matrix")
 	{
    		braid_control::SWITCH_POLYNOMIAL_INVARIANT = true;
 		braid_control::ALEXANDER = false;
@@ -4523,13 +4523,13 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: MATRIX read from " << source << endl;
 	}
-	else if (option.find("mock"))
+	else if (option == "mock")
 	{
    		braid_control::MOCK_ALEXANDER = true;
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: MOCK_ALEXANDER read from " << source << endl;
 	}
-	else if (option.find("mod-p"))
+	else if (option == "mod-p")
 	{
 		braid_control::CALCULATE_MOD_P = true;
 		scalar::set_variant(scalar::MOD_P);	
@@ -4555,91 +4555,91 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: MOD_P read from " << source << ", p = " << p_value << endl;
 	}
-	else if (option.find("no-auto-delta1"))
+	else if (option == "no-auto-delta1")
 	{
 		braid_control::ALWAYS_CALCULATE_DELTA_1 = false;
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: clear ALWAYS_CALCULATE_DELTA_1 read from " << source << endl;
 	}
-	else if (option.find("no-even-writhe"))
+	else if (option == "no-even-writhe")
 	{
     	braid_control::EVEN_WRITHE = false;
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: clear EVEN_WRITHE read from " << source << endl;
 	}
-	else if (option.find("no-expanded-bracket"))
+	else if (option == "no-expanded-bracket")
 	{
 		braid_control::EXPANDED_BRACKET_POLYNOMIAL = false;
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: clear EXPANDED_BRACKET_POLYNOMIAL read from " << source << endl;
 	}
-	else if (option.find("no-normalize-bracket"))
+	else if (option == "no-normalize-bracket")
 	{
 		braid_control::NORMALIZE_BRACKET = false;
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: clear NORMALIZE_BRACKET read from " << source << endl;
 	}
-	else if (option.find("no-reduce-braids"))
+	else if (option == "no-reduce-braids")
 	{
 		braid_control::REDUCE_BRAIDS = false;
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: clear REDUCE_BRAIDS read from " << source << endl;
 	}
-	else if (option.find("no-refine-birack-poly"))
+	else if (option == "no-refine-birack-poly")
 	{
 		braid_control::REFINE_RACK_POLYNOMIAL = false;
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: clear REFINE_RACK_POLYNOMIAL read from " << source << endl;
 	}
-	else if (option.find("normalize-quaternions"))
+	else if (option == "normalize-quaternions")
 	{
 		braid_control::NORMALIZING_Q_POLYNOMIALS = true;
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: NORMALIZING_Q_POLYNOMIALS read from " << source << endl;
 	}
-	else if (option.find("opgc"))
+	else if (option == "opgc")
 	{
     	braid_control::OPGC = true;
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: braid_control::OPGC read from " << source << endl;
 	}
-	else if (option.find("OU-format"))
+	else if (option == "OU-format")
 	{
 		braid_control::OU_FORMAT = true;
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: OU_FORMAT read from " << source << endl;
 	}
-	else if (option.find("parity-arrow"))
+	else if (option == "parity-arrow")
 	{
    		braid_control::PARITY_ARROW = true;
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: PARITY_ARROW read from " << source << endl;
 	}
-	else if (option.find("parity-bracket"))
+	else if (option == "parity-bracket")
 	{
    		braid_control::PARITY_BRACKET = true;
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: PARITY_BRACKET read from " << source << endl;
 	}
-	else if (option.find("PD-format"))
+	else if (option == "PD-format")
 	{
     	braid_control::PD_FORMAT = true;
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: braid_control::PD_FORMAT read from " << source << endl;
 	}
-	else if (option.find("peer"))
+	else if (option == "peer")
 	{
 		braid_control::PEER_CODE = true;
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: PEER_CODE read from " << source << endl;
 	}
-	else if (option.find("plane-reflect-input"))
+	else if (option == "plane-reflect-input")
 	{
 		braid_control::PLANE_REFLECT_INPUT = true;
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: PLANE_REFLECT_INPUT read from " << source << endl;
 	}
-	else if (option.find("power"))
+	else if (option == "power")
 	{
 
 if (debug_control::DEBUG >= debug_control::SUMMARY)
@@ -4660,13 +4660,13 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: SWITCH_POWER=" << braid_control::SWITCH_POWER << " read from " << source << endl;
 	}
-	else if (option.find("prime"))
+	else if (option == "prime")
 	{
 		braid_control::PRIME_TEST = true;
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: PRIME_TEST read from " << source << endl;
 	}
-	else if (option.find("quaternion"))
+	else if (option == "quaternion")
 	{
    		braid_control::SWITCH_POLYNOMIAL_INVARIANT = true;
 		braid_control::ALEXANDER = false;
@@ -4681,26 +4681,26 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: QUATERNION read from " << source << endl;
 	}
-	else if (option.find("rational"))
+	else if (option == "rational")
 	{
     	braid_control::USE_RATIONALS = true;
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: braid_control::USE_RATIONALS read from " << source << endl;
 	}
-	else if (option.find("raw-output"))
+	else if (option == "raw-output")
 	{
 		braid_control::RAW_OUTPUT = true;
 //		braid_control::EXTRA_OUTPUT = false;
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: braid_control::RAW_OUTPUT read from " << source << endl;
 	}
-	else if (option.find("relaxed-parity"))
+	else if (option == "relaxed-parity")
 	{
     	braid_control::RELAXED_PARITY = true;
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: braid_control::RELAXED_PARITY read from " << source << endl;
 	}	
-	else if (option.find("remove"))
+	else if (option == "remove")
 	{
 		braid_control::REMOVE_PEER_CODE_COMPONENT = true;
 if (debug_control::DEBUG >= debug_control::SUMMARY)
@@ -4719,19 +4719,19 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: REMOVE_COMPONENT=" << braid_control::REMOVE_COMPONENT << " read from " << source << endl;
 	}
-	else if (option.find("rho"))
+	else if (option == "rho")
 	{
 		braid_control::STUDY_RHO_MAPPING = true;
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: STUDY_RHO_MAPPING read from " << source << endl;
 	}
-	else if (option.find("reverse-input-orientation"))
+	else if (option == "reverse-input-orientation")
 	{
 		braid_control::REVERSE_INPUT_ORIENTATION = true;
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: REVERSE_INPUT_ORIENTATION read from " << source << endl;
 	}
-	else if (option.find("satellite"))
+	else if (option == "satellite")
 	{
 		size_t pos = option.find('=');
 		if (pos != string::npos)
@@ -4742,74 +4742,74 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: SATELLITE  = " << braid_control::SATELLITE << " read from " << source << endl;
 	}
-	else if (option.find("sawollek"))
+	else if (option == "sawollek")
 	{
     	braid_control::SAWOLLEK = true;
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: SAWOLLEK read from " << source << endl;
 	}
-	else if (option.find("show-parity-peer-codes"))
+	else if (option == "show-parity-peer-codes")
 	{
     		polynomial_control::WRITE_PARITY_PEER_CODES = true;
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: polynomial_control::WRITE_PARITY_PEER_CODES set from " << source << endl;
 	}	
-	else if (option.find("show-varmaps"))
+	else if (option == "show-varmaps")
 	{
     	polynomial_control::SUBSTITUTE_MAPPED_VARIABLES = false;
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: polynomial_control::SUBSTITUTE_MAPPED_VARIABLES cleared from " << source << endl;
 	}	
-	else if (option.find("silent"))
+	else if (option == "silent")
 	{
     	braid_control::SILENT_OPERATION = true;
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: braid_control::SILENT_OPERATION read from " << source << endl;
 	}	
-	else if (option.find("summary-test"))
+	else if (option == "summary-test")
 	{
     	braid_control::SUMMARY_TEST = true;
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: braid_control::SUMMARY_TEST read from " << source << endl;
 	}	
-	else if (option.find("TeX-polynomials"))
+	else if (option == "TeX-polynomials")
 	{
     	braid_control::TeX_POLYNOMIAL_OUTPUT = true;
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: braid_control::TeX_POLYNOMIAL_OUTPUT read from " << source << endl;
 	}
-	else if (option.find("turning-number"))
+	else if (option == "turning-number")
 	{
     	braid_control::VOGEL_ALGORITHM = true;
     	braid_control::VOGEL_TURNING_NUMBER = true;
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: turning-number read from " << source << endl;
 	}
-	else if (option.find("ulpgd"))
+	else if (option == "ulpgd")
 	{
     	braid_control::ULPGD = true;
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: braid_control::ULPGD read from " << source << endl;
 	}
-	else if (option.find("uopgc"))
+	else if (option == "uopgc")
 	{
     	braid_control::UOPGC = true;
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: braid_control::UOPGC read from " << source << endl;
 	}
-	else if (option.find("vogel"))
+	else if (option == "vogel")
 	{
     	braid_control::VOGEL_ALGORITHM = true;
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: VOGEL_ALGORITHM read from " << source << endl;
 	}
-	else if (option.find("vogel-height"))
+	else if (option == "vogel-height")
 	{
     	braid_control::VOGEL_HEIGHT_ONLY = true;
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: VOGEL_HEIGHT_ONLY read from " << source << endl;
 	}
-	else if (option.find("wait"))
+	else if (option == "wait")
 	{
     	braid_control::WAIT_SWITCH = true;
 if (debug_control::DEBUG >= debug_control::SUMMARY)
@@ -4824,7 +4824,7 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "    wait_threshold " << braid_control::wait_threshold << " read from " << source << endl;
    		}
 	}
-	else if (option.find("weyl"))
+	else if (option == "weyl")
 	{
    		braid_control::SWITCH_POLYNOMIAL_INVARIANT = true;
 		braid_control::ALEXANDER = false;
@@ -4839,7 +4839,7 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: WEYL_SWITCH read from " << source << endl;
 	}
-	else if (option.find("zig-zag-delta"))
+	else if (option == "zig-zag-delta")
 	{
 		braid_control::ZIG_ZAG_DELTA = true;	
 if (debug_control::DEBUG >= debug_control::SUMMARY)
@@ -8434,7 +8434,7 @@ void set_main_debug_option(string option)
 {
 	size_t pos = option.find('{');
 	
-cout << "set_main_debug_option isolated option string " << option << endl;
+//cout << "set_main_debug_option isolated option string " << option << endl;
 
 	/* if we've been given the empty string display main debug help information */
 	if (option == "")
@@ -8444,7 +8444,7 @@ cout << "set_main_debug_option isolated option string " << option << endl;
 		return;
 	}
 	
-	if (option.find("braid"))
+	if (option.find("braid") != string::npos)
 	{
 		debug_control::DEBUG = debug_control::SUMMARY;
 		debug << "main::set_main_debug_option: setting debug option debug_control::DEBUG = debug_control::SUMMARY\n";		
@@ -8452,10 +8452,10 @@ cout << "set_main_debug_option isolated option string " << option << endl;
 		if (pos != string::npos)
 		{
 			/* check for any parameters */
-			check_debug_option_parameters(pos, "braid");
+			check_debug_option_parameters(pos, option);
 		}
 	}
-	else if (option.find("vogel"))
+	else if (option.find("vogel") != string::npos)
 	{
 		braid_control::VOGEL_DEBUG = true;
 		debug << "main::set_main_debug_option: setting debug option braid_control::VOGEL_DEBUG\n";		

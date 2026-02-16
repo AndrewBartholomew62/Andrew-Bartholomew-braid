@@ -187,7 +187,7 @@ void set_debug_option(string option)
 {
 	size_t pos = option.find('{');
 	
-cout << "set_debug_option isolated option string " << option << endl;
+//cout << "set_debug_option isolated option string " << option << endl;
 
 	/* if we've been given the empty string display debug help information */
 	if (option == "")
@@ -298,7 +298,7 @@ cout << "set_debug_option isolated option string " << option << endl;
 void check_debug_option_parameters(size_t pos, string option)
 {
 	string base_option = option.substr(0,pos);
-cout << "check_debug_option_parameters base option = " << base_option << endl;
+//cout << "check_debug_option_parameters base option = " << base_option << endl;
 
 	bool end_of_parameters = false;	
 	size_t start = ++pos; // move past opening {
@@ -310,7 +310,7 @@ cout << "check_debug_option_parameters base option = " << base_option << endl;
 			if (option[pos] == '}')
 				end_of_parameters = true;
 	
-cout << "check_debug_option_parameters parameter " << option.substr(start,pos-start) << endl;
+//cout << "check_debug_option_parameters parameter " << option.substr(start,pos-start) << endl;
 				
 			set_debug_option_parameter(option.substr(start,pos-start), base_option);
 
