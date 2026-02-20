@@ -4158,7 +4158,7 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: BIRACK_HOMOLOGY read from " << source << endl;
 	}	
-	else if (option == "birack-polynomial")
+	else if (option.find("birack-polynomial") != string::npos)
 	{
 		braid_control::SWITCH_POLYNOMIAL_INVARIANT = true;
 		braid_control::ALEXANDER = false;
@@ -4236,7 +4236,7 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 //	debug << "set_programme_long_option: also setting FINITE_SWITCH_INVARIANT = true and DOUBLE_BIRACKS = true "<< endl;
 }
 	}
-	else if (option == "cohomology")
+	else if (option.find("cohomology") != string::npos)
 	{
     	braid_control::COHOMOLOGY = true;
     	braid_control::CLASSICAL_ONLY = true;
@@ -4404,7 +4404,7 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: HC_EDGES read from " << source << endl;
 	}
-	else if (option == "HC-include-edge")
+	else if (option.find("HC-include-edge") != string::npos)
 	{
 		size_t pos = option.find('=');
 		if (pos != string::npos)
@@ -4431,7 +4431,7 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: HOMFLY read from " << source << endl;
 	}
-	else if (option == "homology")
+	else if (option.find("homology") != string::npos)
 	{
     	braid_control::HOMOLOGY = true;
     	braid_control::CLASSICAL_ONLY = true;
@@ -4529,7 +4529,7 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: MOCK_ALEXANDER read from " << source << endl;
 	}
-	else if (option == "mod-p")
+	else if (option.find("mod-p") != string::npos)
 	{
 		braid_control::CALCULATE_MOD_P = true;
 		scalar::set_variant(scalar::MOD_P);	
@@ -4639,7 +4639,7 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: PLANE_REFLECT_INPUT read from " << source << endl;
 	}
-	else if (option == "power")
+	else if (option.find("power") != string::npos)
 	{
 
 if (debug_control::DEBUG >= debug_control::SUMMARY)
@@ -4700,7 +4700,7 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: braid_control::RELAXED_PARITY read from " << source << endl;
 	}	
-	else if (option == "remove")
+	else if (option.find("remove") != string::npos)
 	{
 		braid_control::REMOVE_PEER_CODE_COMPONENT = true;
 if (debug_control::DEBUG >= debug_control::SUMMARY)
@@ -4731,7 +4731,7 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: REVERSE_INPUT_ORIENTATION read from " << source << endl;
 	}
-	else if (option == "satellite")
+	else if (option.find("satellite") != string::npos)
 	{
 		size_t pos = option.find('=');
 		if (pos != string::npos)
@@ -4809,7 +4809,7 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_long_option: VOGEL_HEIGHT_ONLY read from " << source << endl;
 	}
-	else if (option == "wait")
+	else if (option.find("wait") != string::npos)
 	{
     	braid_control::WAIT_SWITCH = true;
 if (debug_control::DEBUG >= debug_control::SUMMARY)
