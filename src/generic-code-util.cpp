@@ -57,6 +57,18 @@ if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 	debug << "convert_gauss_code: presented with OU_gauss_code: " << OU_gauss_code << endl;			
 
 	ostringstream oss;
+
+	if (OU_gauss_code.find("K:") != string::npos)
+		oss << "K:";
+	else if (OU_gauss_code.find("K(") != string::npos)
+	{
+		int num_open_components;
+		get_number(num_open_components,OU_gauss_code,OU_gauss_code.find('(')+1);
+		oss << "K(" << num_open_components << "):";
+	}
+	else if (OU_gauss_code.find("L:") != string::npos)
+		oss << "L:";
+
 	
 	/* count the number of crossings */
 	int num_crossings = count(OU_gauss_code.begin(),OU_gauss_code.end(),'O');
@@ -126,7 +138,6 @@ if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 	
 	return oss.str();	
 }
-
 
 /* renumber_peer_code moves the starting point for the numbering of each component
    forwards with respect to the orientation by the number of semi-arcs given by 
