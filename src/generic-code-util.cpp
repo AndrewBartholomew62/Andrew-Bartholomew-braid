@@ -57,18 +57,6 @@ if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 	debug << "convert_gauss_code: presented with OU_gauss_code: " << OU_gauss_code << endl;			
 
 	ostringstream oss;
-
-	if (OU_gauss_code.find("K:") != string::npos)
-		oss << "K:";
-	else if (OU_gauss_code.find("K(") != string::npos)
-	{
-		int num_open_components;
-		get_number(num_open_components,OU_gauss_code,OU_gauss_code.find('(')+1);
-		oss << "K(" << num_open_components << "):";
-	}
-	else if (OU_gauss_code.find("L:") != string::npos)
-		oss << "L:";
-
 	
 	/* count the number of crossings */
 	int num_crossings = count(OU_gauss_code.begin(),OU_gauss_code.end(),'O');
@@ -77,7 +65,6 @@ if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 	char* inbuf = c_string(OU_gauss_code);
 	char* cptr = inbuf;
 	bool over_arc;
-	bool flat_gauss_code = true;
 	
 	for (int i=0; i< 2*num_crossings; i++)
 	{
@@ -90,22 +77,9 @@ if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 		}
 		
 		if (*cptr == 'O')
-		{
-			if (flat_gauss_code)
-				oss << 'R';
-
-			over_arc = true; // always set over_arc true for flat crossings to inhibit the output of minus signs
-		}
-		else // (*cptr == 'U')
-		{
-			if (flat_gauss_code)
-			{
-				oss << 'L';
-				over_arc = true;
-			}
-			else	
-				over_arc = false;
-		}
+			over_arc = true;
+		else
+			over_arc = false;
 
 if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << "convert_gauss_code: crossing " << "cptr = " << *cptr << " over_arc = " << (over_arc?"true":"false");			
@@ -122,20 +96,11 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 			cptr++;
 		
 		if (*cptr == '-')
-		{
-			flat_gauss_code = false;
 			sign[crossing_num-1] = -1;
-			cptr++;
-		}
-		else if (*cptr == '+')
-		{
-			flat_gauss_code = false;
-			sign[crossing_num-1] = 1;
-			cptr++;
-		}
 		else
-			sign[crossing_num-1] = 0; // flat
-		
+			sign[crossing_num-1] = 1;
+
+		cptr++;
 		
 if (debug_control::DEBUG >= debug_control::DETAIL)
 	debug << ", sign = " << sign[crossing_num-1] << endl;			
@@ -150,10 +115,8 @@ if (debug_control::DEBUG >= debug_control::DETAIL)
 	{
 		if (sign[i] == 1)
 			oss << '+';
-		else if (sign[i] == -1)
-			oss << '-';
 		else
-			oss << '#';
+			oss << '-';
 	}
 			
 	delete[] inbuf;
@@ -163,6 +126,7 @@ if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 	
 	return oss.str();	
 }
+
 
 /* renumber_peer_code moves the starting point for the numbering of each component
    forwards with respect to the orientation by the number of semi-arcs given by 
