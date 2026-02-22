@@ -242,7 +242,7 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 		{				
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 {
-	debug << "preprocess_file: first_line_sent_to_output = " << first_line_sent_to_output;
+	debug << "preprocess_file: output_lines = " << output_lines << " first_line_sent_to_output = " << first_line_sent_to_output;
 	debug << " switch_line_sent_to_output = " << switch_line_sent_to_output << endl;
 }
 

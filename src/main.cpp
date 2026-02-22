@@ -799,45 +799,58 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 		string next_line;
 		while(getline(input,next_line))
 		{
-			string::size_type pos = next_line.find(';');
-			if (pos != string::npos)
-				next_line = next_line.substr(0,pos);
+			string::size_type pos1 = next_line.find(';');
+			if (pos1 != string::npos)
+				next_line = next_line.substr(0,pos1);
 	
 			if (next_line.find("exit") != string::npos)
 				break;
 
-			char* line_buf = c_string(next_line);
-
-			if (strlen(line_buf))
+			if (next_line.length() != 0)
 			{
-				char* cptr = strchr(line_buf,'[');
-				if (cptr && !strchr(line_buf,'\\') && !strchr(line_buf,'/') && next_line.find("X[")== string::npos && next_line.find("S[") == string::npos && next_line.find("s[") == string::npos) 
+				pos1 = next_line.find('[');
+				if ( pos1 != string::npos 
+					&& next_line.find('\\') == string::npos 
+					&& next_line.find('/') == string::npos 
+					&& next_line.find("X[") == string::npos 
+					&& next_line.find("S[") == string::npos 
+					&& next_line.find("s[") == string::npos
+				   ) 
 				{		
 					/* this is an options line and not a line containing a peer code, a planar diagram or a switch specifying the t-variable.  Make sure there's an end to the option definitions on this line 
 					*/
-					if (!strchr(line_buf,']'))
+					if (next_line.find(']') == string::npos )
 					{
 						cout << "\nError in " << input_file << ": programme options must be enclosed within []\n";
 						exit(0);
 					}
-					do
+					
+					pos1++; // move over '['
+					while (isspace(next_line[pos1]))
+						pos1++;
+						
+					string::size_type pos2;
+				
+					if (next_line.find(',') != string::npos)
 					{
-						cptr++;
-						/* skip whitespace */
-						while (isspace(*cptr))
-							cptr++;
-						set_programme_long_option(cptr++, "input file");
-						while (*cptr != ',' && *cptr != ']')
-							cptr++;
-					} while (*cptr != ']');
+						do
+						{
+							pos2 = next_line.find(',',pos1);
+							set_programme_long_option(next_line.substr(pos1,pos2-pos1),"input file");
+							pos1 = pos2+1; // move past the ','
+							while (isspace(next_line[pos1]))
+								pos1++;
+							
+						} while (next_line.find(',',pos1) !=string::npos);
+					}
+					pos2 = next_line.find(']',pos1);
+					set_programme_long_option(next_line.substr(pos1,pos2-pos1),"input file");
 					
 					if (!braid_control::RAW_OUTPUT)
-						hold_stream << "input file option " << line_buf << endl;				
+						hold_stream << "input file option " << next_line << endl;				
 					
 				}				
 			}
-			
-			delete[] line_buf;
     	}
 	}
 	
