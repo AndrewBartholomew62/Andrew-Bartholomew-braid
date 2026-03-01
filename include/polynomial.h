@@ -2175,6 +2175,9 @@ if (polynomial_control::DEBUG & polynomial_control::general)
 		}
 	}
 	
+	/* re-sort the variables */
+	sort(result.vc.begin(),result.vc.end());
+	
 	/* if c1 is mapped in poly, replace it with c2 in result.vm */
 	result.vm = poly.vm;
 	typename map<char,V>::const_iterator vm_ptr = poly.vm.find(c1);
