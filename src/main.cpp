@@ -5064,142 +5064,144 @@ void set_programme_short_option(string argument)
 		}
 
 	}
-
-	size_t cpos = argument.find('c');
-	if (cpos  != string::npos)
+	else
 	{
-		braid_control::COMPLEX_STUDY_DELTA_1 = true;
-		braid_control::SWITCH_POLYNOMIAL_INVARIANT = true;
-	    braid_control::QUATERNION = true;
-		set_cli_suboptions(cpos, argument);
-	}
-
-	if (argument.find('B') != string::npos)
-		braid_control::BIGELOW_KNOT_SEARCH = true;
-
-	if (argument.find('d') != string::npos)
-		braid_control::KAMADA_DOUBLE_COVERING = true;
-
-	if (argument.find('D') != string::npos)
-		braid_control::VERIFY_DELTA_0 = true;
-
-	if (argument.find('e') != string::npos)
-		braid_control::EQUALITY_TEST = true;
-
-	if (argument.find('F') != string::npos)
-		braid_control::BYPASS_FUNDAMENTAL_EQUATION_CHECK = true;
-
-	if (argument.find('h') != string::npos)
-		help_info();
-
-	if (argument.find('I') != string::npos)
-	{
-		braid_control::OUTPUT_AS_INPUT = true;
-		braid_control::EXTRA_OUTPUT = false; // turns off additional poly-invariant output
-	}
-
-	if (argument.find('M') != string::npos)
-		braid_control::REMOVE_REIDEMEISTER_II_MOVES = false;
-
-	if (argument.find('N') != string::npos)
-		braid_control::NORMALIZING_Q_POLYNOMIALS = true;
-
-	if (argument.find('o') != string::npos)
-		braid_control::EXTRA_OUTPUT = true;
-
-	if (argument.find('O') != string::npos)
-	{
-		braid_control::RAW_OUTPUT = true;
-		braid_control::EXTRA_OUTPUT = false;
-	}
-
-	if (argument.find('p') != string::npos)
-	{
-		braid_control::CALCULATE_MOD_P = true;
-		scalar::set_variant(scalar::MOD_P);	
-		polynomial_control::MOD_P = true;
-
-if (debug_control::DEBUG >= debug_control::SUMMARY)
-debug << "set_programme_short_option: setting polynomial_control::MOD_P = true as a result of command line option" << endl;
-
-	    size_t pos = argument.find('p')+1;
-	    if (argument[pos] == '=')
-	    {
-			int modulus;
-			get_number(modulus,argument,pos+1);
-			mod_p::set_p(modulus);
-	    }
-		else
+		size_t cpos = argument.find('c');
+		if (cpos  != string::npos)
 		{
-			cout << "\nYou must specify a prime if you use the mod p option, e.g. 'braid -qp=7'" << endl;
-			exit(0);
+			braid_control::COMPLEX_STUDY_DELTA_1 = true;
+			braid_control::SWITCH_POLYNOMIAL_INVARIANT = true;
+		    braid_control::QUATERNION = true;
+			set_cli_suboptions(cpos, argument);
 		}
-	}
-
-	if (argument.find('P') != string::npos)
-		polynomial_control::WAIT_INFO = true;
-
-//			if (strchr(cptr, 'r'))
-//			{
-//		    	REAL_STUDY_DELTA_1 = true;
-//		    	SWITCH_POLYNOMIAL_INVARIANT = true;
-//	    		QUATERNION = true;
-//			}
-
-	if (argument.find('R') != string::npos)
-		braid_control::STUDY_RHO_MAPPING = true;
-
-	if (argument.find('S') != string::npos)
-		braid_control::SILENT_OPERATION = true;
-
-/*	if (strchr(cptr, 't'))
-	{
-	    char* c1 = strchr(cptr,'t')+1;
-	    if (*c1 == '=')
+	
+		if (argument.find('B') != string::npos)
+			braid_control::BIGELOW_KNOT_SEARCH = true;
+	
+		if (argument.find('d') != string::npos)
+			braid_control::KAMADA_DOUBLE_COVERING = true;
+	
+		if (argument.find('D') != string::npos)
+			braid_control::VERIFY_DELTA_0 = true;
+	
+		if (argument.find('e') != string::npos)
+			braid_control::EQUALITY_TEST = true;
+	
+		if (argument.find('F') != string::npos)
+			braid_control::BYPASS_FUNDAMENTAL_EQUATION_CHECK = true;
+	
+		if (argument.find('h') != string::npos)
+			help_info();
+	
+		if (argument.find('I') != string::npos)
 		{
-			get_number(braid_control::RACK_TERMS,++c1);
-			
+			braid_control::OUTPUT_AS_INPUT = true;
+			braid_control::EXTRA_OUTPUT = false; // turns off additional poly-invariant output
+		}
+	
+		if (argument.find('M') != string::npos)
+			braid_control::REMOVE_REIDEMEISTER_II_MOVES = false;
+	
+		if (argument.find('N') != string::npos)
+			braid_control::NORMALIZING_Q_POLYNOMIALS = true;
+	
+		if (argument.find('o') != string::npos)
+			braid_control::EXTRA_OUTPUT = true;
+	
+		if (argument.find('O') != string::npos)
+		{
+			braid_control::RAW_OUTPUT = true;
+			braid_control::EXTRA_OUTPUT = false;
+		}
+	
+		if (argument.find('p') != string::npos)
+		{
+			braid_control::CALCULATE_MOD_P = true;
+			scalar::set_variant(scalar::MOD_P);	
+			polynomial_control::MOD_P = true;
+	
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+	debug << "set_programme_short_option: setting polynomial_control::MOD_P = true as a result of command line option" << endl;
+	
+		    size_t pos = argument.find('p')+1;
+		    if (argument[pos] == '=')
+		    {
+				int modulus;
+				get_number(modulus,argument,pos+1);
+				mod_p::set_p(modulus);
+		    }
+			else
+			{
+				cout << "\nYou must specify a prime if you use the mod p option, e.g. 'braid -qp=7'" << endl;
+				exit(0);
+			}
+		}
+	
+		if (argument.find('P') != string::npos)
+			polynomial_control::WAIT_INFO = true;
+	
+//		if (strchr(cptr, 'r'))
+//		{
+//	    	REAL_STUDY_DELTA_1 = true;
+//	    	SWITCH_POLYNOMIAL_INVARIANT = true;
+//	   		QUATERNION = true;
+//		}
+	
+		if (argument.find('R') != string::npos)
+			braid_control::STUDY_RHO_MAPPING = true;
+	
+		if (argument.find('S') != string::npos)
+			braid_control::SILENT_OPERATION = true;
+	
+/*		if (strchr(cptr, 't'))
+		{
+		    char* c1 = strchr(cptr,'t')+1;
+		    if (*c1 == '=')
+			{
+				get_number(braid_control::RACK_TERMS,++c1);
+				
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_short_option: setting RACK_TERMS = " << braid_control::RACK_TERMS << " as a result of command line option" << endl;
+			}
+			
+			if (!braid_control::RACK_TERMS)
+			{
+				cout << "\nYou must specify the number of terms if you use the t option, e.g. 'braid -t=7'" << endl;
+				exit(0);
+			}
 		}
-		
-		if (!braid_control::RACK_TERMS)
-		{
-			cout << "\nYou must specify the number of terms if you use the t option, e.g. 'braid -t=7'" << endl;
-			exit(0);
-		}
-	}
 */		
-	if (argument.find('U') != string::npos)
-		braid_control::DELTA_1_UNIT_CHECK = false;
-
-	if (argument.find('V') != string::npos)
-		braid_control::T_VARIABLE = false;
-
-	if (argument.find('W') != string::npos)
-	{
-		braid_control::WAIT_SWITCH = true;
-	    size_t pos = argument.find('W')+1;
-	    if (argument[pos] == '=')
-	    {
-			int threshold;
-			get_number(threshold,argument,pos+1);
-		    braid_control::wait_threshold = max(threshold,2);
-
+		if (argument.find('U') != string::npos)
+			braid_control::DELTA_1_UNIT_CHECK = false;
+	
+		if (argument.find('V') != string::npos)
+			braid_control::T_VARIABLE = false;
+	
+		if (argument.find('W') != string::npos)
+		{
+			braid_control::WAIT_SWITCH = true;
+		    size_t pos = argument.find('W')+1;
+		    if (argument[pos] == '=')
+		    {
+				int threshold;
+				get_number(threshold,argument,pos+1);
+			    braid_control::wait_threshold = max(threshold,2);
+	
 if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << "set_programme_short_option: setting wait_threshold = " << braid_control::wait_threshold << endl;
-		    
-	    }
+			    
+		    }
+		}
+	
+		if (argument.find('x') != string::npos)
+		    braid_control::TEST_MODE = true;
+	
+		if (argument.find('z') != string::npos)
+		    braid_control::ALWAYS_CALCULATE_DELTA_1 = false;
+	
+		if (argument.find('Z') != string::npos)
+			braid_control::DISPLAY_DELTA_1_ONLY = true;
 	}
-
-	if (argument.find('x') != string::npos)
-	    braid_control::TEST_MODE = true;
-
-	if (argument.find('z') != string::npos)
-	    braid_control::ALWAYS_CALCULATE_DELTA_1 = false;
-
-	if (argument.find('Z') != string::npos)
-		braid_control::DISPLAY_DELTA_1_ONLY = true;
 }
 
 

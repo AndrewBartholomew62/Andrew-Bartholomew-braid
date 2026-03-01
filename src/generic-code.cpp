@@ -2363,7 +2363,21 @@ if (debug_control::DEBUG >= debug_control::BASIC)
 		}
 	}
 }	
+
 	
+/*******************		
+ 27-2-26 
+
+nabla_k currently supports only classical knotoids with the starred region at either the leg and the head of the knotoid, testing Lou's
+conjecture.  The function evaluates the full potential matrix and then determines column permutations to evaluate the appropriate permanent
+by omitting selected columns
+starred_edge is used for knot-type knotoids to identify where the leg and head are located
+
+For classical multi-linkoids (on a surface of genus 0) with m>2 line components and n crossings, we need to star m-2 crossings to obtain 
+f-n = 2-2g-m = 2-m = 0
+In this case we shall need to set r_perm accordingly for the permanent calculation.
+*******************/		
+
 polynomial<int> nabla_k(generic_code_data& code_data, int starred_edge)	
 {
 	bool pure_knotoid = (code_data.immersion_character == generic_code_data::character::PURE_KNOTOID);
@@ -2464,7 +2478,7 @@ if (debug_control::DEBUG >= debug_control::INTERMEDIATE)
 	
 		int head_cycle = -1; // the first turning cycle containing the first shortcut edge.
 		int first_starred_cycle = -1; // the first turning cycle containing the starred edge.
-		int second_starred_cycle = -1; // the first turning cycle containing the starred edge.
+		int second_starred_cycle = -1; // the second turning cycle containing the starred edge.
 		
 		for (int i = first_shortcut_edge; i<= (pure_knotoid? code_data.num_component_edges[0]: starred_edge); i++)
 		{
@@ -2529,6 +2543,10 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 				region[i] = region[region[i]];
 		}
 		
+/*******************		
+ 27-2-26 
+ num_regions should be the same as num_classical_crossings: i.e. non-short-cut crossings for a classical knotoid.
+*******************/		
 		int num_regions = index;
 
 if (debug_control::DEBUG >= debug_control::SUMMARY)
@@ -2546,6 +2564,14 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 		
 		matrix<polynomial<int> > M(num_classical_crossings, num_regions);
 		
+/*******************		
+ 27-2-26 
+ do we need to take notice of virtual crossing in the next loop?  M has only num_classical_crossings rows but
+ the loop doesn't check for the crossing label
+
+ num_classical_crossings is the number of non-shortcut crossings in this context
+
+*******************/		
 		index = -1;
 		for (int i=0; i< num_crossings; i++)
 		{
@@ -2597,11 +2623,18 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 	debug << endl;
 }
 		
+		
 		/* nabla_k is determined by placing a star adjacent to the leg of the knotoid.  In a pure knotoid, the leg is always edge zero, and edge zero always appears
 		   in the first turning cycle, the star lies in region zero, so to evaluate nabla_ we omit the first column of M to calculate the permanent
 		   
 		   In a knot-type knotoid, we're being given a peer code of a knot and could consider the leg to be on any edge
 		*/ 
+		
+/*******************		
+ 27-2-26 
+r_perm will always be the identity, as we will want the permanent to include every row, c_perm will pick out the columns of M we're interested in, that is all
+columns other than the one being removed.
+*******************/				
 		vector<int> r_perm(num_classical_crossings);
 		for (int i=0; i< num_classical_crossings; i++)
 			r_perm[i] = i;
@@ -2634,6 +2667,9 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 }
 		
 		polynomial<int> nabla_k_main = permanent(M, "", num_classical_crossings, r_perm, c_perm);
+
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+	debug << "nabla_k: nabla_k_main = " << nabla_k_main << endl;
 
 /*
 		if (!braid_control::SILENT_OPERATION)
@@ -2687,10 +2723,17 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 		}
 		
 		polynomial<int> nabla_k_prime = permanent(M, "", num_classical_crossings, r_perm, c_perm);
+
+if (debug_control::DEBUG >= debug_control::SUMMARY)
+	debug << "nabla_k: initial nabla_k_prime = " << nabla_k_prime << endl;
 		
-		polynomial<int> step_1 = substitute_signed_polynomial_variable(nabla_k_prime,'W','A',true);
-		polynomial<int> step_2 = substitute_signed_polynomial_variable(step_1,'B','W',true);
-		polynomial<int> step_3 = substitute_signed_polynomial_variable(step_2,'A','B',false);
+/*******************		
+ 27-2-26 
+This is the varialble substitution to check nabla_k'(W,B) = nabla_k(-B,-W)
+*******************/				
+		polynomial<int> step_1 = substitute_signed_polynomial_variable(nabla_k_prime,'W','A',true); //change_sign = true: W -> -A
+		polynomial<int> step_2 = substitute_signed_polynomial_variable(step_1,'B','W',true); //change_sign = true: B -> -W
+		polynomial<int> step_3 = substitute_signed_polynomial_variable(step_2,'A','B',false); //change_sign = false: A -> B
 
 			
 
@@ -2707,6 +2750,7 @@ if (debug_control::DEBUG >= debug_control::SUMMARY)
 	}
 }
 
+/* Find the left/right turning cycle in which edge_2 is the succeeding edge to edge_1 */
 int find_cycle(matrix<int>& cycle, int num_cycles, int num_left_cycles, int edge_1, int edge_2, bool left_cycle)
 {
 	int turning_cycle = -1;
